@@ -1,0 +1,131 @@
+ScrollBarSliderVertical < UIButton
+  id: sliderButton
+  anchors.centerIn: parent
+  size: 14 17
+  image-source: /images/ui/scrollbar/slider_vertical
+  image-border: 2
+  image-border-top: 6
+  image-border-bottom: 6
+  image-color: #ffffffff
+  //$hover:
+  //$pressed:
+  $disabled:
+    image-color: #ffffff66
+
+ScrollBarSliderHorizontal < UIButton
+  id: sliderButton
+  anchors.centerIn: parent
+  size: 17 14
+  image-source: /images/ui/scrollbar/slider_horizontal
+  image-border: 2
+  image-border-left: 6
+  image-border-right: 6
+  image-color: #ffffffff
+  //$hover:
+  //$pressed:
+  $disabled:
+    image-color: #ffffff66
+
+ScrollBarValueLabel < Label
+  id: valueLabel
+  anchors.fill: parent
+  color: white
+  text-align: center
+
+VerticalScrollBar < UIScrollBar
+  orientation: vertical
+  width: 17
+  height: 39
+  pixels-scroll: true
+
+  UIButton
+    id: decrementButton
+    anchors.top: parent.top
+    anchors.left: parent.left
+    image-source: /images/ui/scrollbar/scrollbar_buttons_vertical
+    image-clip: 0 0 17 17
+    image-color: #ffffffff
+    size: 17 17
+    $hover:
+      image-clip: 0 17 17 17
+    $pressed:
+      image-clip: 0 34 17 17
+    $disabled:
+      image-color: #ffffff66
+
+  UIWidget
+    phantom: true
+    focusable: false
+    anchors.top: prev.bottom
+    anchors.bottom: next.top
+    image-source: /images/ui/scrollbar/scrollbar_vertical
+    image-border: 2
+
+  UIButton
+    id: incrementButton
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    size: 17 17
+    image-source: /images/ui/scrollbar/scrollbar_buttons_vertical
+    image-clip: 17 0 17 17
+    image-color: #ffffffff
+    $hover:
+      image-clip: 17 17 17 17
+    $pressed:
+      image-clip: 17 34 17 17
+    $disabled:
+      image-color: #ffffff66
+
+  ScrollBarSliderVertical
+
+  ScrollBarValueLabel
+
+HorizontalScrollBar < UIScrollBar
+  orientation: horizontal
+  height: 17
+  width: 39
+
+  $disabled:
+    color: #bbbbbb88
+
+  UIButton
+    id: decrementButton
+    anchors.top: parent.top
+    anchors.left: parent.left
+    image-source: /images/ui/scrollbar/scrollbar_buttons_horizontal
+    image-clip: 0 0 17 17
+    image-color: #ffffffff
+    size: 17 17
+    $hover:
+      image-clip: 0 0 17 17
+    $pressed:
+      image-clip: 0 34 17 17
+    $disabled:
+      image-color: #ffffff66
+
+  UIWidget
+    phantom: true
+    focusable: false
+    anchors.left: prev.right
+    anchors.right: next.left
+    image-source: /images/ui/scrollbar/scrollbar_horizontal
+    image-border: 2
+
+  UIButton
+    id: incrementButton
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    size: 17 17
+    image-source: /images/ui/scrollbar/scrollbar_buttons_horizontal
+    image-clip: 17 0 17 17
+    image-color: #ffffffff
+    $hover:
+      image-clip: 17 17 17 17
+    $pressed:
+      image-clip: 17 34 17 17
+    $disabled:
+      image-color: #ffffff66
+
+  ScrollBarSliderHorizontal
+
+  ScrollBarValueLabel

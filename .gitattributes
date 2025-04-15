@@ -1,0 +1,9 @@
+# Normalize source code before commits
+*.lua eol=lf 
+*.txt eol=lf 
+*.ot* eol=lf 
+*.cpp eol=lf 
+*.h   eol=lf 
+vcpkg_installed/x64-windows-static/x64-windows-static/lib/OpenAL32.lib filter=lfs diff=lfs merge=lfs -text
+vcpkg_installed/x64-windows-static/x64-windows-static/lib/libGLESv2.lib filter=lfs diff=lfs merge=lfs -text
+vcpkg_installed/x64-windows-static/x64-windows-static/lib/ANGLE.lib filter=lfs diff=lfs merge=lfs -text

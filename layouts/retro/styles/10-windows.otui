@@ -1,0 +1,113 @@
+WindowBorders < UIWidget
+  phantom: true
+  focusable: false
+  image-source: /images/ui/panels/dragon_miniwindow
+  image-border: 12
+  image-border-top: 41
+  image-border-right: 38
+  image-border-left: 38
+  image-border-bottom: 33
+  anchors.fill: parent
+  margin-top: -45
+  margin-left: -21
+  margin-right: -26
+  margin-bottom: -16
+
+Window < UIWindow
+  font: verdana-11px-antialised
+  size: 236 207
+  opacity: 1
+  color: #e3cdbb
+  image-source: /images/ui/textures/mainwindow_background
+  image-border: 1
+  image-border-top: 37
+  text-offset: 25 18
+  text-align: topleft
+  anchors.centerIn: parent
+  padding-top: 45
+  padding-left: 21
+  padding-right: 26
+  padding-bottom: 16
+
+  WindowBorders
+
+  $disabled:
+    color: #dfdfdf
+
+WindowBorderless < UIWindow
+  font: verdana-11px-antialised
+  size: 236 207
+  opacity: 1
+  color: #e3cdbb
+  image-source: /images/ui/textures/mainwindow_background
+  image-border: 1
+  image-border-top: 37
+  text-offset: 25 18
+  text-align: topleft
+  anchors.centerIn: parent
+  padding-top: 45
+  padding-left: 21
+  padding-right: 26
+  padding-bottom: 16
+
+  $disabled:
+    color: #dfdfdf
+
+HeadlessWindow < UIWindow
+  image-source: /images/ui/window_headless
+  image-border: 5
+  padding: 5
+
+MainWindow < Window
+  anchors.centerIn: parent
+
+MainWindowBorderless < WindowBorderless
+  anchors.centerIn: parent
+
+StaticWindow < Window
+  &static: true
+
+StaticMainWindow < StaticWindow
+  anchors.centerIn: parent
+
+StaticBorderlessWindow < WindowBorderless
+  &static: true
+
+DragonWindow < UIWindow
+  font: verdana-11px-antialised
+  size: 236 207
+  opacity: 1
+  color: #e3cdbb
+  image-source: /images/ui/textures/mainwindow_background
+  image-border: 1
+  image-border-top: 37
+  text-offset: 25 18
+  text-align: topleft
+  anchors.centerIn: parent
+  padding-top: 45
+  padding-left: 21
+  padding-right: 26
+  padding-bottom: 16
+
+  WindowBorders
+    image-source: /images/ui/panels/dragon_miniwindow
+  
+  UIWidget
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.left: parent.left
+    image-source: /images/ui/panels/window_top_deco
+    margin-top: -63
+    margin-left: -28
+    margin-right: -28
+    image-auto-resize: true
+  
+  UIWidget
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    anchors.left: parent.left
+    image-source: /images/ui/panels/window_bottom_deco
+    margin-left: -21
+    margin-right: -26
+    margin-bottom: -16
+    image-auto-resize: true

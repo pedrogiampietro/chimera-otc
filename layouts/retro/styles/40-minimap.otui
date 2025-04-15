@@ -1,0 +1,324 @@
+MinimapFlag < UIWidget
+  size: 11 11
+  focusable: false
+
+MinimapCross < UIWidget
+  focusable: false
+  phantom: true
+  image: /images/game/minimap/cross
+  size: 16 16
+
+MinimapMaximizeButton < UIButton
+  id: mapMaximizebutton
+  anchors.top: minimizeButton.top
+  anchors.right: minimizeButton.left
+  margin-right: 3
+  size: 22 16
+  image-source: /images/ui/nav_buttons
+  image-clip: 75 0 25 20
+  $hover:
+    image-clip: 75 20 25 20
+  $pressed:
+    image-clip: 75 40 25 20
+
+MinimapFloorUpButton < UIButton
+  size: 21 18
+  margin-right: 6
+  margin-top: 6
+  anchors.right: parent.right
+  anchors.top: parent.top
+  image-source: /images/ui/nav_buttons
+  image-clip: 125 0 25 20
+  $hover:
+    image-clip: 125 20 25 20
+  $pressed:
+    image-clip: 125 40 25 20
+
+MinimapFloorDownButton < UIButton
+  size: 21 18
+  margin-right: 6
+  margin-top: 25
+  anchors.right: parent.right
+  anchors.top: parent.top
+  image-source: /images/ui/nav_buttons
+  image-clip: 150 0 25 20
+  $hover:
+    image-clip: 150 20 25 20
+  $pressed:
+    image-clip: 150 40 25 20
+
+MinimapZoomInButton < UIButton
+  size: 21 18
+  margin-right: 6
+  margin-bottom: 6
+  anchors.right: parent.right
+  anchors.bottom: parent.bottom
+  image-source: /images/ui/nav_buttons
+  image-clip: 50 0 25 20
+
+  $hover:
+    image-clip: 50 20 25 20
+
+  $pressed:
+    image-clip: 50 40 25 20
+
+MinimapZoomOutButton < UIButton
+  size: 21 18
+  margin-right: 6
+  margin-bottom: 25
+  anchors.right: parent.right
+  anchors.bottom: parent.bottom
+  image-source: /images/ui/nav_buttons
+  image-clip: 25 0 25 20
+
+  $hover:
+    image-clip: 25 20 25 20
+
+  $pressed:
+    image-clip: 25 40 25 20
+
+MinimapResetButton < Button
+  !text: tr('Center')
+  size: 44 20
+  anchors.left: parent.left
+  anchors.top: parent.top
+  margin: 4
+  visible: false
+
+Minimap < UIMinimap
+  draggable: true
+  focusable: false
+  cross: true
+  color: black
+
+  MinimapMaximizeButton
+    id: fullMapMaximize
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: none
+    margin-right: 0
+    margin-top: 6
+    margin-left: 6
+    size: 88 64
+    visible: false
+
+  MinimapFloorUpButton
+    id: floorUpWidget
+    @onClick: self:getParent():floorUp(1)
+
+  MinimapFloorDownButton
+    id: floorDownWidget
+    @onClick: self:getParent():floorDown(1)
+
+  MinimapZoomInButton
+    id: zoomInWidget
+    @onClick: self:getParent():zoomIn()
+
+  MinimapZoomOutButton
+    id: zoomOutWidget
+    @onClick: self:getParent():zoomOut()
+
+  MinimapResetButton
+    id: resetWidget
+    @onClick: self:getParent():reset()
+
+
+// Minimap Flag Create Window
+
+
+MinimapFlagCheckBox < CheckBox
+  size: 15 15
+  margin-left: 2
+  image-source: /images/game/minimap/flagcheckbox
+  image-size: 15 15
+  image-border: 3
+  icon-source: /images/game/minimap/mapflags
+  icon-size: 11 11
+  icon-offset: 2 4
+  anchors.left: prev.right
+  anchors.top: prev.top
+  $!checked:
+    image-clip: 26 0 26 26
+  $hover !checked:
+    image-clip: 78 0 26 26
+  $checked:
+    image-clip: 0 0 26 26
+  $hover checked:
+    image-clip: 52 0 26 26
+
+MinimapFlagWindow < MainWindow
+  !text: tr('Create Map Mark')
+  size: 196 185
+
+  Label
+    !text: tr('Position') .. ':'
+    text-auto-resize: true
+    anchors.top: parent.top
+    anchors.left: parent.left
+    margin-top: 2
+
+  Label
+    id: position
+    text-auto-resize: true
+    anchors.top: parent.top
+    anchors.right: parent.right
+    margin-top: 2
+
+  Label
+    !text: tr('Description') .. ':'
+    anchors.left: parent.left
+    anchors.top: prev.bottom
+    margin-top: 7
+
+  TextEdit
+    id: description
+    margin-top: 3
+    anchors.left: parent.left
+    anchors.top: prev.bottom
+    anchors.right: parent.right
+
+  MinimapFlagCheckBox
+    id: flag0
+    icon-source: /images/game/minimap/flag0
+    anchors.left: parent.left
+    anchors.top: prev.bottom
+    margin-top: 6
+    margin-left: 0  
+
+  MinimapFlagCheckBox
+    id: flag1
+    icon-source: /images/game/minimap/flag1
+
+  MinimapFlagCheckBox
+    id: flag2
+    icon-source: /images/game/minimap/flag2
+
+  MinimapFlagCheckBox
+    id: flag3
+    icon-source: /images/game/minimap/flag3
+
+  MinimapFlagCheckBox
+    id: flag4
+    icon-source: /images/game/minimap/flag4
+
+  MinimapFlagCheckBox
+    id: flag5
+    icon-source: /images/game/minimap/flag5
+
+  MinimapFlagCheckBox
+    id: flag6
+    icon-source: /images/game/minimap/flag6
+
+  MinimapFlagCheckBox
+    id: flag7
+    icon-source: /images/game/minimap/flag7
+
+  MinimapFlagCheckBox
+    id: flag8
+    icon-source: /images/game/minimap/flag8
+
+  MinimapFlagCheckBox
+    id: flag9
+    icon-source: /images/game/minimap/flag9
+
+  MinimapFlagCheckBox
+    id: flag10
+    icon-source: /images/game/minimap/flag10
+    anchors.left: parent.left
+    anchors.top: prev.bottom
+    margin-top: 6
+    margin-left: 0  
+
+  MinimapFlagCheckBox
+    id: flag11
+    icon-source: /images/game/minimap/flag11
+
+  MinimapFlagCheckBox
+    id: flag12
+    icon-source: /images/game/minimap/flag12
+
+  MinimapFlagCheckBox
+    id: flag13
+    icon-source: /images/game/minimap/flag13
+
+  MinimapFlagCheckBox
+    id: flag14
+    icon-source: /images/game/minimap/flag14
+
+  MinimapFlagCheckBox
+    id: flag15
+    icon-source: /images/game/minimap/flag15
+
+  MinimapFlagCheckBox
+    id: flag16
+    icon-source: /images/game/minimap/flag16
+
+  MinimapFlagCheckBox
+    id: flag17
+    icon-source: /images/game/minimap/flag17
+
+  MinimapFlagCheckBox
+    id: flag18
+    icon-source: /images/game/minimap/flag18
+
+  MinimapFlagCheckBox
+    id: flag19
+    icon-source: /images/game/minimap/flag19
+
+  Button
+    id: okButton
+    !text: tr('Ok')
+    width: 64
+    anchors.right: next.left
+    anchors.bottom: parent.bottom
+    margin-right: 10
+
+  Button
+    id: cancelButton
+    !text: tr('Cancel')
+    width: 64
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+
+MinimapWindow < DragonMiniWindowNoTopDeco
+  height: 150
+  @onNoParent: modules.game_minimap.onNoParent()
+
+  MiniWindowContents
+    margin-top: 38
+
+    Minimap
+      id: minimap
+      anchors.fill: parent
+
+  ResizeBorder
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    &minimum: 175
+    enabled: true
+
+  WindowBorders
+    id: noParentBorder
+    visible: false
+    margin: 0
+
+  UIWidget
+    id: parentBorder1
+    phantom: true
+    focusable: false
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    image-source: /images/ui/panels/window_top_deco
+    margin-top: -8
+    size: 221 49
+
+  UIWidget
+    id: parentBorder2
+    phantom: true
+    focusable: false
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.bottom: parent.bottom
+    image-source: /images/ui/panels/window_bottom_deco
+    margin-bottom: -2
+    size: 222 27

@@ -1,0 +1,9 @@
+EnterGameWindow < DragonWindow
+  size: 320 340
+  
+  Label
+    id: enterLabel
+    !text: tr('Enter Game')
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    text-offset: 0 -25
