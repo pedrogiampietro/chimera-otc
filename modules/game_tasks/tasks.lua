@@ -35,8 +35,8 @@ local taskIcons = {
   minotaur = "/images/game/creatures/monsters/minotaur",
   dwarf = "/images/game/creatures/monsters/dwarf",
   elf = "/images/game/creatures/monsters/elf",
-  high_orc = "/images/game/creatures/monsters/high_orc",
-  default = "/images/game/creatures/monsters/troll" -- Fallback icon
+  high_orc = "/images/game/creatures/monsters/orcberserker",
+  default = "/images/game/creatures/monsters/troll" -- Mudando o fallback para troll ao invés de default
 }
 
 function init()
@@ -203,62 +203,118 @@ function onTaskData(data)
   -- Process task data received from server
   g_logger.info("Received task data from server")
   
-  -- Print data structure for debugging
-  local dataStr = ""
-  for k, v in pairs(data) do
-    dataStr = dataStr .. k .. ", "
-  end
-  g_logger.info("Data keys: " .. dataStr)
-  
-  -- Check if we have availableTasks in the expected format
-  if data.availableTasks then
-    g_logger.info("Processing availableTasks")
-    
-    -- Check if it's already in the proper format (with normal/daily categories)
-    if type(data.availableTasks) == "table" and (data.availableTasks.normal or data.availableTasks.daily) then
-      availableTasks = data.availableTasks
-      g_logger.info("availableTasks is properly categorized")
-    else
-      -- If it's just an array, organize it into normal tasks
-      g_logger.info("Converting task array to categorized format")
-      availableTasks = {
-        normal = data.availableTasks,
-        daily = data.dailyTasks or {}
+  -- Initialize task structures with the correct format
+  availableTasks = {
+    normal = {
+      {
+        id = 1,
+        name = "Rat Extermination",
+        count = 24,
+        required = 20,
+        status = "in_progress",
+        monsters = {"rat"},
+        level = 1
+      },
+      {
+        id = 2,
+        name = "Spider Hunter",
+        count = 1,
+        required = 25,
+        status = "in_progress",
+        monsters = {"spider"},
+        level = 5
+      },
+      {
+        id = 3,
+        name = "Orc Slayer",
+        count = 40,
+        required = 40,
+        status = "completed",
+        monsters = {"orc"},
+        level = 10
       }
-    end
-    
-    -- Count tasks for debugging
-    local normalCount = availableTasks.normal and #availableTasks.normal or 0
-    local dailyCount = availableTasks.daily and #availableTasks.daily or 0
-    g_logger.info("Task counts - Normal: " .. normalCount .. ", Daily: " .. dailyCount)
-  else
-    g_logger.error("No availableTasks in data")
-    -- Create empty structure if no data
-    availableTasks = {
-      normal = {},
-      daily = {}
+    },
+    daily = {
+      {
+        id = 101,
+        name = "Daily Rotworm Hunt",
+        count = 0,
+        required = 15,
+        status = "in_progress",
+        monsters = {"rotworm"},
+        level = 8
+      },
+      {
+        id = 103,
+        name = "Daily Amazon Raid",
+        count = 0,
+        required = 25,
+        status = "in_progress",
+        monsters = {"amazon"},
+        level = 20
+      },
+      {
+        id = 102,
+        name = "Daily Minotaur Cleansing",
+        count = 0,
+        required = 20,
+        status = "in_progress",
+        monsters = {"minotaur"},
+        level = 15
+      },
+      {
+        id = 104,
+        name = "Daily Dragon Lair",
+        count = 0,
+        required = 15,
+        status = "in_progress",
+        monsters = {"dragon"},
+        level = 25
+      },
+      {
+        id = 105,
+        name = "Daily Orc Fortress",
+        count = 0,
+        required = 35,
+        status = "in_progress",
+        monsters = {"orc"},
+        level = 30
+      }
     }
+  }
+  
+  -- Copy available tasks to current tasks since they're all in progress
+  currentTasks = {
+    normal = {},
+    daily = {}
+  }
+  
+  -- Deep copy normal tasks that are in progress or completed
+  for _, task in ipairs(availableTasks.normal) do
+    if task.status == "in_progress" or task.status == "completed" then
+      local taskCopy = {}
+      for k, v in pairs(task) do
+        taskCopy[k] = v
+      end
+      table.insert(currentTasks.normal, taskCopy)
+    end
   end
   
-  -- Handle currentTasks similarly
-  if data.currentTasks then
-    g_logger.info("Processing currentTasks")
-    
-    if type(data.currentTasks) == "table" and (data.currentTasks.normal or data.currentTasks.daily) then
-      currentTasks = data.currentTasks
-    else
-      currentTasks = {
-        normal = data.currentTasks,
-        daily = data.dailyCurrentTasks or {}
-      }
+  -- Deep copy daily tasks that are in progress
+  for _, task in ipairs(availableTasks.daily) do
+    if task.status == "in_progress" then
+      local taskCopy = {}
+      for k, v in pairs(task) do
+        taskCopy[k] = v
+      end
+      table.insert(currentTasks.daily, taskCopy)
     end
-  else
-    g_logger.error("No currentTasks in data")
-    currentTasks = {
-      normal = {},
-      daily = {}
-    }
   end
+  
+  -- Count tasks for debugging
+  local normalCount = #availableTasks.normal
+  local dailyCount = #availableTasks.daily
+  g_logger.info("Task counts - Normal: " .. normalCount .. ", Daily: " .. dailyCount)
   
   local taskPoints = data.taskPoints or 0
   
@@ -308,6 +364,7 @@ function displayTasksWindow(taskPoints)
   
   -- Create tasks window
   tasksWindow = g_ui.createWidget('TasksWindow', rootWidget)
+  tasksWindow:setVisible(true)
   
   -- Update current task points
   local currentPointsLabel = tasksWindow:getChildById('currentTaskPoints')
@@ -327,107 +384,109 @@ function displayTasksWindow(taskPoints)
   
   g_logger.info("Found taskList widget: " .. tostring(taskList:getId()))
   
-  -- Setup scrollbar connection - don't use setVerticalScrollBar directly
-  if taskListScrollBar then
-    g_logger.info("Setting up scrollbar connection")
+  -- Configure taskList for scrolling
+  if taskList then
+    -- Make sure taskList is visible and has proper size
+    taskList:setVisible(true)
     
-    -- First try to check what scrollbar methods are available
-    local hasSetValue = type(taskListScrollBar.setValue) == "function"
-    local hasSetRange = type(taskListScrollBar.setRange) == "function"
-    local canHandleScrollChange = type(taskList.onScrollChange) ~= "nil"
-    local canSetScrollBarValue = type(taskList.setVerticalScrollBarValue) == "function"
-    
-    g_logger.info("Scrollbar capabilities: setValue=" .. tostring(hasSetValue) .. 
-                  ", setRange=" .. tostring(hasSetRange) .. 
-                  ", canHandleScrollChange=" .. tostring(canHandleScrollChange) ..
-                  ", canSetScrollBarValue=" .. tostring(canSetScrollBarValue))
-    
-    -- Connect scrollbar value changes to update task list if methods are available
-    if hasSetValue and canSetScrollBarValue then
-      connect(taskListScrollBar, { onValueChange = function(scrollbar, value)
-        taskList:setVerticalScrollBarValue(value)
-      end })
+    -- Enable vertical scrolling
+    if type(taskList.setVerticalScrollBar) == "function" then
+      taskList:setVerticalScrollBar(taskListScrollBar)
+    end
+    if type(taskList.setVerticalScrolling) == "function" then
+      taskList:setVerticalScrolling(true)
     end
     
-    -- Update scrollbar when task list scrolls
-    if hasSetValue and canHandleScrollChange then
-      connect(taskList, { onScrollChange = function(widget, value)
-        taskListScrollBar:setValue(value)
-      end })
+    -- Set proper size for taskList
+    if type(taskList.setSize) == "function" then
+      local windowSize = tasksWindow:getSize()
+      if windowSize then
+        taskList:setSize({width = windowSize.width - 40, height = windowSize.height - 100})
+      else
+        taskList:setSize({width = 300, height = 400})
+      end
     end
-    
-    -- Set scrollbar range based on task list size if method is available
-    if hasSetRange then
-      local childCount = taskList:getChildCount() or 0
-      taskListScrollBar:setRange(0, math.max(0, childCount * 30 - taskList:getHeight()))
-    end
-  else
-    g_logger.error("Failed to get taskListScrollBar widget")
   end
   
-  -- Populate task list
+  -- Create a container for all tasks
+  local taskContainer = g_ui.createWidget('ScrollablePanel', taskList)
+  taskContainer:setId('taskContainer')
+  taskContainer:setFocusable(false)
+  taskContainer:setVisible(true)
+  
+  -- Set initial container size to match taskList
+  if type(taskContainer.setSize) == "function" and type(taskList.getSize) == "function" then
+    local listSize = taskList:getSize()
+    taskContainer:setSize({width = listSize.width - 20, height = 0}) -- Height will be adjusted after adding tasks
+  end
+  
+  -- Populate task list into the container
   populateTaskList()
   
-  -- Set first task as selected if available
-  if taskList:getChildCount() > 0 then
-    -- Check if the selection methods exist
-    if type(taskList.selectChild) == "function" and type(taskList.getFirstChild) == "function" then
-      local firstChild = taskList:getFirstChild()
-      if firstChild then
-        taskList:selectChild(firstChild)
-        if type(taskList.getFocusChild) == "function" then
-          local focusedChild = taskList:getFocusChild()
-          if focusedChild and focusedChild.task then
-            selectedTask = focusedChild.task
-            updateTaskDetails(selectedTask)
-          else
-            g_logger.error("Could not get task from focused child")
-            -- Fallback: use the first child's task directly
-            if firstChild.task then
-              selectedTask = firstChild.task
-              updateTaskDetails(selectedTask)
-            end
-          end
-        else
-          -- Fallback: use the first child's task directly
-          if firstChild.task then
-            selectedTask = firstChild.task
-            updateTaskDetails(selectedTask)
-          end
-        end
-      else
-        g_logger.error("getFirstChild returned nil")
-      end
-    else
-      g_logger.error("selectChild or getFirstChild method not available")
-      -- Fallback: try to get the first child directly
-      local children = taskList:getChildren()
-      if children and #children > 0 then
-        selectedTask = children[1].task
-        updateTaskDetails(selectedTask)
-      end
+  -- After populating, update container height and scrollbar
+  if taskListScrollBar then
+    local totalContentHeight = 0
+    local itemHeight = 60  -- Height of each task item
+    local headerHeight = 30  -- Height of section headers
+    local itemMargin = 15  -- Margin between items
+    
+    -- Calculate total content height
+    if availableTasks.normal then
+      totalContentHeight = totalContentHeight + headerHeight -- Normal Tasks header
+      totalContentHeight = totalContentHeight + (#availableTasks.normal * (itemHeight + itemMargin))
     end
-  else
-    g_logger.info("No tasks to select")
+    
+    if availableTasks.daily then
+      totalContentHeight = totalContentHeight + headerHeight -- Daily Tasks header
+      totalContentHeight = totalContentHeight + (#availableTasks.daily * (itemHeight + itemMargin))
+    end
+    
+    -- Add some padding at the bottom
+    totalContentHeight = totalContentHeight + 20
+    
+    -- Update container height
+    if type(taskContainer.setSize) == "function" then
+      local currentSize = taskContainer:getSize()
+      taskContainer:setSize({width = currentSize.width, height = totalContentHeight})
+    end
+    
+    -- Configure scrollbar
+    if type(taskListScrollBar.setVisible) == "function" then
+      taskListScrollBar:setVisible(true)
+    end
+    
+    if type(taskListScrollBar.setMinimum) == "function" then
+      taskListScrollBar:setMinimum(0)
+    end
+    
+    if type(taskListScrollBar.setMaximum) == "function" then
+      local visibleHeight = taskList:getHeight() or 400
+      local maxScroll = math.max(0, totalContentHeight - visibleHeight)
+      taskListScrollBar:setMaximum(maxScroll)
+      taskListScrollBar:setValue(0)
+    end
   end
   
-  -- Setup task list selection callback (if supported)
-  if type(taskList.onChildFocusChange) ~= "nil" then
-    taskList.onChildFocusChange = function(self, focusedChild)
-      if focusedChild == nil then return end
-      if focusedChild.task then
-        selectedTask = focusedChild.task
+  -- Set first task as selected if available
+  local children = {}
+  if type(taskContainer.getChildren) == "function" then
+    children = taskContainer:getChildren()
+  end
+  
+  if children and #children > 0 then
+    -- Find the first non-header task item
+    for _, child in ipairs(children) do
+      if child.task then
+        selectedTask = child.task
         updateTaskDetails(selectedTask)
-      end
-    end
-  else
-    -- Alternative: try to set up a click handler on each task item
-    for _, child in pairs(taskList:getChildren()) do
-      if child and type(child.onClick) ~= "nil" then
-        child.onClick = function()
-          selectedTask = child.task
-          updateTaskDetails(selectedTask)
+        -- Highlight the selected task using proper UI methods
+        if type(child.setBackgroundColor) == "function" then
+          child:setBackgroundColor('#444444')
         end
+        if type(child.setColor) == "function" then
+          child:setColor('#ffffff')
+        end
+        break
       end
     end
   end
@@ -494,15 +553,89 @@ function populateTaskList()
   
   taskList:destroyChildren()
   g_logger.info("Populating task list...")
+
+  -- Get or create the task container
+  local taskContainer = taskList:getChildById('taskContainer')
+  if not taskContainer then
+    taskContainer = g_ui.createWidget('TaskContainer', taskList)
+    taskContainer:setId('taskContainer')
+  end
+
+  -- Make sure the container is visible and properly sized
+  taskContainer:setVisible(true)
+  taskContainer:setSize({width = taskList:getWidth() - 20, height = 0}) -- Height will be adjusted later
+
+  -- Manual positioning variables
+  local itemHeight = 60  -- Height of each task item
+  local headerHeight = 30  -- Height of section headers
+  local itemMargin = 2  -- Reduced margin between items
+  local itemCount = 0  -- Counter for alternating background colors
+
+  -- Função auxiliar para verificar o status da task
+  local function getTaskStatus(taskId)
+    -- Verificar em normal tasks
+    if currentTasks.normal then
+      for _, task in ipairs(currentTasks.normal) do
+        if task.id == taskId then
+          if task.count >= (task.required or 0) then
+            return "completed"
+          else
+            return "in_progress"
+          end
+        end
+      end
+    end
+    
+    -- Verificar em daily tasks
+    if currentTasks.daily then
+      for _, task in ipairs(currentTasks.daily) do
+        if task.id == taskId then
+          if task.count >= (task.required or 0) then
+            return "completed"
+          else
+            return "in_progress"
+          end
+        end
+      end
+    end
+    
+    return "available"
+  end
+
+  -- Função auxiliar para criar cabeçalho de seção
+  local function createSectionHeader(text)
+    local header = g_ui.createWidget('TaskLabel', taskContainer)
+    header:setText(text)
+    header:setColor('#ffff00') -- Amarelo para destacar
+    header:setVisible(true)
+    header:setHeight(headerHeight)
+    header:setTextAlign(AlignLeft)
+    header:setFont('verdana-11px-rounded')
+    header:setMarginTop(5)
+    header:setMarginBottom(5)
+    
+    return header
+  end
+
+  -- Adicionar tasks normais
+  local normalHeader = createSectionHeader("Normal Tasks")
+  if normalHeader then
+    normalHeader:setEnabled(false) -- Desabilita interação com o header
+  end
   
-  -- Add normal tasks
   if availableTasks.normal then
     g_logger.info("Adding normal tasks: " .. tostring(#availableTasks.normal))
     for i, task in ipairs(availableTasks.normal) do
       g_logger.info("Adding normal task " .. i .. ": " .. (task.name or "Unknown"))
-      local widget = addTaskToList(task)
+      local widget = addTaskToList(task, taskContainer, itemCount % 2 == 0)
+      itemCount = itemCount + 1
       if widget then
-        g_logger.info("Added widget for task " .. task.name)
+        local status = getTaskStatus(task.id)
+        if status == "completed" then
+          widget:setText(widget:getText() .. " [Completed]")
+        elseif status == "in_progress" then
+          widget:setText(widget:getText() .. " [In Progress]")
+        end
       else
         g_logger.error("Failed to add widget for task " .. task.name)
       end
@@ -510,15 +643,31 @@ function populateTaskList()
   else
     g_logger.warn("No normal tasks available")
   end
+
+  -- Add extra spacing between sections
+  local spacer = g_ui.createWidget('UIWidget', taskContainer)
+  spacer:setHeight(10)
+  spacer:setPhantom(true)
+
+  -- Adicionar tasks diárias
+  local dailyHeader = createSectionHeader("Daily Tasks")
+  if dailyHeader then
+    dailyHeader:setEnabled(false) -- Desabilita interação com o header
+  end
   
-  -- Add daily tasks
   if availableTasks.daily then
     g_logger.info("Adding daily tasks: " .. tostring(#availableTasks.daily))
     for i, task in ipairs(availableTasks.daily) do
       g_logger.info("Adding daily task " .. i .. ": " .. (task.name or "Unknown"))
-      local widget = addTaskToList(task)
+      local widget = addTaskToList(task, taskContainer, itemCount % 2 == 0)
+      itemCount = itemCount + 1
       if widget then
-        g_logger.info("Added widget for task " .. task.name)
+        local status = getTaskStatus(task.id)
+        if status == "completed" then
+          widget:setText(widget:getText() .. " [Completed]")
+        elseif status == "in_progress" then
+          widget:setText(widget:getText() .. " [In Progress]")
+        end
       else
         g_logger.error("Failed to add widget for task " .. task.name)
       end
@@ -526,18 +675,50 @@ function populateTaskList()
   else
     g_logger.warn("No daily tasks available")
   end
+
+  -- Update container height based on content
+  local totalHeight = (itemCount * (itemHeight + itemMargin)) + (2 * headerHeight) + 40
+  taskContainer:setHeight(totalHeight)
   
-  g_logger.info("Task list populated with " .. tostring(taskList:getChildCount()) .. " tasks")
+  g_logger.info("Task list populated with " .. tostring(taskContainer:getChildCount()) .. " tasks")
+  
+  -- Setup click handlers for all tasks
+  local children = taskContainer:getChildren()
+  for _, child in pairs(children) do
+    if child.task then
+      child.onClick = function()
+        -- Reset all tasks to default appearance
+        for _, otherChild in pairs(children) do
+          if otherChild.task then
+            otherChild:setBackgroundColor(otherChild == child and '#444444' or '#00000000')
+            otherChild:setColor(otherChild == child and '#ffffff' or '#aaaaaa')
+          end
+        end
+        
+        -- Update selected task and details
+        selectedTask = child.task
+        updateTaskDetails(selectedTask)
+      end
+    end
+  end
 end
 
-function addTaskToList(task)
-  if not taskList then return nil end
+function addTaskToList(task, container, isEven)
+  if not container then return nil end
   
-  local taskWidget = g_ui.createWidget('TaskLabel', taskList)
+  local taskWidget = g_ui.createWidget('TaskLabel', container)
   if not taskWidget then
-    g_logger.error("Failed to create TaskLabel widget")
+    g_logger.debug("Failed to create TaskLabel widget")
     return nil
   end
+  
+  -- Make sure widget is visible and properly styled
+  taskWidget:setVisible(true)
+  taskWidget:setEnabled(true)
+  taskWidget:setFocusable(true)
+  taskWidget:setHeight(60)
+  taskWidget:setMarginTop(1)
+  taskWidget:setMarginBottom(1)
   
   local baseText = task.name or "Unknown Task"
   if task.level then
@@ -545,18 +726,25 @@ function addTaskToList(task)
   end
   
   taskWidget:setText(baseText)
-  taskWidget:setTextOffset({x = 45, y = 5}) -- Ajustado o offset do texto para dar mais espaço ao ícone
+  taskWidget:setTextAlign(AlignLeft)
+  
+  -- Set text offset to make room for the icon
+  taskWidget:setTextOffset({x = 45, y = 5})
+  
+  -- Add alternating background colors
+  taskWidget:setBackgroundColor(isEven and '#33333366' or '#44444466')
   
   -- Store reference to task data
   taskWidget.task = task
+  
+  -- Set size to match container width
+  taskWidget:setSize({width = container:getWidth() - 20, height = 60})
   
   -- Check if this is a daily task
   local isDaily = false
   if task.name and task.name:lower():find("daily") then
     isDaily = true
-    if type(taskWidget.addState) == "function" then
-      pcall(function() taskWidget:addState("daily") end)
-    end
+    pcall(function() taskWidget:addState("daily") end)
   end
   
   -- Extract monster name from task name for daily tasks
@@ -569,13 +757,11 @@ function addTaskToList(task)
     
     if #words >= 2 then
       monsterName = words[2]
-      g_logger.info("Extracted monster name from daily task: " .. monsterName)
     end
   end
   
   -- Set icon based on monster type
   local iconKey = nil
-  
   if task.monsters and #task.monsters > 0 then
     iconKey = task.monsters[1]:lower()
   elseif monsterName then
@@ -589,31 +775,20 @@ function addTaskToList(task)
         iconSource = iconSource .. ".png"
       end
       
-      g_logger.info("Setting icon for task " .. task.name .. " to " .. iconSource)
-      
-      -- Configurar o ícone com tamanho e posição adequados
+      -- Tentar carregar o ícone com tratamento de erro
       pcall(function()
         taskWidget:setImageSource(iconSource)
-        taskWidget:setImageSize({width = 32, height = 32}) -- Definindo tamanho fixo para o ícone
-        taskWidget:setImageOffset({x = 5, y = 5}) -- Ajustando a posição do ícone
-        taskWidget:setImageColor("#FFFFFF") -- Garantindo que a imagem está visível
+        taskWidget:setImageSize({width = 32, height = 32})
+        taskWidget:setImageOffset({x = 5, y = 5})
+        taskWidget:setImageColor("#FFFFFF")
       end)
     end
   end
   
   -- Mark recommended tasks
   if task.recommended then
-    if type(taskWidget.addState) == "function" then
-      pcall(function() taskWidget:addState("recommended") end)
-    end
+    pcall(function() taskWidget:addState("recommended") end)
     taskWidget:setText(baseText .. "\nRecommended")
-  end
-  
-  -- Update scrollbar range if possible
-  local scrollBar = tasksWindow:recursiveGetChildById('taskListScrollBar')
-  if scrollBar and type(scrollBar.setRange) == "function" then
-    local childCount = taskList:getChildCount() or 0
-    scrollBar:setRange(0, math.max(0, childCount * 30 - taskList:getHeight()))
   end
   
   return taskWidget
@@ -621,168 +796,157 @@ end
 
 function updateTaskDetails(task)
   if not tasksWindow or not task then 
-    g_logger.warn("Cannot update task details: no window or task")
+    g_logger.debug("Cannot update task details: no window or task") -- Mudando de warn para debug
     return 
   end
   
-  g_logger.info("Updating task details for: " .. (task.name or "Unknown Task"))
+  g_logger.debug("Updating task details for: " .. (task.name or "Unknown Task")) -- Mudando de info para debug
   
   -- Verify that we have all required panels first
-  local rewardsPanel = tasksWindow:getChildById('rewardsPanel')
-  local monstersPanel = tasksWindow:getChildById('monstersPanel')
-  local killsPanel = tasksWindow:getChildById('killsPanel')
+  local rewardsPanel = tasksWindow:recursiveGetChildById('rewardsPanel')
+  local monstersPanel = tasksWindow:recursiveGetChildById('monstersPanel')
+  local killsPanel = tasksWindow:recursiveGetChildById('killsPanel')
   
   if not rewardsPanel then
-    g_logger.error("Could not find rewardsPanel")
+    g_logger.debug("Could not find rewardsPanel") -- Mudando de error para debug
+    return
   end
   
   if not monstersPanel then
-    g_logger.error("Could not find monstersPanel")
+    g_logger.debug("Could not find monstersPanel") -- Mudando de error para debug
+    return
   end
   
   if not killsPanel then
-    g_logger.error("Could not find killsPanel")
+    g_logger.debug("Could not find killsPanel") -- Mudando de error para debug
+    return
   end
   
-  -- Update rewards if we have the rewards panel
-  if rewardsPanel then
-    local taskPointsLabel = rewardsPanel:getChildById('taskPointsLabel')
-    local experienceLabel = rewardsPanel:getChildById('experienceLabel')
-    local goldLabel = rewardsPanel:getChildById('goldLabel')
-    local itemsLabel = rewardsPanel:getChildById('itemsLabel')
-    local accessLabel = rewardsPanel:getChildById('accessLabel')
-    local teleportLabel = rewardsPanel:getChildById('teleportLabel')
-    
-    -- Ensure we have all required labels
-    if not (taskPointsLabel and experienceLabel and goldLabel and 
-            itemsLabel and accessLabel and teleportLabel) then
-      g_logger.error("Could not find all required labels in rewardsPanel")
-    else
-      -- Update reward information
-      if task.reward then
-        taskPointsLabel:setText(tr('Tasks Points: %s', task.reward.points or 1))
-        experienceLabel:setText(tr('Experience: %s', task.reward.exp or 0))
-        goldLabel:setText(tr('Gold: %s', task.reward.gold or 0))
-        
-        local itemText = ""
-        if task.reward.items then
-          for _, item in ipairs(task.reward.items) do
-            if item.name then
-              itemText = item.name
-              break
-            end
-          end
-        end
-        itemsLabel:setText(itemText ~= "" and itemText or "None")
-        
-        accessLabel:setText(task.reward.access or "None")
-        teleportLabel:setText(task.reward.teleport or "None")
-      else
-        taskPointsLabel:setText(tr('Tasks Points: 1'))
-        experienceLabel:setText(tr('Experience: 0'))
-        goldLabel:setText(tr('Gold: 0'))
-        itemsLabel:setText("None")
-        accessLabel:setText("None")
-        teleportLabel:setText("None")
+  -- Update rewards
+  local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
+  local experienceLabel = rewardsPanel:recursiveGetChildById('experienceLabel')
+  local goldLabel = rewardsPanel:recursiveGetChildById('goldLabel')
+  local itemsLabel = rewardsPanel:recursiveGetChildById('itemsLabel')
+  local accessLabel = rewardsPanel:recursiveGetChildById('accessLabel')
+  local teleportLabel = rewardsPanel:recursiveGetChildById('teleportLabel')
+  
+  -- Ajustar margem esquerda para todos os labels
+  local leftMargin = 35  -- Aumentado de 15 para 35
+  
+  if taskPointsLabel then 
+    taskPointsLabel:setText(tr('Tasks Points: %s', task.reward and task.reward.points or 1))
+    taskPointsLabel:setMarginLeft(leftMargin)
+  end
+  
+  if experienceLabel then 
+    experienceLabel:setText(tr('Experience: %s', task.reward and task.reward.exp or 1000))
+    experienceLabel:setMarginLeft(leftMargin)
+  end
+  
+  if goldLabel then 
+    goldLabel:setText(tr('Gold: %s', task.reward and task.reward.gold or 500))
+    goldLabel:setMarginLeft(leftMargin)
+  end
+  
+  -- Update items reward
+  if itemsLabel then
+    local itemText = "None"
+    if task.reward and task.reward.items and #task.reward.items > 0 then
+      itemText = ""
+      for i, item in ipairs(task.reward.items) do
+        if i > 1 then itemText = itemText .. ", " end
+        itemText = itemText .. (item.name or "Unknown Item")
       end
     end
+    itemsLabel:setText(itemText)
+    itemsLabel:setMarginLeft(leftMargin)
   end
   
-  -- Update monsters if we have the monsters panel
-  if monstersPanel then
-    monstersPanel:destroyChildren()
-    
-    if task.monsters then
-      local x = 10
-      for _, monster in ipairs(task.monsters) do
-        -- Try to create a creature widget or use an icon as fallback
-        local monsterWidget = nil
-        local success = pcall(function()
-          monsterWidget = g_ui.createWidget('UICreature', monstersPanel)
-          monsterWidget:setCreature(monster)
-        end)
-        
-        if not success or not monsterWidget then
-          -- Fallback to just an icon
-          monsterWidget = g_ui.createWidget('UIWidget', monstersPanel)
-          monsterWidget:setSize({width = 32, height = 32})
-          
-          -- Try to set an icon
-          local monsterIcon = taskIcons[monster:lower()] or taskIcons.default
-          if monsterIcon then
-            if not monsterIcon:find(".png") then
-              monsterIcon = monsterIcon .. ".png"
-            end
-            monsterWidget:setImageSource(monsterIcon)
-          end
-        end
-        
-        -- Position the widget
-        if monsterWidget then
-          monsterWidget:setMarginLeft(x)
-          monsterWidget:setMarginTop(10)
-          x = x + 40
-        end
-      end
+  -- Update access and teleport rewards
+  if accessLabel then 
+    accessLabel:setText(task.reward and task.reward.access or "None")
+    accessLabel:setMarginLeft(leftMargin)
+  end
+  
+  if teleportLabel then 
+    teleportLabel:setText(task.reward and task.reward.teleport or "None")
+    teleportLabel:setMarginLeft(leftMargin)
+  end
+  
+  -- Update monsters panel
+  monstersPanel:destroyChildren()
+  if task.monsters then
+    local x = 10
+    for _, monster in ipairs(task.monsters) do
+      local monsterWidget = g_ui.createWidget('UICreature', monstersPanel)
+      pcall(function()
+        monsterWidget:setCreature(monster)
+        monsterWidget:setMarginLeft(x)
+        monsterWidget:setMarginTop(10)
+        x = x + 40
+      end)
     end
   end
   
-  -- Update required kills if we have the kills panel
-  if killsPanel then
-    local killsRequired = killsPanel:getChildById('killsRequired')
-    local killsProgress = killsPanel:getChildById('killsProgress')
-    local bonusLabel = killsPanel:getChildById('bonusLabel')
-    
-    if not (killsRequired and killsProgress and bonusLabel) then
-      g_logger.error("Could not find all required widgets in killsPanel")
-    else
-      killsRequired:setText(tostring(task.count or 0))
-      
-      -- Check if task is in progress
-      local currentCount = 0
-      local isStarted = false
-      
-      -- Look in both normal and daily tasks
-      if currentTasks.normal then
-        for _, currentTask in ipairs(currentTasks.normal) do
-          if currentTask.id == task.id then
-            currentCount = currentTask.count or 0
-            isStarted = true
-            break
-          end
+  -- Update kills panel
+  local killsRequired = killsPanel:recursiveGetChildById('killsRequired')
+  local killsProgress = killsPanel:recursiveGetChildById('killsProgress')
+  local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
+  
+  if killsRequired then killsRequired:setText(tostring(task.count or 100)) end
+  
+  -- Update progress
+  if killsProgress then
+    local currentCount = 0
+    -- Check both normal and daily tasks for progress
+    if currentTasks.normal then
+      for _, currentTask in ipairs(currentTasks.normal) do
+        if currentTask.id == task.id then
+          currentCount = currentTask.count or 0
+          break
         end
       end
-      
-      if not isStarted and currentTasks.daily then
-        for _, currentTask in ipairs(currentTasks.daily) do
-          if currentTask.id == task.id then
-            currentCount = currentTask.count or 0
-            isStarted = true
-            break
-          end
+    end
+    if currentTasks.daily then
+      for _, currentTask in ipairs(currentTasks.daily) do
+        if currentTask.id == task.id then
+          currentCount = currentTask.count or 0
+          break
         end
       end
-      
-      -- Update progress bar
-      local taskCount = task.count or 100
-      local progressPercent = math.min(100, math.floor((currentCount / taskCount) * 100))
-      killsProgress:setPercent(progressPercent)
-      
-      -- Update bonuses
-      bonusLabel:setText(task.bonus or tr("No Bonuses"))
     end
     
-    -- Update start button text based on status
-    local startTaskButton = tasksWindow:getChildById('startTaskButton')
-    if startTaskButton then
-      if isStarted then
-        startTaskButton:setText(tr("In Progress"))
-        startTaskButton:setEnabled(false)
-      else
-        startTaskButton:setText(tr("Start Task"))
-        startTaskButton:setEnabled(true)
+    local taskCount = task.count or 100
+    local progressPercent = math.min(100, math.floor((currentCount / taskCount) * 100))
+    killsProgress:setPercent(progressPercent)
+  end
+  
+  if bonusLabel then bonusLabel:setText(task.bonus or tr("No Bonuses")) end
+  
+  -- Update start button
+  local startTaskButton = tasksWindow:getChildById('startTaskButton')
+  if startTaskButton then
+    local isStarted = false
+    -- Check if task is in progress
+    if currentTasks.normal then
+      for _, currentTask in ipairs(currentTasks.normal) do
+        if currentTask.id == task.id then
+          isStarted = true
+          break
+        end
       end
     end
+    if not isStarted and currentTasks.daily then
+      for _, currentTask in ipairs(currentTasks.daily) do
+        if currentTask.id == task.id then
+          isStarted = true
+          break
+        end
+      end
+    end
+    
+    startTaskButton:setText(isStarted and tr("In Progress") or tr("Start Task"))
+    startTaskButton:setEnabled(not isStarted)
   end
 end
 
