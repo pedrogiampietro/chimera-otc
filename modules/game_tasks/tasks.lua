@@ -29,6 +29,7 @@ local taskList = nil
 local taskIcons = {
   troll = "/images/game/creatures/monsters/troll",
   rotworm = "/images/game/creatures/monsters/rotworm",
+  amazon = "/images/game/creatures/monsters/amazon",
   spider = "/images/game/creatures/monsters/spider",
   orc = "/images/game/creatures/monsters/orc",
   minotaur = "/images/game/creatures/monsters/minotaur",
@@ -544,35 +545,67 @@ function addTaskToList(task)
   end
   
   taskWidget:setText(baseText)
+  taskWidget:setTextOffset({x = 45, y = 5}) -- Ajustado o offset do texto para dar mais espaço ao ícone
   
   -- Store reference to task data
   taskWidget.task = task
   
-  -- Set icon based on task monster type (example using first monster)
+  -- Check if this is a daily task
+  local isDaily = false
+  if task.name and task.name:lower():find("daily") then
+    isDaily = true
+    if type(taskWidget.addState) == "function" then
+      pcall(function() taskWidget:addState("daily") end)
+    end
+  end
+  
+  -- Extract monster name from task name for daily tasks
+  local monsterName = nil
+  if isDaily then
+    local words = {}
+    for word in task.name:gmatch("%w+") do
+      table.insert(words, word:lower())
+    end
+    
+    if #words >= 2 then
+      monsterName = words[2]
+      g_logger.info("Extracted monster name from daily task: " .. monsterName)
+    end
+  end
+  
+  -- Set icon based on monster type
+  local iconKey = nil
+  
   if task.monsters and #task.monsters > 0 then
-    local monster = task.monsters[1]:lower()
-    local iconSource = taskIcons[monster] or taskIcons.default
+    iconKey = task.monsters[1]:lower()
+  elseif monsterName then
+    iconKey = monsterName
+  end
+  
+  if iconKey then
+    local iconSource = taskIcons[iconKey] or taskIcons.default
     if iconSource then
-      -- Add image extension if needed
       if not iconSource:find(".png") then
         iconSource = iconSource .. ".png"
       end
       
-      -- Try to set the image source safely
-      if type(taskWidget.setImageSource) == "function" then
-        pcall(function() taskWidget:setImageSource(iconSource) end)
-      end
+      g_logger.info("Setting icon for task " .. task.name .. " to " .. iconSource)
+      
+      -- Configurar o ícone com tamanho e posição adequados
+      pcall(function()
+        taskWidget:setImageSource(iconSource)
+        taskWidget:setImageSize({width = 32, height = 32}) -- Definindo tamanho fixo para o ícone
+        taskWidget:setImageOffset({x = 5, y = 5}) -- Ajustando a posição do ícone
+        taskWidget:setImageColor("#FFFFFF") -- Garantindo que a imagem está visível
+      end)
     end
   end
   
-  -- Mark recommended tasks - use safe method calling
+  -- Mark recommended tasks
   if task.recommended then
-    -- Try to add state if method exists
     if type(taskWidget.addState) == "function" then
       pcall(function() taskWidget:addState("recommended") end)
     end
-    
-    -- Always update the text for recommended tasks
     taskWidget:setText(baseText .. "\nRecommended")
   end
   
@@ -587,161 +620,170 @@ function addTaskToList(task)
 end
 
 function updateTaskDetails(task)
-  if not tasksWindow or not task then return end
+  if not tasksWindow or not task then 
+    g_logger.warn("Cannot update task details: no window or task")
+    return 
+  end
   
-  -- Update rewards
+  g_logger.info("Updating task details for: " .. (task.name or "Unknown Task"))
+  
+  -- Verify that we have all required panels first
   local rewardsPanel = tasksWindow:getChildById('rewardsPanel')
+  local monstersPanel = tasksWindow:getChildById('monstersPanel')
+  local killsPanel = tasksWindow:getChildById('killsPanel')
+  
   if not rewardsPanel then
     g_logger.error("Could not find rewardsPanel")
-    return
   end
   
-  local taskPointsLabel = rewardsPanel:getChildById('taskPointsLabel')
-  local experienceLabel = rewardsPanel:getChildById('experienceLabel')
-  local goldLabel = rewardsPanel:getChildById('goldLabel')
-  local itemsLabel = rewardsPanel:getChildById('itemsLabel')
-  local accessLabel = rewardsPanel:getChildById('accessLabel')
-  local teleportLabel = rewardsPanel:getChildById('teleportLabel')
-  
-  -- Ensure we have all required labels
-  if not (taskPointsLabel and experienceLabel and goldLabel and 
-          itemsLabel and accessLabel and teleportLabel) then
-    g_logger.error("Could not find all required labels in rewardsPanel")
-    return
-  end
-  
-  if task.reward then
-    taskPointsLabel:setText(tr('Tasks Points: %s', task.reward.points or 1))
-    experienceLabel:setText(tr('Experience: %s', task.reward.exp or 0))
-    goldLabel:setText(tr('Gold: %s', task.reward.gold or 0))
-    
-    local itemText = ""
-    if task.reward.items then
-      for _, item in ipairs(task.reward.items) do
-        if item.name then
-          itemText = item.name
-          break
-        end
-      end
-    end
-    itemsLabel:setText(itemText ~= "" and itemText or "None")
-    
-    accessLabel:setText(task.reward.access or "None")
-    teleportLabel:setText(task.reward.teleport or "None")
-  else
-    taskPointsLabel:setText(tr('Tasks Points: 1'))
-    experienceLabel:setText(tr('Experience: 0'))
-    goldLabel:setText(tr('Gold: 0'))
-    itemsLabel:setText("None")
-    accessLabel:setText("None")
-    teleportLabel:setText("None")
-  end
-  
-  -- Update monsters
-  local monstersPanel = tasksWindow:getChildById('monstersPanel')
   if not monstersPanel then
     g_logger.error("Could not find monstersPanel")
-    return
   end
   
-  monstersPanel:destroyChildren()
+  if not killsPanel then
+    g_logger.error("Could not find killsPanel")
+  end
   
-  if task.monsters then
-    local x = 10
-    for _, monster in ipairs(task.monsters) do
-      -- Try to create a creature widget or use an icon as fallback
-      local monsterWidget = nil
-      local success = pcall(function()
-        monsterWidget = g_ui.createWidget('UICreature', monstersPanel)
-        monsterWidget:setCreature(monster)
-      end)
-      
-      if not success or not monsterWidget then
-        -- Fallback to just an icon
-        monsterWidget = g_ui.createWidget('UIWidget', monstersPanel)
-        monsterWidget:setSize({width = 32, height = 32})
+  -- Update rewards if we have the rewards panel
+  if rewardsPanel then
+    local taskPointsLabel = rewardsPanel:getChildById('taskPointsLabel')
+    local experienceLabel = rewardsPanel:getChildById('experienceLabel')
+    local goldLabel = rewardsPanel:getChildById('goldLabel')
+    local itemsLabel = rewardsPanel:getChildById('itemsLabel')
+    local accessLabel = rewardsPanel:getChildById('accessLabel')
+    local teleportLabel = rewardsPanel:getChildById('teleportLabel')
+    
+    -- Ensure we have all required labels
+    if not (taskPointsLabel and experienceLabel and goldLabel and 
+            itemsLabel and accessLabel and teleportLabel) then
+      g_logger.error("Could not find all required labels in rewardsPanel")
+    else
+      -- Update reward information
+      if task.reward then
+        taskPointsLabel:setText(tr('Tasks Points: %s', task.reward.points or 1))
+        experienceLabel:setText(tr('Experience: %s', task.reward.exp or 0))
+        goldLabel:setText(tr('Gold: %s', task.reward.gold or 0))
         
-        -- Try to set an icon
-        local monsterIcon = taskIcons[monster:lower()] or taskIcons.default
-        if monsterIcon then
-          if not monsterIcon:find(".png") then
-            monsterIcon = monsterIcon .. ".png"
+        local itemText = ""
+        if task.reward.items then
+          for _, item in ipairs(task.reward.items) do
+            if item.name then
+              itemText = item.name
+              break
+            end
           end
-          monsterWidget:setImageSource(monsterIcon)
+        end
+        itemsLabel:setText(itemText ~= "" and itemText or "None")
+        
+        accessLabel:setText(task.reward.access or "None")
+        teleportLabel:setText(task.reward.teleport or "None")
+      else
+        taskPointsLabel:setText(tr('Tasks Points: 1'))
+        experienceLabel:setText(tr('Experience: 0'))
+        goldLabel:setText(tr('Gold: 0'))
+        itemsLabel:setText("None")
+        accessLabel:setText("None")
+        teleportLabel:setText("None")
+      end
+    end
+  end
+  
+  -- Update monsters if we have the monsters panel
+  if monstersPanel then
+    monstersPanel:destroyChildren()
+    
+    if task.monsters then
+      local x = 10
+      for _, monster in ipairs(task.monsters) do
+        -- Try to create a creature widget or use an icon as fallback
+        local monsterWidget = nil
+        local success = pcall(function()
+          monsterWidget = g_ui.createWidget('UICreature', monstersPanel)
+          monsterWidget:setCreature(monster)
+        end)
+        
+        if not success or not monsterWidget then
+          -- Fallback to just an icon
+          monsterWidget = g_ui.createWidget('UIWidget', monstersPanel)
+          monsterWidget:setSize({width = 32, height = 32})
+          
+          -- Try to set an icon
+          local monsterIcon = taskIcons[monster:lower()] or taskIcons.default
+          if monsterIcon then
+            if not monsterIcon:find(".png") then
+              monsterIcon = monsterIcon .. ".png"
+            end
+            monsterWidget:setImageSource(monsterIcon)
+          end
+        end
+        
+        -- Position the widget
+        if monsterWidget then
+          monsterWidget:setMarginLeft(x)
+          monsterWidget:setMarginTop(10)
+          x = x + 40
+        end
+      end
+    end
+  end
+  
+  -- Update required kills if we have the kills panel
+  if killsPanel then
+    local killsRequired = killsPanel:getChildById('killsRequired')
+    local killsProgress = killsPanel:getChildById('killsProgress')
+    local bonusLabel = killsPanel:getChildById('bonusLabel')
+    
+    if not (killsRequired and killsProgress and bonusLabel) then
+      g_logger.error("Could not find all required widgets in killsPanel")
+    else
+      killsRequired:setText(tostring(task.count or 0))
+      
+      -- Check if task is in progress
+      local currentCount = 0
+      local isStarted = false
+      
+      -- Look in both normal and daily tasks
+      if currentTasks.normal then
+        for _, currentTask in ipairs(currentTasks.normal) do
+          if currentTask.id == task.id then
+            currentCount = currentTask.count or 0
+            isStarted = true
+            break
+          end
         end
       end
       
-      -- Position the widget
-      if monsterWidget then
-        monsterWidget:setMarginLeft(x)
-        monsterWidget:setMarginTop(10)
-        x = x + 40
+      if not isStarted and currentTasks.daily then
+        for _, currentTask in ipairs(currentTasks.daily) do
+          if currentTask.id == task.id then
+            currentCount = currentTask.count or 0
+            isStarted = true
+            break
+          end
+        end
+      end
+      
+      -- Update progress bar
+      local taskCount = task.count or 100
+      local progressPercent = math.min(100, math.floor((currentCount / taskCount) * 100))
+      killsProgress:setPercent(progressPercent)
+      
+      -- Update bonuses
+      bonusLabel:setText(task.bonus or tr("No Bonuses"))
+    end
+    
+    -- Update start button text based on status
+    local startTaskButton = tasksWindow:getChildById('startTaskButton')
+    if startTaskButton then
+      if isStarted then
+        startTaskButton:setText(tr("In Progress"))
+        startTaskButton:setEnabled(false)
+      else
+        startTaskButton:setText(tr("Start Task"))
+        startTaskButton:setEnabled(true)
       end
     end
   end
-  
-  -- Update required kills
-  local killsPanel = tasksWindow:getChildById('killsPanel')
-  if not killsPanel then
-    g_logger.error("Could not find killsPanel")
-    return
-  end
-  
-  local killsRequired = killsPanel:getChildById('killsRequired')
-  local killsProgress = killsPanel:getChildById('killsProgress')
-  local bonusLabel = killsPanel:getChildById('bonusLabel')
-  
-  if not (killsRequired and killsProgress and bonusLabel) then
-    g_logger.error("Could not find all required widgets in killsPanel")
-    return
-  end
-  
-  killsRequired:setText(tostring(task.count or 0))
-  
-  -- Check if task is in progress
-  local currentCount = 0
-  local isStarted = false
-  
-  -- Look in both normal and daily tasks
-  if currentTasks.normal then
-    for _, currentTask in ipairs(currentTasks.normal) do
-      if currentTask.id == task.id then
-        currentCount = currentTask.count or 0
-        isStarted = true
-        break
-      end
-    end
-  end
-  
-  if not isStarted and currentTasks.daily then
-    for _, currentTask in ipairs(currentTasks.daily) do
-      if currentTask.id == task.id then
-        currentCount = currentTask.count or 0
-        isStarted = true
-        break
-      end
-    end
-  end
-  
-  -- Update progress bar
-  local taskCount = task.count or 100
-  local progressPercent = math.min(100, math.floor((currentCount / taskCount) * 100))
-  killsProgress:setPercent(progressPercent)
-  
-  -- Update start button text based on status
-  local startTaskButton = tasksWindow:getChildById('startTaskButton')
-  if startTaskButton then
-    if isStarted then
-      startTaskButton:setText(tr("In Progress"))
-      startTaskButton:setEnabled(false)
-    else
-      startTaskButton:setText(tr("Start Task"))
-      startTaskButton:setEnabled(true)
-    end
-  end
-  
-  -- Update bonuses
-  bonusLabel:setText(task.bonus or tr("No Bonuses"))
 end
 
 function startTask()

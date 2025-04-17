@@ -1,13 +1,13 @@
 TaskLabel < Label
   font: verdana-11px-monochrome
-  text-offset: 20 0
   focusable: true
-  height: 30
+  height: 50
   background-color: alpha
-  icon-source: /images/game/creatures/monsters/troll.png
-  icon-rect: 0 0 16 16
-  icon-offset: 2 7
-  text-offset: 24 7
+  icon-source: /images/game/creatures/monsters/default.png
+  icon-size: 40 40
+  icon-rect: 0 0 40 40
+  icon-offset: 5 5
+  text-offset: 50 15
   color: #aaaaaa
 
   $focus:
@@ -19,6 +19,9 @@ TaskLabel < Label
 
   $recommended:
     text-color: #00ff00
+
+  $daily:
+    text-color: #ffcc00
 
 TasksWindow < MainWindow
   id: tasksWindow
@@ -67,6 +70,7 @@ TasksWindow < MainWindow
         margin-right: 5
         layout:
           type: verticalBox
+          spacing: 10
         vertical-scrollbar: taskListScrollBar
       
       VerticalScrollBar
@@ -228,4 +232,4 @@ TasksWindow < MainWindow
     anchors.right: parent.right
     !text: tr('Close')
     width: 90
-    @onClick: self:getParent():destroy() 
+    @onClick: self:getParent():destroy()
