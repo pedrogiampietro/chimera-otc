@@ -4,7 +4,7 @@ TaskLabel < Label
   focusable: true
   height: 30
   background-color: alpha
-  icon-source: /images/game/tasks/task_icon
+  icon-source: /images/game/creatures/monsters/troll.png
   icon-rect: 0 0 16 16
   icon-offset: 2 7
   text-offset: 24 7

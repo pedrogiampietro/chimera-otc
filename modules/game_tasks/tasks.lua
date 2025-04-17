@@ -27,14 +27,15 @@ local taskList = nil
 
 -- Task Icons (create these icons in your client)
 local taskIcons = {
-  troll = "/images/game/tasks/troll",
-  rotworm = "/images/game/tasks/rotworm",
-  spider = "/images/game/tasks/spider",
-  orc = "/images/game/tasks/orc",
-  minotaur = "/images/game/tasks/minotaur",
-  dwarf = "/images/game/tasks/dwarf",
-  elf = "/images/game/tasks/elf",
-  high_orc = "/images/game/tasks/high_orc"
+  troll = "/images/game/creatures/monsters/troll",
+  rotworm = "/images/game/creatures/monsters/rotworm",
+  spider = "/images/game/creatures/monsters/spider",
+  orc = "/images/game/creatures/monsters/orc",
+  minotaur = "/images/game/creatures/monsters/minotaur",
+  dwarf = "/images/game/creatures/monsters/dwarf",
+  elf = "/images/game/creatures/monsters/elf",
+  high_orc = "/images/game/creatures/monsters/high_orc",
+  default = "/images/game/creatures/monsters/troll" -- Fallback icon
 }
 
 function init()
@@ -199,12 +200,63 @@ end
 
 function onTaskData(data)
   -- Process task data received from server
+  g_logger.info("Received task data from server")
+  
+  -- Print data structure for debugging
+  local dataStr = ""
+  for k, v in pairs(data) do
+    dataStr = dataStr .. k .. ", "
+  end
+  g_logger.info("Data keys: " .. dataStr)
+  
+  -- Check if we have availableTasks in the expected format
   if data.availableTasks then
-    availableTasks = data.availableTasks
+    g_logger.info("Processing availableTasks")
+    
+    -- Check if it's already in the proper format (with normal/daily categories)
+    if type(data.availableTasks) == "table" and (data.availableTasks.normal or data.availableTasks.daily) then
+      availableTasks = data.availableTasks
+      g_logger.info("availableTasks is properly categorized")
+    else
+      -- If it's just an array, organize it into normal tasks
+      g_logger.info("Converting task array to categorized format")
+      availableTasks = {
+        normal = data.availableTasks,
+        daily = data.dailyTasks or {}
+      }
+    end
+    
+    -- Count tasks for debugging
+    local normalCount = availableTasks.normal and #availableTasks.normal or 0
+    local dailyCount = availableTasks.daily and #availableTasks.daily or 0
+    g_logger.info("Task counts - Normal: " .. normalCount .. ", Daily: " .. dailyCount)
+  else
+    g_logger.error("No availableTasks in data")
+    -- Create empty structure if no data
+    availableTasks = {
+      normal = {},
+      daily = {}
+    }
   end
   
+  -- Handle currentTasks similarly
   if data.currentTasks then
-    currentTasks = data.currentTasks
+    g_logger.info("Processing currentTasks")
+    
+    if type(data.currentTasks) == "table" and (data.currentTasks.normal or data.currentTasks.daily) then
+      currentTasks = data.currentTasks
+    else
+      currentTasks = {
+        normal = data.currentTasks,
+        daily = data.dailyCurrentTasks or {}
+      }
+    end
+  else
+    g_logger.error("No currentTasks in data")
+    currentTasks = {
+      normal = {},
+      daily = {}
+    }
   end
   
   local taskPoints = data.taskPoints or 0
@@ -272,6 +324,8 @@ function displayTasksWindow(taskPoints)
     return
   end
   
+  g_logger.info("Found taskList widget: " .. tostring(taskList:getId()))
+  
   -- Setup scrollbar connection - don't use setVerticalScrollBar directly
   if taskListScrollBar then
     g_logger.info("Setting up scrollbar connection")
@@ -315,16 +369,66 @@ function displayTasksWindow(taskPoints)
   
   -- Set first task as selected if available
   if taskList:getChildCount() > 0 then
-    taskList:selectChild(taskList:getFirstChild())
-    selectedTask = taskList:getFocusChild().task
-    updateTaskDetails(selectedTask)
+    -- Check if the selection methods exist
+    if type(taskList.selectChild) == "function" and type(taskList.getFirstChild) == "function" then
+      local firstChild = taskList:getFirstChild()
+      if firstChild then
+        taskList:selectChild(firstChild)
+        if type(taskList.getFocusChild) == "function" then
+          local focusedChild = taskList:getFocusChild()
+          if focusedChild and focusedChild.task then
+            selectedTask = focusedChild.task
+            updateTaskDetails(selectedTask)
+          else
+            g_logger.error("Could not get task from focused child")
+            -- Fallback: use the first child's task directly
+            if firstChild.task then
+              selectedTask = firstChild.task
+              updateTaskDetails(selectedTask)
+            end
+          end
+        else
+          -- Fallback: use the first child's task directly
+          if firstChild.task then
+            selectedTask = firstChild.task
+            updateTaskDetails(selectedTask)
+          end
+        end
+      else
+        g_logger.error("getFirstChild returned nil")
+      end
+    else
+      g_logger.error("selectChild or getFirstChild method not available")
+      -- Fallback: try to get the first child directly
+      local children = taskList:getChildren()
+      if children and #children > 0 then
+        selectedTask = children[1].task
+        updateTaskDetails(selectedTask)
+      end
+    end
+  else
+    g_logger.info("No tasks to select")
   end
   
-  -- Setup task list selection callback
-  taskList.onChildFocusChange = function(self, focusedChild)
-    if focusedChild == nil then return end
-    selectedTask = focusedChild.task
-    updateTaskDetails(selectedTask)
+  -- Setup task list selection callback (if supported)
+  if type(taskList.onChildFocusChange) ~= "nil" then
+    taskList.onChildFocusChange = function(self, focusedChild)
+      if focusedChild == nil then return end
+      if focusedChild.task then
+        selectedTask = focusedChild.task
+        updateTaskDetails(selectedTask)
+      end
+    end
+  else
+    -- Alternative: try to set up a click handler on each task item
+    for _, child in pairs(taskList:getChildren()) do
+      if child and type(child.onClick) ~= "nil" then
+        child.onClick = function()
+          selectedTask = child.task
+          updateTaskDetails(selectedTask)
+        end
+      end
+    end
   end
   
   -- Setup window destroy callback
@@ -388,24 +492,51 @@ function populateTaskList()
   end
   
   taskList:destroyChildren()
+  g_logger.info("Populating task list...")
   
   -- Add normal tasks
   if availableTasks.normal then
-    for _, task in ipairs(availableTasks.normal) do
-      addTaskToList(task)
+    g_logger.info("Adding normal tasks: " .. tostring(#availableTasks.normal))
+    for i, task in ipairs(availableTasks.normal) do
+      g_logger.info("Adding normal task " .. i .. ": " .. (task.name or "Unknown"))
+      local widget = addTaskToList(task)
+      if widget then
+        g_logger.info("Added widget for task " .. task.name)
+      else
+        g_logger.error("Failed to add widget for task " .. task.name)
+      end
     end
+  else
+    g_logger.warn("No normal tasks available")
   end
   
   -- Add daily tasks
   if availableTasks.daily then
-    for _, task in ipairs(availableTasks.daily) do
-      addTaskToList(task)
+    g_logger.info("Adding daily tasks: " .. tostring(#availableTasks.daily))
+    for i, task in ipairs(availableTasks.daily) do
+      g_logger.info("Adding daily task " .. i .. ": " .. (task.name or "Unknown"))
+      local widget = addTaskToList(task)
+      if widget then
+        g_logger.info("Added widget for task " .. task.name)
+      else
+        g_logger.error("Failed to add widget for task " .. task.name)
+      end
     end
+  else
+    g_logger.warn("No daily tasks available")
   end
+  
+  g_logger.info("Task list populated with " .. tostring(taskList:getChildCount()) .. " tasks")
 end
 
 function addTaskToList(task)
+  if not taskList then return nil end
+  
   local taskWidget = g_ui.createWidget('TaskLabel', taskList)
+  if not taskWidget then
+    g_logger.error("Failed to create TaskLabel widget")
+    return nil
+  end
   
   local baseText = task.name or "Unknown Task"
   if task.level then
@@ -420,15 +551,28 @@ function addTaskToList(task)
   -- Set icon based on task monster type (example using first monster)
   if task.monsters and #task.monsters > 0 then
     local monster = task.monsters[1]:lower()
-    local iconSource = taskIcons[monster]
+    local iconSource = taskIcons[monster] or taskIcons.default
     if iconSource then
-      taskWidget:setImageSource(iconSource)
+      -- Add image extension if needed
+      if not iconSource:find(".png") then
+        iconSource = iconSource .. ".png"
+      end
+      
+      -- Try to set the image source safely
+      if type(taskWidget.setImageSource) == "function" then
+        pcall(function() taskWidget:setImageSource(iconSource) end)
+      end
     end
   end
   
-  -- Mark recommended tasks
+  -- Mark recommended tasks - use safe method calling
   if task.recommended then
-    taskWidget:addState("recommended")
+    -- Try to add state if method exists
+    if type(taskWidget.addState) == "function" then
+      pcall(function() taskWidget:addState("recommended") end)
+    end
+    
+    -- Always update the text for recommended tasks
     taskWidget:setText(baseText .. "\nRecommended")
   end
   
@@ -447,12 +591,24 @@ function updateTaskDetails(task)
   
   -- Update rewards
   local rewardsPanel = tasksWindow:getChildById('rewardsPanel')
+  if not rewardsPanel then
+    g_logger.error("Could not find rewardsPanel")
+    return
+  end
+  
   local taskPointsLabel = rewardsPanel:getChildById('taskPointsLabel')
   local experienceLabel = rewardsPanel:getChildById('experienceLabel')
   local goldLabel = rewardsPanel:getChildById('goldLabel')
   local itemsLabel = rewardsPanel:getChildById('itemsLabel')
   local accessLabel = rewardsPanel:getChildById('accessLabel')
   local teleportLabel = rewardsPanel:getChildById('teleportLabel')
+  
+  -- Ensure we have all required labels
+  if not (taskPointsLabel and experienceLabel and goldLabel and 
+          itemsLabel and accessLabel and teleportLabel) then
+    g_logger.error("Could not find all required labels in rewardsPanel")
+    return
+  end
   
   if task.reward then
     taskPointsLabel:setText(tr('Tasks Points: %s', task.reward.points or 1))
@@ -483,24 +639,62 @@ function updateTaskDetails(task)
   
   -- Update monsters
   local monstersPanel = tasksWindow:getChildById('monstersPanel')
+  if not monstersPanel then
+    g_logger.error("Could not find monstersPanel")
+    return
+  end
+  
   monstersPanel:destroyChildren()
   
   if task.monsters then
     local x = 10
     for _, monster in ipairs(task.monsters) do
-      local monsterIcon = g_ui.createWidget('UICreature', monstersPanel)
-      monsterIcon:setCreature(monster)
-      monsterIcon:setMarginLeft(x)
-      monsterIcon:setMarginTop(10)
-      x = x + 40
+      -- Try to create a creature widget or use an icon as fallback
+      local monsterWidget = nil
+      local success = pcall(function()
+        monsterWidget = g_ui.createWidget('UICreature', monstersPanel)
+        monsterWidget:setCreature(monster)
+      end)
+      
+      if not success or not monsterWidget then
+        -- Fallback to just an icon
+        monsterWidget = g_ui.createWidget('UIWidget', monstersPanel)
+        monsterWidget:setSize({width = 32, height = 32})
+        
+        -- Try to set an icon
+        local monsterIcon = taskIcons[monster:lower()] or taskIcons.default
+        if monsterIcon then
+          if not monsterIcon:find(".png") then
+            monsterIcon = monsterIcon .. ".png"
+          end
+          monsterWidget:setImageSource(monsterIcon)
+        end
+      end
+      
+      -- Position the widget
+      if monsterWidget then
+        monsterWidget:setMarginLeft(x)
+        monsterWidget:setMarginTop(10)
+        x = x + 40
+      end
     end
   end
   
   -- Update required kills
   local killsPanel = tasksWindow:getChildById('killsPanel')
+  if not killsPanel then
+    g_logger.error("Could not find killsPanel")
+    return
+  end
+  
   local killsRequired = killsPanel:getChildById('killsRequired')
   local killsProgress = killsPanel:getChildById('killsProgress')
   local bonusLabel = killsPanel:getChildById('bonusLabel')
+  
+  if not (killsRequired and killsProgress and bonusLabel) then
+    g_logger.error("Could not find all required widgets in killsPanel")
+    return
+  end
   
   killsRequired:setText(tostring(task.count or 0))
   
@@ -536,12 +730,14 @@ function updateTaskDetails(task)
   
   -- Update start button text based on status
   local startTaskButton = tasksWindow:getChildById('startTaskButton')
-  if isStarted then
-    startTaskButton:setText(tr("In Progress"))
-    startTaskButton:setEnabled(false)
-  else
-    startTaskButton:setText(tr("Start Task"))
-    startTaskButton:setEnabled(true)
+  if startTaskButton then
+    if isStarted then
+      startTaskButton:setText(tr("In Progress"))
+      startTaskButton:setEnabled(false)
+    else
+      startTaskButton:setText(tr("Start Task"))
+      startTaskButton:setEnabled(true)
+    end
   end
   
   -- Update bonuses

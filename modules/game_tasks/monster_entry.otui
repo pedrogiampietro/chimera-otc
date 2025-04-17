@@ -1,0 +1,47 @@
+Panel
+  id: monsterEntry
+  height: 50
+  background-color: alpha
+  margin: 1
+  
+  UIWidget
+    id: monsterIcon
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 10
+    size: 32 32
+    
+  Label
+    id: monsterName
+    anchors.left: monsterIcon.right
+    anchors.top: parent.top
+    anchors.right: parent.right
+    margin-left: 10
+    margin-top: 5
+    text-auto-resize: true
+    text: Monster Name
+    font: verdana-11px-rounded
+    
+  Label
+    id: monsterLevel
+    anchors.left: monsterIcon.right
+    anchors.top: monsterName.bottom
+    margin-left: 10
+    margin-top: 2
+    text-auto-resize: true
+    text: Level 0
+    font: verdana-11px-rounded
+    
+  Label
+    id: monsterRecommended
+    anchors.left: monsterLevel.right
+    anchors.verticalCenter: monsterLevel.verticalCenter
+    anchors.right: parent.right
+    margin-left: 10
+    text-auto-resize: true
+    text: Recommended
+    color: #00ff00
+    font: verdana-11px-rounded
+    
+  @onHoverChange: self:setBackgroundColor(self:isHovered() and '#44444470' or 'alpha')
+  @onClick: self:focus() 
