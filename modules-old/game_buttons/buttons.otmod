@@ -1,8 +1,0 @@
-Module
-  name: game_buttons
-  description: Shows miniwindow with buttons
-  author: opentibiabr@outlook.com
-  sandboxed: true
-  scripts: [ buttons ]
-  @onLoad: init()
-  @onUnload: terminate()

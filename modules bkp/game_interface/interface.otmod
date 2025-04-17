@@ -33,7 +33,6 @@ Module
     - game_walking
     - game_shop
     - game_itemselector
-    - game_tasks
     - client_textedit
     - game_actionbar
     - game_prey

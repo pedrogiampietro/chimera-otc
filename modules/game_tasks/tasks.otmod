@@ -1,0 +1,10 @@
+Module
+  name: game_tasks
+  description: View and manage game tasks
+  author: OTServ Team
+  website: https://github.com/otserv/otclient
+  sandboxed: true
+  scripts: [ tasks ]
+  dependencies: [ gamelib ]
+  @onLoad: init()
+  @onUnload: terminate() 
