@@ -725,17 +725,6 @@ function displayTasksWindow(taskPoints)
     end
   end
   
-  -- Ensure monsters panel updates on resize
-  local monstersPanel = tasksWindow:recursiveGetChildById('monstersPanel')
-  if monstersPanel then
-    monstersPanel.onResize = function(self)
-      if selectedTask then
-        -- Force update of task details when panel is resized
-        updateTaskDetails(selectedTask)
-      end
-    end
-  end
-  
   -- Setup window destroy callback
   tasksWindow.onDestroy = function()
     tasksButton:setOn(false)
@@ -1173,10 +1162,9 @@ function updateTaskDetails(task)
   
   -- Verify that we have all required panels first
   local rewardsPanel = tasksWindow:recursiveGetChildById('rewardsPanel')
-  local monstersPanel = tasksWindow:recursiveGetChildById('monstersPanel')
   local killsPanel = tasksWindow:recursiveGetChildById('killsPanel')
   
-  if not rewardsPanel or not monstersPanel or not killsPanel then
+  if not rewardsPanel or not killsPanel then
     g_logger.debug("Could not find required panels")
     return
   end
@@ -1271,30 +1259,6 @@ function updateTaskDetails(task)
     end
   end
   setupLabel(itemsLabel, itemText)
-  
-  -- Update the monster information using the fixed OTUI elements
-  local monsterNameLabel = monstersPanel:getChildById('monsterNameLabel')
-  local monsterIconWidget = monstersPanel:getChildById('monsterIconWidget')
-  
-  if monsterNameLabel and monsterIconWidget then
-    if monstersList and #monstersList > 0 then
-      -- Set the monster name
-      local formattedName = monstersList[1]:sub(1, 1):upper() .. monstersList[1]:sub(2):lower()
-      monsterNameLabel:setText(formattedName)
-      monsterNameLabel:setVisible(true)
-      
-      -- Set the monster icon
-      local monsterType = monstersList[1]:lower()
-      local iconPath = taskIcons[monsterType] or taskIcons["default"]
-      monsterIconWidget:setImageSource(iconPath)
-      monsterIconWidget:setVisible(true)
-    else
-      -- If no monsters, show "Unknown"
-      monsterNameLabel:setText("Unknown")
-      monsterNameLabel:setVisible(true)
-      monsterIconWidget:setVisible(false)
-    end
-  end
   
   -- Update kills panel
   local killsRequired = killsPanel:recursiveGetChildById('killsRequired')

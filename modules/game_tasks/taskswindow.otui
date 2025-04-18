@@ -229,32 +229,13 @@ TasksWindow < MainWindow
           color: #ffffff
           font: verdana-11px-rounded
           
-      // Painel de monstros
+      // Painel de kills
       Panel
-        id: monstersPanel
+        id: killsPanel
         anchors.top: rewardsPanel.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         height: 100
-        margin-top: 10
-        background-color: #10101088
-        border: 1 #444444
-        
-        Label
-          !text: tr('Monsters')
-          anchors.top: parent.top
-          anchors.horizontalCenter: parent.horizontalCenter
-          margin-top: 5
-          color: #ffcc00
-          font: verdana-11px-rounded
-          
-      // Painel de progresso
-      Panel
-        id: killsPanel
-        anchors.top: monstersPanel.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 120
         margin-top: 10
         background-color: #10101088
         border: 1 #444444
@@ -266,52 +247,41 @@ TasksWindow < MainWindow
           margin-top: 5
           color: #ffcc00
           font: verdana-11px-rounded
-          
+        
         Label
           id: killsRequired
-          !text: tr('0')
+          !text: tr('25')
           anchors.top: prev.bottom
           anchors.horizontalCenter: parent.horizontalCenter
-          margin-top: 5
-          color: #ffffff
+          margin-top: 10
           font: verdana-11px-rounded
           
         ProgressBar
           id: killsProgress
-          anchors.top: prev.bottom
           anchors.left: parent.left
           anchors.right: parent.right
-          height: 20
-          margin: 10
-          background-color: #222222
-          border: 1 #444444
+          anchors.bottom: bonusLabel.top
+          height: 15
+          margin-left: 10
+          margin-right: 10
+          margin-bottom: 10
+          background-color: #00000066
           
         Label
           id: bonusLabel
-          !text: tr('No Bonuses')
-          anchors.top: prev.bottom
+          !text: tr('+10% Experience (today)')
+          anchors.bottom: parent.bottom
           anchors.horizontalCenter: parent.horizontalCenter
-          margin-top: 5
-          color: #00ff00
+          margin-bottom: 10
           font: verdana-11px-rounded
+          color: #00ff00
           
-      Button
-        id: startTaskButton
-        !text: tr('Start Task')
-        width: 100
-        height: 30
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        margin-bottom: 10
-        color: #ffffff
-        background-color: #1f6b1f
-        border: 1 #444444
-        font: verdana-11px-rounded
-        @onClick: modules.game_tasks.startTask()
-        $hover:
-          background-color: #2f8b2f
-        $pressed:
-          background-color: #0f4b0f
-        $disabled:
-          color: #666666
-          background-color: #333333
+        Button
+          id: startTaskButton
+          !text: tr('Start Task')
+          width: 120
+          height: 30
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          margin-bottom: 10
+          @onClick: modules.game_tasks.startTask()
