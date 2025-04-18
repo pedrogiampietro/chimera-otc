@@ -2,185 +2,273 @@ MainWindow
   id: tasksWindow
   !text: tr('Tasks')
   size: 550 400
-  @onEscape: modules.game_tasks.hide()
+  @onEscape: modules.game_tasks.destroyWindow()
   draggable: true
   
-  Label
-    id: headerLabel
-    !text: tr('Monster Tasks')
-    text-align: center
-    text-auto-resize: true
-    anchors.top: parent.top
-    anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: 10
-    font: verdana-11px-rounded
-    color: #FFD700
-
-  TextEdit
-    id: searchText
-    anchors.top: headerLabel.bottom
-    anchors.left: parent.left
-    anchors.right: parent.horizontalCenter
-    margin-top: 10
-    margin-left: 10
-    margin-right: 5
-    placeholder-text: 'Search by monster name'
-
   Panel
-    id: monsterList
-    anchors.top: searchText.bottom
+    id: leftPanel
+    anchors.top: parent.top
     anchors.left: parent.left
     anchors.bottom: parent.bottom
-    anchors.right: parent.horizontalCenter
-    margin-top: 10
-    margin-left: 10
-    margin-right: 5
-    margin-bottom: 10
-    layout: verticalBox
-    background-color: #00000070
-    border-width: 1
-    border-color: #303030
-
+    width: 250
+    margin: 10
+    
+    Label
+      id: currentTaskPoints
+      !text: tr('Current Tasks Points: 0')
+      text-align: center
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      margin-bottom: 5
+      font: verdana-11px-rounded
+    
+    TextEdit
+      id: searchText
+      anchors.top: currentTaskPoints.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 25
+      margin-top: 5
+      placeholder-text: 'Search tasks'
+      @onTextChange: modules.game_tasks.filterTasks()
+    
+    ScrollablePanel
+      id: taskList
+      anchors.top: searchText.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      margin-top: 10
+      vertical-scrollbar: taskListScrollBar
+      layout: verticalBox
+      
+    VerticalScrollBar
+      id: taskListScrollBar
+      anchors.top: taskList.top
+      anchors.bottom: taskList.bottom
+      anchors.right: taskList.right
+      step: 14
+      pixels-scroll: true
+  
   Panel
-    id: taskInfo
-    anchors.top: headerLabel.bottom
+    id: detailsPanel
+    anchors.top: parent.top
+    anchors.left: leftPanel.right
     anchors.right: parent.right
-    anchors.bottom: startButton.top
-    anchors.left: parent.horizontalCenter
-    margin-top: 10
-    margin-right: 10
-    margin-left: 5
-    margin-bottom: 10
-    layout: verticalBox
+    anchors.bottom: parent.bottom
+    margin: 10
     
     Panel
-      id: baseRewardsPanel
-      height: 120
-      layout: verticalBox
+      id: rewardsPanel
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 150
+      background-color: #00000033
+      border-width: 1
+      border-color: #303030
       
       Label
         !text: tr('Base Rewards')
         text-align: center
-        background-color: #00000040
-        margin-bottom: 5
+        text-auto-resize: true
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        margin-top: 2
         font: verdana-11px-rounded
         color: #FFD700
-        
+      
       Label
-        id: tasksPoints
-        !text: tr('Tasks Points: 0')
-        margin-left: 5
-        
+        id: taskPointsLabel
+        !text: tr('Task Points: 1')
+        text-auto-resize: true
+        anchors.top: prev.bottom
+        anchors.left: parent.left
+        margin-top: 5
+        margin-left: 10
+        font: verdana-11px-rounded
+      
       Label
-        id: experience
-        !text: tr('Experience: 0')
-        margin-left: 5
-        
+        id: experienceLabel
+        !text: tr('Experience: 300')
+        text-auto-resize: true
+        anchors.top: taskPointsLabel.bottom
+        anchors.left: parent.left
+        margin-top: 3
+        margin-left: 10
+        font: verdana-11px-rounded
+      
       Label
-        id: gold
-        !text: tr('Gold: 0')
-        margin-left: 5
-        
+        id: goldLabel
+        !text: tr('Gold: 300')
+        text-auto-resize: true
+        anchors.top: experienceLabel.bottom
+        anchors.left: parent.left
+        margin-top: 3
+        margin-left: 10
+        font: verdana-11px-rounded
+      
       Label
-        id: itemReward
-        !text: tr('Item: None')
-        margin-left: 5
-        
+        id: itemsLabel
+        !text: tr('None')
+        text-auto-resize: true
+        anchors.top: goldLabel.bottom
+        anchors.left: parent.left
+        margin-top: 3
+        margin-left: 10
+        font: verdana-11px-rounded
+      
       Label
-        id: otherRewards
-        !text: tr('Other: None')
-        margin-left: 5
+        id: accessLabel
+        !text: tr('None')
+        text-auto-resize: true
+        anchors.top: itemsLabel.bottom
+        anchors.left: parent.left
+        margin-top: 3
+        margin-left: 10
+        font: verdana-11px-rounded
+      
+      Label
+        id: teleportLabel
+        !text: tr('None')
+        text-auto-resize: true
+        anchors.top: accessLabel.bottom
+        anchors.left: parent.left
+        margin-top: 3
+        margin-left: 10
+        font: verdana-11px-rounded
     
     Panel
       id: monstersPanel
-      height: 120
-      layout: verticalBox
+      anchors.top: rewardsPanel.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 100
       margin-top: 10
+      background-color: #00000033
+      border-width: 1
+      border-color: #303030
       
       Label
-        !text: tr('Monsters')
+        id: monstersTitleLabel
+        !text: tr('Target Monsters')
         text-align: center
-        background-color: #00000040
-        margin-bottom: 5
+        text-auto-resize: true
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        margin-top: 2
         font: verdana-11px-rounded
         color: #FFD700
       
-      Panel
-        id: monsterImagesPanel
-        height: 50
-        margin-bottom: 5
+      Label
+        id: monsterNameLabel
+        !text: tr('')
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        margin-left: 10
+        font: verdana-11px-rounded
+        color: #FFFFFF
       
-      HorizontalScrollBar
-        id: monstersScroll
-        height: 15
-        step: 10
+      UIWidget
+        id: monsterIconWidget
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        margin-right: 10
+        size: 32 32
+        phantom: true
     
     Panel
-      id: requiredKillsPanel
-      height: 80
-      layout: verticalBox
+      id: killsPanel
+      anchors.top: monstersPanel.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 70
       margin-top: 10
+      background-color: #00000033
+      border-width: 1
+      border-color: #303030
       
       Label
         !text: tr('Required Kills')
         text-align: center
-        background-color: #00000040
-        margin-bottom: 5
+        text-auto-resize: true
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        margin-top: 2
         font: verdana-11px-rounded
         color: #FFD700
       
-      Panel
-        height: 40
-        
-        Label
-          id: kill1
-          !text: tr('100')
-          anchors.left: parent.left
-          anchors.verticalCenter: parent.verticalCenter
-          margin-left: 50
-          
-        Label
-          id: kill2
-          !text: tr('100')
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.verticalCenter: parent.verticalCenter
-          
-        Label
-          id: kill3
-          !text: tr('5000')
-          anchors.right: parent.right
-          anchors.verticalCenter: parent.verticalCenter
-          margin-right: 50
+      Label
+        id: killsRequired
+        !text: tr('15')
+        text-align: center
+        text-auto-resize: true
+        anchors.top: prev.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        margin-top: 5
+        font: verdana-11px-rounded
+      
+      ProgressBar
+        id: killsProgress
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: bonusLabel.top
+        height: 15
+        margin-left: 10
+        margin-right: 10
+        margin-bottom: 5
+        background-color: #00000066
+      
+      Label
+        id: bonusLabel
+        !text: tr('+5% Loot chance (today)')
+        text-align: center
+        text-auto-resize: true
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        margin-bottom: 3
+        font: verdana-11px-rounded
+        color: #00FF00
+    
+    Button
+      id: startTaskButton
+      !text: tr('Start Task')
+      width: 120
+      height: 30
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      @onClick: modules.game_tasks.startTask()
 
-  Button
-    id: startButton
-    !text: tr('Start Task')
-    width: 100
-    height: 30
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    margin-right: 10
-    margin-bottom: 10
-    @onClick: modules.game_tasks.startTask()
-    
-  Button
-    id: closeButton
-    !text: tr('Close')
-    width: 80
-    height: 30
-    anchors.right: startButton.left
-    anchors.bottom: parent.bottom
-    margin-right: 10
-    margin-bottom: 10
-    @onClick: modules.game_tasks.hide()
-    
-  Button
-    id: testDataButton
-    !text: tr('Load Test Data')
-    width: 110
-    height: 30
+UIWidget
+  id: TaskSectionHeader
+  height: 20
+  background-color: #335588aa
+  text-align: center
+  font: verdana-11px-rounded
+  color: #FFFFFF
+
+UIWidget
+  id: TaskPanel
+  height: 60
+  background-color: alpha
+  focusable: true
+  
+  UIWidget
+    id: taskIcon
+    size: 32 32
     anchors.left: parent.left
-    anchors.bottom: parent.bottom
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 5
+    phantom: false
+  
+  UILabel
+    id: taskName
+    text: Task Name
+    anchors.left: taskIcon.right
+    anchors.top: taskIcon.top
     margin-left: 10
-    margin-bottom: 10
-    @onClick: modules.game_tasks.loadTestData() 
+    width: 180
+    text-wrap: true
+    phantom: true
+    color: #cccccc 

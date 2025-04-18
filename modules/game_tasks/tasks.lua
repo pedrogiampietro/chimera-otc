@@ -258,7 +258,17 @@ function destroyWindow()
   if tasksWindow then
     tasksWindow:destroy()
     tasksWindow = nil
+    selectedTask = nil
+    taskList = nil
+    
+    if tasksButton then
+      tasksButton:setOn(false)
+    end
   end
+end
+
+function hide()
+  destroyWindow()
 end
 
 function setupTopMenuButton()
@@ -711,6 +721,17 @@ function displayTasksWindow(taskPoints)
       local nameLabel = firstTaskWidget:getChildById('taskName')
       if nameLabel and type(nameLabel.setColor) == "function" then
         nameLabel:setColor('#ffffff')
+      end
+    end
+  end
+  
+  -- Ensure monsters panel updates on resize
+  local monstersPanel = tasksWindow:recursiveGetChildById('monstersPanel')
+  if monstersPanel then
+    monstersPanel.onResize = function(self)
+      if selectedTask then
+        -- Force update of task details when panel is resized
+        updateTaskDetails(selectedTask)
       end
     end
   end
@@ -1251,83 +1272,28 @@ function updateTaskDetails(task)
   end
   setupLabel(itemsLabel, itemText)
   
-  -- Update monsters panel com TODOS os monstros da tarefa
-  monstersPanel:destroyChildren()
+  -- Update the monster information using the fixed OTUI elements
+  local monsterNameLabel = monstersPanel:getChildById('monsterNameLabel')
+  local monsterIconWidget = monstersPanel:getChildById('monsterIconWidget')
   
-  -- Primeiro adicionar um título "Target Monsters:"
-  local monsterTitleLabel = g_ui.createWidget('UILabel', monstersPanel)
-  monsterTitleLabel:setText("Target Monsters")
-  monsterTitleLabel:setFont("verdana-11px-rounded")
-  monsterTitleLabel:setColor('#FFCC00') -- Dourado para destacar
-  monsterTitleLabel:setMarginTop(8)
-  monsterTitleLabel:setMarginLeft(leftMargin)
-  monsterTitleLabel:setMarginBottom(5)
-  
-  -- Adicionar linha divisória 
-  local separator = g_ui.createWidget('UIWidget', monstersPanel)
-  separator:setBackgroundColor('#555555')
-  separator:setHeight(1)
-  separator:setMarginTop(2)
-  separator:setMarginBottom(5)
-  separator:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
-  separator:setMarginLeft(leftMargin)
-  separator:setMarginRight(leftMargin)
-  
-  -- Adicionar lista de monstros em formato de texto
-  if monstersList and #monstersList > 0 then
-    local monsterList = ""
-    for i, monster in ipairs(monstersList) do
-      -- Formatar o nome do monstro com primeira letra maiúscula
-      local formattedName = monster:sub(1, 1):upper() .. monster:sub(2):lower()
+  if monsterNameLabel and monsterIconWidget then
+    if monstersList and #monstersList > 0 then
+      -- Set the monster name
+      local formattedName = monstersList[1]:sub(1, 1):upper() .. monstersList[1]:sub(2):lower()
+      monsterNameLabel:setText(formattedName)
+      monsterNameLabel:setVisible(true)
       
-      if i > 1 then 
-        monsterList = monsterList .. ", " 
-      end
-      monsterList = monsterList .. formattedName
-    end
-    
-    local monstersLabel = g_ui.createWidget('UILabel', monstersPanel)
-    monstersLabel:setText(monsterList)
-    monstersLabel:setColor('#FFFFFF')
-    monstersLabel:setMarginLeft(leftMargin)
-    monstersLabel:setMarginRight(leftMargin)
-    monstersLabel:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
-    monstersLabel:setTextWrap(true)
-    
-    -- Adicionar os ícones dos monstros abaixo do texto
-    local iconsPanel = g_ui.createWidget('UIWidget', monstersPanel)
-    -- Não usar layout, posicionar manualmente
-    iconsPanel:setMarginTop(8)
-    iconsPanel:setMarginLeft(leftMargin)
-    iconsPanel:setHeight(42) -- Aumentar altura para comportar os ícones
-    iconsPanel:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
-    
-    -- Posicionar os ícones horizontalmente com espaçamento adequado
-    local x = 0
-    for _, monster in ipairs(monstersList) do
-      local monsterType = monster:lower()
+      -- Set the monster icon
+      local monsterType = monstersList[1]:lower()
       local iconPath = taskIcons[monsterType] or taskIcons["default"]
-      
-      -- Criar um widget para agrupar o ícone e o nome
-      local monsterContainer = g_ui.createWidget('UIWidget', iconsPanel)
-      monsterContainer:setMarginLeft(x)
-      monsterContainer:setWidth(36)
-      monsterContainer:setHeight(42)
-      
-      -- Adicionar o ícone
-      local monsterWidget = g_ui.createWidget('UIWidget', monsterContainer)
-      monsterWidget:setImageSource(iconPath)
-      monsterWidget:setSize({width = 32, height = 32})
-      monsterWidget:setMarginLeft(2) -- Centralizar o ícone
-      
-      x = x + 40 -- Avançar a posição X para o próximo ícone
+      monsterIconWidget:setImageSource(iconPath)
+      monsterIconWidget:setVisible(true)
+    else
+      -- If no monsters, show "Unknown"
+      monsterNameLabel:setText("Unknown")
+      monsterNameLabel:setVisible(true)
+      monsterIconWidget:setVisible(false)
     end
-  else
-    -- Se não tiver lista de monstros, mostrar "Unknown"
-    local monstersLabel = g_ui.createWidget('UILabel', monstersPanel)
-    monstersLabel:setText("Unknown")
-    monstersLabel:setColor('#CCCCCC')
-    monstersLabel:setMarginLeft(leftMargin)
   end
   
   -- Update kills panel
