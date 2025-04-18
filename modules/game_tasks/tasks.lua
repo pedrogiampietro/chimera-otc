@@ -55,7 +55,7 @@ local taskRewards = {
     access = "None",
     teleport = "None",
     bonus = "None",
-    monsters = {"rat", "cave rat"}
+    monsters = {"rat", "cave rat"} -- Baseado no NPC task_master
   },
   [2] = { -- Spider Hunter
     points = 1,
@@ -64,7 +64,7 @@ local taskRewards = {
     access = "None",
     teleport = "None",
     bonus = "+10% Loot chance",
-    monsters = {"spider"}
+    monsters = {"spider"} -- Baseado no NPC task_master
   },
   [3] = { -- Orc Slayer
     points = 2,
@@ -73,7 +73,7 @@ local taskRewards = {
     access = "Orc Fortress",
     teleport = "None",
     bonus = "None",
-    monsters = {"orc", "orc spearman", "orc warrior"}
+    monsters = {"orc", "orc spearman", "orc warrior"} -- Baseado no NPC task_master
   },
   [4] = { -- Cyclops Elimination
     points = 2,
@@ -82,7 +82,7 @@ local taskRewards = {
     access = "Cyclopolis",
     teleport = "Cyclopolis shortcut",
     bonus = "+5% Experience",
-    monsters = {"cyclops"}
+    monsters = {"cyclops"} -- Baseado no NPC task_master
   },
   [5] = { -- Dragon Hunt
     points = 3,
@@ -91,7 +91,7 @@ local taskRewards = {
     access = "Dragon Lair",
     teleport = "Dragon Boss fight",
     bonus = "+15% Loot chance",
-    monsters = {"dragon"}
+    monsters = {"dragon"} -- Baseado no NPC task_master
   },
   
   -- Daily tasks
@@ -102,7 +102,7 @@ local taskRewards = {
     access = "None",
     teleport = "None",
     bonus = "+5% Loot chance (today)",
-    monsters = {"rotworm"}
+    monsters = {"rotworm"} -- Baseado no NPC task_master
   },
   [102] = { -- Daily Minotaur Cleansing
     points = 1,
@@ -111,7 +111,7 @@ local taskRewards = {
     access = "Minotaur Cave",
     teleport = "None",
     bonus = "None",
-    monsters = {"minotaur", "minotaur guard", "minotaur archer"}
+    monsters = {"minotaur", "minotaur guard", "minotaur archer"} -- Baseado no NPC task_master
   },
   [103] = { -- Daily Amazon Raid
     points = 1,
@@ -120,7 +120,7 @@ local taskRewards = {
     access = "Amazon Camp",
     teleport = "None",
     bonus = "+10% Experience (today)",
-    monsters = {"amazon", "valkyrie"}
+    monsters = {"amazon", "valkyrie"} -- Baseado no NPC task_master
   },
   [104] = { -- Daily Orc Fortress
     points = 1,
@@ -129,7 +129,7 @@ local taskRewards = {
     access = "Orc Fortress",
     teleport = "None",
     bonus = "+5% Loot chance (today)",
-    monsters = {"orc", "orc spearman", "orc warrior", "orc berserker", "orc leader"}
+    monsters = {"orc", "orc spearman", "orc warrior", "orc berserker", "orc leader"} -- Baseado no NPC task_master
   },
   [105] = { -- Daily Dragon Lair
     points = 1,
@@ -138,7 +138,7 @@ local taskRewards = {
     access = "Dragon Lair",
     teleport = "Dragon Boss Arena",
     bonus = "+15% Experience (today)",
-    monsters = {"dragon", "dragon lord"}
+    monsters = {"dragon", "dragon lord"} -- Baseado no NPC task_master
   }
 }
 
@@ -391,14 +391,12 @@ function onTaskData(data)
         -- Usar os monstros definidos no mapeamento fixo
         if fixedRewards.monsters and #fixedRewards.monsters > 0 then
           task.monsters = fixedRewards.monsters
-          g_logger.debug("DEFINIDOS: Usando monstros fixos para tarefa " .. task.id .. ": " .. table.concat(task.monsters, ", "))
+          g_logger.debug("Using fixed monsters list for task " .. task.id .. ": " .. table.concat(task.monsters, ", "))
         end
       end
       
       -- Set monster information if not present
       if not task.monsters or #task.monsters == 0 then
-        g_logger.debug("Nenhuma lista de monstros encontrada para tarefa " .. task.id .. ", derivando do nome")
-        
         -- Try to derive monster info from task name
         local monsterName = string.match(task.name:lower(), "(%w+)")
         if monsterName and monsterName ~= "daily" then
@@ -417,7 +415,7 @@ function onTaskData(data)
         else
           task.monsters = {"default"}
         end
-        g_logger.debug("DERIVADOS: Monstros para tarefa " .. task.id .. ": " .. table.concat(task.monsters, ", "))
+        g_logger.debug("Derived monsters for task " .. task.id .. ": " .. table.concat(task.monsters, ", "))
       end
       
       -- Ensure reward information exists
@@ -983,14 +981,6 @@ function populateTaskList()
         -- Force detailed update
         updateTaskDetails(selectedTask)
         updateTaskButton(selectedTask)
-        
-        -- Adicionar um pequeno delay para garantir que a UI seja atualizada corretamente
-        scheduleEvent(function()
-          if selectedTask and tasksWindow and tasksWindow:isVisible() then
-            updateTaskDetails(selectedTask)
-            updateTaskButton(selectedTask)
-          end
-        end, 50)
       end
     end
   end
@@ -1153,13 +1143,6 @@ function updateTaskDetails(task)
     g_logger.debug("A tarefa " .. task.id .. " não tem recompensas definidas pelo servidor")
   end
   
-  -- Verificar a lista de monstros da tarefa
-  if task.monsters then
-    g_logger.debug("Monstros da tarefa do servidor: " .. json.encode(task.monsters))
-  else
-    g_logger.debug("Tarefa não tem lista de monstros do servidor")
-  end
-  
   -- Primeiro obter o painel de detalhes
   local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
   if not detailsPanel then
@@ -1195,7 +1178,6 @@ function updateTaskDetails(task)
   local accessLabel = rewardsPanel:recursiveGetChildById('accessLabel')
   local teleportLabel = rewardsPanel:recursiveGetChildById('teleportLabel')
   local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
-  local monstersLabel = rewardsPanel:recursiveGetChildById('monstersLabel')
   
   -- Função helper para configurar os labels
   local function setupLabel(label, text, center)
@@ -1216,8 +1198,6 @@ function updateTaskDetails(task)
   local points, exp, gold, access, teleport, bonus
   local monstersList = task.monsters or {}
   
-  g_logger.debug("Lista de monstros da tarefa no início: " .. json.encode(monstersList))
-  
   if fixedRewards then
     -- Use fixed rewards values
     points = fixedRewards.points
@@ -1230,7 +1210,7 @@ function updateTaskDetails(task)
     -- Usar a lista de monstros do mapeamento fixo se disponível
     if fixedRewards.monsters and #fixedRewards.monsters > 0 then
       monstersList = fixedRewards.monsters
-      g_logger.debug("Substituindo por lista fixa de monstros: " .. json.encode(monstersList))
+      g_logger.debug("Using fixed monsters list for display")
     end
     
     g_logger.debug("Usando recompensas fixas")
@@ -1243,12 +1223,6 @@ function updateTaskDetails(task)
     teleport = task.reward and task.reward.teleport or "None"
     bonus = task.bonus or "None"
     g_logger.debug("Usando recompensas do servidor ou padrões")
-  end
-  
-  -- Garantir que monstersList nunca seja nil
-  if not monstersList or type(monstersList) ~= "table" then
-    g_logger.debug("Problema com a lista de monstros, criando lista vazia")
-    monstersList = {}
   end
   
   g_logger.debug("Exibindo recompensas para tarefa " .. task.id .. ":")
@@ -1276,34 +1250,85 @@ function updateTaskDetails(task)
     end
   end
   setupLabel(itemsLabel, itemText)
-
-  -- Pegar lista de monstros do mapeamento fixo
-  local monsters = {}
-  if task.id and taskRewards[task.id] then
-    monsters = taskRewards[task.id].monsters or {}
-  end
-
-  -- Criar label para lista de monstros
-  if #monsters > 0 then
-    -- Formatar os nomes dos monstros com primeira letra maiúscula
-    local formattedMonsters = {}
-    for _, monster in ipairs(monsters) do
-      local formatted = monster:gsub("(%a)([%w_']*)", function(first, rest)
-        return first:upper() .. rest:lower()
-      end)
-      table.insert(formattedMonsters, formatted)
+  
+  -- Update monsters panel com TODOS os monstros da tarefa
+  monstersPanel:destroyChildren()
+  
+  -- Primeiro adicionar um título "Target Monsters:"
+  local monsterTitleLabel = g_ui.createWidget('UILabel', monstersPanel)
+  monsterTitleLabel:setText("Target Monsters")
+  monsterTitleLabel:setFont("verdana-11px-rounded")
+  monsterTitleLabel:setColor('#FFCC00') -- Dourado para destacar
+  monsterTitleLabel:setMarginTop(8)
+  monsterTitleLabel:setMarginLeft(leftMargin)
+  monsterTitleLabel:setMarginBottom(5)
+  
+  -- Adicionar linha divisória 
+  local separator = g_ui.createWidget('UIWidget', monstersPanel)
+  separator:setBackgroundColor('#555555')
+  separator:setHeight(1)
+  separator:setMarginTop(2)
+  separator:setMarginBottom(5)
+  separator:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
+  separator:setMarginLeft(leftMargin)
+  separator:setMarginRight(leftMargin)
+  
+  -- Adicionar lista de monstros em formato de texto
+  if monstersList and #monstersList > 0 then
+    local monsterList = ""
+    for i, monster in ipairs(monstersList) do
+      -- Formatar o nome do monstro com primeira letra maiúscula
+      local formattedName = monster:sub(1, 1):upper() .. monster:sub(2):lower()
+      
+      if i > 1 then 
+        monsterList = monsterList .. ", " 
+      end
+      monsterList = monsterList .. formattedName
     end
     
-    -- Criar o texto dos monstros
-    local monsterText = table.concat(formattedMonsters, ", ")
-    setupLabel(monstersLabel, monsterText)
+    local monstersLabel = g_ui.createWidget('UILabel', monstersPanel)
+    monstersLabel:setText(monsterList)
+    monstersLabel:setColor('#FFFFFF')
+    monstersLabel:setMarginLeft(leftMargin)
+    monstersLabel:setMarginRight(leftMargin)
+    monstersLabel:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
+    monstersLabel:setTextWrap(true)
+    
+    -- Adicionar os ícones dos monstros abaixo do texto
+    local iconsPanel = g_ui.createWidget('UIWidget', monstersPanel)
+    -- Não usar layout, posicionar manualmente
+    iconsPanel:setMarginTop(8)
+    iconsPanel:setMarginLeft(leftMargin)
+    iconsPanel:setHeight(42) -- Aumentar altura para comportar os ícones
+    iconsPanel:setWidth(monstersPanel:getWidth() - 2 * leftMargin)
+    
+    -- Posicionar os ícones horizontalmente com espaçamento adequado
+    local x = 0
+    for _, monster in ipairs(monstersList) do
+      local monsterType = monster:lower()
+      local iconPath = taskIcons[monsterType] or taskIcons["default"]
+      
+      -- Criar um widget para agrupar o ícone e o nome
+      local monsterContainer = g_ui.createWidget('UIWidget', iconsPanel)
+      monsterContainer:setMarginLeft(x)
+      monsterContainer:setWidth(36)
+      monsterContainer:setHeight(42)
+      
+      -- Adicionar o ícone
+      local monsterWidget = g_ui.createWidget('UIWidget', monsterContainer)
+      monsterWidget:setImageSource(iconPath)
+      monsterWidget:setSize({width = 32, height = 32})
+      monsterWidget:setMarginLeft(2) -- Centralizar o ícone
+      
+      x = x + 40 -- Avançar a posição X para o próximo ícone
+    end
   else
-    setupLabel(monstersLabel, "None")
+    -- Se não tiver lista de monstros, mostrar "Unknown"
+    local monstersLabel = g_ui.createWidget('UILabel', monstersPanel)
+    monstersLabel:setText("Unknown")
+    monstersLabel:setColor('#CCCCCC')
+    monstersLabel:setMarginLeft(leftMargin)
   end
-
-  -- Debug da task atual
-  g_logger.info("Atualizando task: " .. (task.name or "unknown"))
-  g_logger.info("Task ID: " .. (task.id or "no id"))
   
   -- Update kills panel
   local killsRequired = killsPanel:recursiveGetChildById('killsRequired')
@@ -1311,8 +1336,7 @@ function updateTaskDetails(task)
   
   -- Configurar labels do painel de kills
   if killsRequired then 
-    local total = task.total or 100
-    setupLabel(killsRequired, tostring(total), true)
+    setupLabel(killsRequired, tostring(task.total or task.count or 100), true)
   end
   
   -- Update progress
@@ -1336,7 +1360,7 @@ function updateTaskDetails(task)
       end
     end
     
-    local required = task.total or 100
+    local required = task.total or task.count or 100
     local progressPercent = math.min(100, math.floor((currentCount / required) * 100))
     g_logger.debug("Setting progress to " .. progressPercent .. "% (" .. currentCount .. "/" .. required .. ")")
     killsProgress:setPercent(progressPercent)
@@ -1346,44 +1370,6 @@ function updateTaskDetails(task)
   local bonusToDisplay = bonus or "None"
   if bonusLabel then 
     setupLabel(bonusLabel, bonusToDisplay)
-  end
-  
-  -- Atualizar o painel de monstros
-  monstersPanel:destroyChildren()
-  
-  -- Criar container para os ícones dos monstros
-  local iconsContainer = g_ui.createWidget('UIWidget', monstersPanel)
-  iconsContainer:setId('monstersIconsContainer')
-  iconsContainer:setLayout(VerticalLayout)
-  iconsContainer:setMarginTop(10)
-  
-  -- Adicionar os ícones dos monstros
-  if monstersList and #monstersList > 0 then
-    -- Container horizontal para os ícones
-    local horizontalContainer = g_ui.createWidget('UIWidget', iconsContainer)
-    horizontalContainer:setLayout(HorizontalLayout)
-    horizontalContainer:setMarginLeft(10)
-    horizontalContainer:setHeight(40)
-    
-    for _, monster in ipairs(monstersList) do
-      local monsterType = monster:lower()
-      local iconPath = taskIcons[monsterType] or taskIcons["default"]
-      
-      local monsterIcon = g_ui.createWidget('UIWidget', horizontalContainer)
-      monsterIcon:setId('monsterIcon_' .. monsterType)
-      monsterIcon:setImageSource(iconPath)
-      monsterIcon:setSize({width = 32, height = 32})
-      monsterIcon:setMarginRight(5)
-      monsterIcon:setTooltip(monster:sub(1, 1):upper() .. monster:sub(2):lower())
-    end
-    
-    -- Ajustar altura do painel de monstros
-    monstersPanel:setHeight(60)
-  end
-  
-  -- Forçar atualização da UI
-  if tasksWindow then
-    tasksWindow:update()
   end
   
   -- Update start/cancel task button
