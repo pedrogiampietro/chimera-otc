@@ -260,7 +260,7 @@ TasksWindow < MainWindow
         anchors.top: rewardsPanel.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 60
+        height: 90
         margin-top: 10
         background-color: #101010ee
         border: 1 #444444
@@ -273,35 +273,99 @@ TasksWindow < MainWindow
           color: #ffcc00
           font: verdana-11px-rounded
         
-        // Just showing fixed monster icons in a row
-        UIWidget
-          id: monster1Icon
+        // First monster with name
+        Panel
+          id: monster1Panel
           anchors.left: parent.left
-          anchors.verticalCenter: parent.verticalCenter
-          margin-left: 40
-          size: 32 32
-          image-source: /images/game/creatures/monsters/troll
-          phantom: true
+          anchors.top: prev.bottom
+          anchors.bottom: parent.bottom
+          width: 80
+          margin-left: 30
+          margin-top: 5
           
-        UIWidget
-          id: monster2Icon
-          anchors.left: monster1Icon.right
-          anchors.verticalCenter: parent.verticalCenter
-          margin-left: 40
-          size: 32 32
-          image-source: /images/game/creatures/monsters/troll
-          phantom: true
-          visible: false
+          UIWidget
+            id: monster1Icon
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 3
+            size: 32 32
+            image-source: /images/game/creatures/monsters/troll
+            phantom: true
+            
+          Label
+            id: monster1Name
+            !text: tr('Troll')
+            anchors.top: monster1Icon.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 2
+            text-auto-resize: true
+            text-wrap: true
+            width: 75
+            text-align: center
+            font: verdana-9px-rounded
+            color: #ffffff
           
-        UIWidget
-          id: monster3Icon
-          anchors.left: monster2Icon.right
-          anchors.verticalCenter: parent.verticalCenter
-          margin-left: 40
-          size: 32 32
-          image-source: /images/game/creatures/monsters/troll
-          phantom: true
-          visible: false
+        // Second monster with name
+        Panel
+          id: monster2Panel
+          anchors.left: monster1Panel.right
+          anchors.top: monster1Panel.top
+          anchors.bottom: parent.bottom
+          width: 80
+          margin-left: 10
+          
+          UIWidget
+            id: monster2Icon
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 3
+            size: 32 32
+            image-source: /images/game/creatures/monsters/troll
+            phantom: true
+            
+          Label
+            id: monster2Name
+            !text: tr('Orc Spearman')
+            anchors.top: monster2Icon.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 2
+            text-auto-resize: true
+            text-wrap: true
+            width: 75
+            text-align: center
+            font: verdana-9px-rounded
+            color: #ffffff
+          
+        // Third monster with name
+        Panel
+          id: monster3Panel
+          anchors.left: monster2Panel.right
+          anchors.top: monster1Panel.top
+          anchors.bottom: parent.bottom
+          width: 80
+          margin-left: 10
+          
+          UIWidget
+            id: monster3Icon
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 3
+            size: 32 32
+            image-source: /images/game/creatures/monsters/troll
+            phantom: true
+            
+          Label
+            id: monster3Name
+            !text: tr('Orc Warrior')
+            anchors.top: monster3Icon.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            margin-top: 2
+            text-auto-resize: true
+            text-wrap: true
+            width: 75
+            text-align: center
+            font: verdana-9px-rounded
+            color: #ffffff
       
       // Kills panel with multiple columns
       Panel

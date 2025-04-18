@@ -32,6 +32,7 @@ local taskList = nil
 
 -- Task Icons (create these icons in your client)
 local taskIcons = {
+  -- Base monster types
   troll = "/images/game/creatures/monsters/troll",
   trolls = "/images/game/creatures/monsters/troll",
   rotworm = "/images/game/creatures/monsters/rotworm",
@@ -52,6 +53,20 @@ local taskIcons = {
   dragons = "/images/game/creatures/monsters/dragon",
   rat = "/images/game/creatures/monsters/rat",
   rats = "/images/game/creatures/monsters/rat",
+  
+  -- Specific monster types
+  ["cave rat"] = "/images/game/creatures/monsters/cave_rat",
+  ["orc spearman"] = "/images/game/creatures/monsters/orc_spearman",
+  ["orc warrior"] = "/images/game/creatures/monsters/orc_warrior",
+  ["orc berserker"] = "/images/game/creatures/monsters/orc_berserker",
+  ["orc leader"] = "/images/game/creatures/monsters/orc_leader",
+  ["minotaur guard"] = "/images/game/creatures/monsters/minotaur_guard",
+  ["minotaur archer"] = "/images/game/creatures/monsters/minotaur_archer",
+  ["valkyrie"] = "/images/game/creatures/monsters/valkyrie",
+  ["cyclops"] = "/images/game/creatures/monsters/cyclops",
+  ["dragon lord"] = "/images/game/creatures/monsters/dragon_lord",
+  
+  -- Default fallback
   default = "/images/game/creatures/monsters/troll"
 }
 
@@ -1101,6 +1116,27 @@ function addTaskToList(task, container, isEven)
   -- Use the task icon from taskIcons dictionary
   local iconPath = taskIcons[monsterType]
   if not iconPath then
+    -- Try different patterns to extract base monster type
+    local baseType = nil
+    
+    -- Try space separator first (e.g., "orc warrior" -> "orc")
+    baseType = monsterType:match("^([%a]+)%s")
+    
+    -- If not found, try other patterns like hyphens, underscores, etc.
+    if not baseType then
+      baseType = monsterType:match("^([%a]+)[%-_]")
+    end
+    
+    -- If a base type was found, try to get its icon
+    if baseType then
+      g_logger.debug("Extracted base monster type: " .. baseType .. " from " .. monsterType)
+      iconPath = taskIcons[baseType]
+    end
+  end
+  
+  -- Final fallback to default if still no icon found
+  if not iconPath then
+    g_logger.debug("No icon found for monster: " .. monsterType .. ", using default")
     iconPath = taskIcons["default"]
   end
   
@@ -1298,38 +1334,84 @@ function updateTaskDetails(task)
   setupLabel(teleportLabel, teleport)
   
   -- Update monster icons in the monster display panel
-  local monster1Icon = monstersDisplayPanel:getChildById('monster1Icon')
-  local monster2Icon = monstersDisplayPanel:getChildById('monster2Icon')
-  local monster3Icon = monstersDisplayPanel:getChildById('monster3Icon')
+  local monster1Panel = monstersDisplayPanel:getChildById('monster1Panel')
+  local monster2Panel = monstersDisplayPanel:getChildById('monster2Panel')
+  local monster3Panel = monstersDisplayPanel:getChildById('monster3Panel')
   
-  -- Helper function to setup monster icons
-  local function setupMonsterIcon(icon, monsterType, visible)
-    if icon then
-      local iconPath = taskIcons[monsterType:lower()] or taskIcons["default"]
-      icon:setImageSource(iconPath)
-      icon:setVisible(visible)
+  -- Helper function to setup monster panels
+  local function setupMonsterPanel(panel, monsterName, visible)
+    if not panel then return end
+    
+    -- Extract parts of the panel
+    local icon = panel:getChildById(panel:getId():gsub('Panel', 'Icon'))
+    local nameLabel = panel:getChildById(panel:getId():gsub('Panel', 'Name'))
+    
+    if not icon or not nameLabel then return end
+    
+    -- Set visibility first
+    panel:setVisible(visible)
+    
+    if not visible then return end
+    
+    -- Format monster name for display (capitalize first letter)
+    local displayName = monsterName:gsub("^%l", string.upper)
+    nameLabel:setText(displayName)
+    
+    -- Try to get specific monster icon, falling back to base monster type if needed
+    local monsterType = monsterName:lower()
+    local iconPath = taskIcons[monsterType]
+    
+    -- If no specific icon, try to extract the base monster type
+    if not iconPath then
+      -- Try different patterns to extract base monster type
+      local baseType = nil
+      
+      -- Try space separator first (e.g., "orc warrior" -> "orc")
+      baseType = monsterType:match("^([%a]+)%s")
+      
+      -- If not found, try other patterns like hyphens, underscores, etc.
+      if not baseType then
+        baseType = monsterType:match("^([%a]+)[%-_]")
+      end
+      
+      -- If a base type was found, try to get its icon
+      if baseType then
+        g_logger.debug("Extracted base monster type: " .. baseType .. " from " .. monsterType)
+        iconPath = taskIcons[baseType]
+      end
     end
+    
+    -- Final fallback to default if still no icon found
+    if not iconPath then
+      g_logger.debug("No icon found for monster: " .. monsterType .. ", using default")
+      iconPath = taskIcons["default"]
+    end
+    
+    icon:setImageSource(iconPath)
   end
   
-  -- Setup monster icons
+  -- Default to hidden
+  setupMonsterPanel(monster1Panel, "Unknown", false)
+  setupMonsterPanel(monster2Panel, "Unknown", false)
+  setupMonsterPanel(monster3Panel, "Unknown", false)
+  
+  -- Setup monster icons if we have monster information
   if monstersList and #monstersList > 0 then
-    setupMonsterIcon(monster1Icon, monstersList[1], true)
+    -- Always show at least the first monster
+    setupMonsterPanel(monster1Panel, monstersList[1], true)
     
+    -- Show second monster if available
     if #monstersList > 1 then
-      setupMonsterIcon(monster2Icon, monstersList[1], true)
-    else
-      if monster2Icon then monster2Icon:setVisible(false) end
+      setupMonsterPanel(monster2Panel, monstersList[2], true)
     end
     
+    -- Show third monster if available
     if #monstersList > 2 then
-      setupMonsterIcon(monster3Icon, monstersList[2], true)
-    else
-      if monster3Icon then monster3Icon:setVisible(false) end
+      setupMonsterPanel(monster3Panel, monstersList[3], true)
     end
   else
-    setupMonsterIcon(monster1Icon, "default", true)
-    if monster2Icon then monster2Icon:setVisible(false) end
-    if monster3Icon then monster3Icon:setVisible(false) end
+    -- If no monsters defined, show at least one with default
+    setupMonsterPanel(monster1Panel, "Unknown", true)
   end
   
   -- Update kill requirements - for simplicity, using fixed values
