@@ -72,6 +72,31 @@ local function getTaskStatus(taskId)
     end
   end
   
+  -- Check in availableTasks if not found in currentTasks
+  if availableTasks.normal then
+    for _, task in ipairs(availableTasks.normal) do
+      if task.id == taskId then
+        if task.status == TASK_STATUS_STARTED then
+          return "in_progress"
+        else
+          return "available"
+        end
+      end
+    end
+  end
+  
+  if availableTasks.daily then
+    for _, task in ipairs(availableTasks.daily) do
+      if task.id == taskId then
+        if task.status == TASK_STATUS_STARTED then
+          return "in_progress"
+        else
+          return "available"
+        end
+      end
+    end
+  end
+  
   return "available"
 end
 
@@ -319,49 +344,112 @@ function onTaskData(data)
   displayTasksWindow(taskPoints)
 end
 
+-- Helper function to update the button based on task status
+function updateTaskButton(task)
+  if not tasksWindow or not task then return end
+  
+  local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
+  if not detailsPanel then return end
+  
+  local startTaskButton = detailsPanel:getChildById('startTaskButton')
+  if not startTaskButton then return end
+  
+  -- Determine if the task is in progress
+  local isInProgress = false
+  
+  g_logger.debug("Verificando status da tarefa: " .. tostring(task.id))
+  g_logger.debug("Status atual: " .. tostring(task.status))
+  
+  -- Apenas considerar iniciada se o status for explicitamente STARTED
+  if task.status == TASK_STATUS_STARTED then
+    isInProgress = true
+    g_logger.debug("Tarefa em andamento pelo status STARTED")
+  else
+    -- Check in currentTasks apenas se o status não é STARTED
+    -- Verifica se esta tarefa específica está nas tarefas atuais
+    if currentTasks.normal then
+      for _, currentTask in ipairs(currentTasks.normal) do
+        if currentTask.id == task.id then
+          if currentTask.status == TASK_STATUS_STARTED then
+            isInProgress = true
+            g_logger.debug("Tarefa em andamento encontrada em currentTasks.normal")
+            break
+          end
+        end
+      end
+    end
+    
+    if not isInProgress and currentTasks.daily then
+      for _, currentTask in ipairs(currentTasks.daily) do
+        if currentTask.id == task.id then
+          if currentTask.status == TASK_STATUS_STARTED then
+            isInProgress = true
+            g_logger.debug("Tarefa em andamento encontrada em currentTasks.daily")
+            break
+          end
+        end
+      end
+    end
+  end
+  
+  -- Não considere mais o progresso da tarefa como indicação de que ela está em andamento
+  -- Apenas o status STARTED é relevante
+  
+  -- Update button text and state
+  if isInProgress then
+    g_logger.debug("Setting button to 'Cancel Task' for task: " .. task.id)
+    startTaskButton:setText(tr("Cancel Task"))
+  else
+    g_logger.debug("Setting button to 'Start Task' for task: " .. task.id)
+    startTaskButton:setText(tr("Start Task"))
+  end
+  
+  startTaskButton:setEnabled(true)
+  startTaskButton:setVisible(true)
+end
+
 function onTaskUpdate(data)
   -- Update task progress
-  if data.taskId and data.count then
-    -- Update task progress
+  if data.taskId and data.count ~= nil then
+    g_logger.debug("Received task update for ID " .. data.taskId .. " with count " .. data.count)
+    
+    -- Variável para armazenar a tarefa encontrada
+    local updatedTask = nil
+    
+    -- Update task progress in normal tasks
     if currentTasks.normal then
       for i, task in ipairs(currentTasks.normal) do
         if task.id == data.taskId then
           task.count = data.count
-          
-          -- If window is open, update the UI
-          if tasksWindow and tasksWindow:isVisible() and selectedTask and selectedTask.id == data.taskId then
-            updateTaskDetails(selectedTask)
-          end
-          
-          -- Update task list display if window is open
-          if tasksWindow and tasksWindow:isVisible() then
-            populateTaskList()
-          end
-          
+          updatedTask = task
+          g_logger.debug("Updated normal task: " .. task.name .. " with count " .. data.count)
           break
         end
       end
     end
     
     -- Same for daily tasks
-    if currentTasks.daily then
+    if not updatedTask and currentTasks.daily then
       for i, task in ipairs(currentTasks.daily) do
         if task.id == data.taskId then
           task.count = data.count
-          
-          -- If window is open, update the UI
-          if tasksWindow and tasksWindow:isVisible() and selectedTask and selectedTask.id == data.taskId then
-            updateTaskDetails(selectedTask)
-          end
-          
-          -- Update task list display if window is open
-          if tasksWindow and tasksWindow:isVisible() then
-            populateTaskList()
-          end
-          
+          updatedTask = task
+          g_logger.debug("Updated daily task: " .. task.name .. " with count " .. data.count)
           break
         end
       end
+    end
+    
+    -- If window is open, update the UI
+    if tasksWindow and tasksWindow:isVisible() then
+      -- If this is the selected task, update details
+      if selectedTask and selectedTask.id == data.taskId then
+        updateTaskDetails(selectedTask)
+        updateTaskButton(selectedTask)
+      end
+      
+      -- Always update task list to show progress
+      populateTaskList()
     end
   end
 end
@@ -407,6 +495,7 @@ function displayTasksWindow(taskPoints)
       if child.task then
         selectedTask = child.task
         updateTaskDetails(selectedTask)
+        updateTaskButton(selectedTask)
         -- Highlight the selected task using proper UI methods
         if type(child.setBackgroundColor) == "function" then
           child:setBackgroundColor('#444444')
@@ -490,9 +579,32 @@ function populateTaskList()
     return header
   end
 
+  -- Helper function to check if a task already exists in current tasks
+  local function isTaskInCurrentTasks(taskId)
+    -- Check in daily tasks
+    if currentTasks.daily then
+      for _, task in ipairs(currentTasks.daily) do
+        if task.id == taskId then
+          return true
+        end
+      end
+    end
+    
+    -- Check in normal tasks
+    if currentTasks.normal then
+      for _, task in ipairs(currentTasks.normal) do
+        if task.id == taskId then
+          return true
+        end
+      end
+    end
+    
+    return false
+  end
+
   local itemCount = 0
 
-  -- Add Daily Tasks section
+  -- Add Daily Tasks section from currentTasks
   if currentTasks and currentTasks.daily and #currentTasks.daily > 0 then
     createSectionHeader("Daily Tasks")
     
@@ -504,27 +616,62 @@ function populateTaskList()
     end
   end
   
-  -- Add Normal Tasks section
-  if availableTasks and availableTasks.normal and #availableTasks.normal > 0 then
+  -- Add available daily tasks that aren't already in currentTasks
+  local availableDailyTasksCount = 0
+  if availableTasks and availableTasks.daily then
+    for _, task in ipairs(availableTasks.daily) do
+      if not isTaskInCurrentTasks(task.id) then
+        availableDailyTasksCount = availableDailyTasksCount + 1
+      end
+    end
+  end
+  
+  if availableDailyTasksCount > 0 then
+    -- If we haven't already created the Daily Tasks header, create it now
+    if not (currentTasks and currentTasks.daily and #currentTasks.daily > 0) then
+      createSectionHeader("Daily Tasks")
+    end
+    
+    for i, task in ipairs(availableTasks.daily) do
+      if not isTaskInCurrentTasks(task.id) then
+        g_logger.info("Adding available daily task: " .. (task.name or "Unknown"))
+        local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
+        itemCount = itemCount + 1
+      end
+    end
+  end
+  
+  -- Add current Normal Tasks
+  local hasNormalTasksHeader = false
+  if currentTasks and currentTasks.normal and #currentTasks.normal > 0 then
     -- Add spacer before new section
     local spacer = g_ui.createWidget('UIWidget', taskList)
     spacer:setHeight(10)
     spacer:setPhantom(true)
     
     createSectionHeader("Normal Tasks")
+    hasNormalTasksHeader = true
     
-    g_logger.info("Adding normal tasks: " .. tostring(#availableTasks.normal))
-    for i, task in ipairs(availableTasks.normal) do
-      g_logger.info("Adding normal task " .. i .. ": " .. (task.name or "Unknown"))
+    for i, task in ipairs(currentTasks.normal) do
+      g_logger.info("Adding current normal task " .. i .. ": " .. (task.name or "Unknown"))
       local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
       itemCount = itemCount + 1
     end
   end
 
-  -- Add current normal tasks if they exist and aren't already shown
-  if currentTasks and currentTasks.normal and #currentTasks.normal > 0 then
-    if not (availableTasks and availableTasks.normal and #availableTasks.normal > 0) then
-      -- Add spacer before section if it wasn't added before
+  -- Add available Normal Tasks that aren't already in currentTasks
+  local availableNormalTasksCount = 0
+  if availableTasks and availableTasks.normal then
+    for _, task in ipairs(availableTasks.normal) do
+      if not isTaskInCurrentTasks(task.id) then
+        availableNormalTasksCount = availableNormalTasksCount + 1
+      end
+    end
+  end
+  
+  if availableNormalTasksCount > 0 then
+    -- Add spacer and header if we haven't already added them
+    if not hasNormalTasksHeader then
       local spacer = g_ui.createWidget('UIWidget', taskList)
       spacer:setHeight(10)
       spacer:setPhantom(true)
@@ -532,10 +679,12 @@ function populateTaskList()
       createSectionHeader("Normal Tasks")
     end
     
-    for i, task in ipairs(currentTasks.normal) do
-      g_logger.info("Adding current normal task " .. i .. ": " .. (task.name or "Unknown"))
-      local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
-      itemCount = itemCount + 1
+    for i, task in ipairs(availableTasks.normal) do
+      if not isTaskInCurrentTasks(task.id) then
+        g_logger.info("Adding available normal task: " .. (task.name or "Unknown"))
+        local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
+        itemCount = itemCount + 1
+      end
     end
   end
 
@@ -572,6 +721,8 @@ function populateTaskList()
         -- Update selected task and details
         selectedTask = child.task
         updateTaskDetails(selectedTask)
+        -- Guarantees the button is in the correct state
+        updateTaskButton(selectedTask)
       end
     end
   end
@@ -643,26 +794,18 @@ function addTaskToList(task, container, isEven)
   -- Get the monster type for the icon
   local monsterType = "default"
   
-  -- Log task information for debugging
-  g_logger.info("Processing task: " .. (task.name or "Unknown") .. ", Type: " .. (task.type == TASK_TYPE_DAILY and "Daily" or "Normal"))
-  
   -- Get monster type from task name first
   monsterType = getMonsterTypeFromName(task.name)
-  g_logger.info("Monster type from name: " .. monsterType)
   
   -- If we got a default type, try to get it from monsters array
   if monsterType == "default" and task.monsters and #task.monsters > 0 then
     monsterType = task.monsters[1]:lower()
-    g_logger.info("Monster type from monsters array: " .. monsterType)
   end
   
   -- Use the task icon from taskIcons dictionary
   local iconPath = taskIcons[monsterType]
   if not iconPath then
-    g_logger.info("No icon found for monster type: " .. monsterType .. ", using default")
     iconPath = taskIcons["default"]
-  else
-    g_logger.info("Using icon path: " .. iconPath)
   end
   
   -- Set the icon
@@ -692,10 +835,20 @@ function addTaskToList(task, container, isEven)
     end
     
     -- Add progress/completion status if applicable
-    if task.status == TASK_STATUS_COMPLETED then
+    local taskStatus = getTaskStatus(task.id)
+    
+    if taskStatus == "completed" then
       nameLabel:setText(baseText .. " [Completed]")
-    elseif task.count then
-      nameLabel:setText(baseText .. " [" .. task.count .. "/" .. (task.total or task.count) .. "]")
+    elseif taskStatus == "in_progress" then
+      -- Se estiver em progresso e tiver count, mostra o progresso
+      if task.count and task.count > 0 then
+        nameLabel:setText(baseText .. " [" .. task.count .. "/" .. (task.total or 100) .. "]")
+      else
+        nameLabel:setText(baseText .. " [In Progress]")
+      end
+    elseif task.type == TASK_TYPE_DAILY and task.count and task.count > 0 then
+      -- Para daily tasks, mostra o progresso se tiver contagem
+      nameLabel:setText(baseText .. " [" .. task.count .. "/" .. (task.total or 100) .. "]")
     end
   end
   
@@ -704,31 +857,54 @@ end
 
 function updateTaskDetails(task)
   if not tasksWindow or not task then 
-    g_logger.debug("Cannot update task details: no window or task") -- Mudando de warn para debug
+    g_logger.debug("Cannot update task details: no window or task")
     return 
   end
   
-  g_logger.debug("Updating task details for: " .. (task.name or "Unknown Task")) -- Mudando de info para debug
+  -- Verificação adicional para garantir que a tarefa tenha um ID
+  if not task.id then
+    g_logger.debug("Cannot update task details: task has no ID")
+    return
+  end
+  
+  -- Primeiro obter o painel de detalhes
+  local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
+  if not detailsPanel then
+    g_logger.debug("Cannot find detailsPanel")
+    return
+  end
+  
+  -- Verifica se o botão está presente antes de iniciar (como filho do detailsPanel)
+  local startTaskButton = detailsPanel:getChildById('startTaskButton')
+  g_logger.debug("Start task button found: " .. tostring(startTaskButton ~= nil))
+  
+  if not startTaskButton then
+    g_logger.debug("Cannot update task button: start task button not found in detailsPanel")
+    
+    -- Tentar encontrar de forma recursiva em todo o painel de detalhes
+    startTaskButton = detailsPanel:recursiveGetChildById('startTaskButton')
+    g_logger.debug("Start task button found recursively in detailsPanel: " .. tostring(startTaskButton ~= nil))
+    
+    -- Se ainda não encontrou, tentar na janela inteira como último recurso
+    if not startTaskButton then
+      startTaskButton = tasksWindow:recursiveGetChildById('startTaskButton')
+      g_logger.debug("Start task button found recursively in tasksWindow: " .. tostring(startTaskButton ~= nil))
+    end
+  end
   
   -- Verify that we have all required panels first
   local rewardsPanel = tasksWindow:recursiveGetChildById('rewardsPanel')
   local monstersPanel = tasksWindow:recursiveGetChildById('monstersPanel')
   local killsPanel = tasksWindow:recursiveGetChildById('killsPanel')
   
-  if not rewardsPanel then
-    g_logger.debug("Could not find rewardsPanel") -- Mudando de error para debug
+  if not rewardsPanel or not monstersPanel or not killsPanel then
+    g_logger.debug("Could not find required panels")
     return
   end
   
-  if not monstersPanel then
-    g_logger.debug("Could not find monstersPanel") -- Mudando de error para debug
-    return
-  end
-  
-  if not killsPanel then
-    g_logger.debug("Could not find killsPanel") -- Mudando de error para debug
-    return
-  end
+  -- Ajustar margem e largura dos labels
+  local leftMargin = 10  -- Reduzido para dar mais espaço ao texto
+  local labelWidth = 200 -- Aumentado para garantir que o texto caiba
   
   -- Update rewards
   local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
@@ -738,55 +914,46 @@ function updateTaskDetails(task)
   local accessLabel = rewardsPanel:recursiveGetChildById('accessLabel')
   local teleportLabel = rewardsPanel:recursiveGetChildById('teleportLabel')
   
-  -- Ajustar margem esquerda para todos os labels
-  local leftMargin = 35  -- Aumentado de 15 para 35
-  
-  if taskPointsLabel then 
-    taskPointsLabel:setText(tr('Tasks Points: %s', task.reward and task.reward.points or 1))
-    taskPointsLabel:setMarginLeft(leftMargin)
+  -- Função helper para configurar os labels
+  local function setupLabel(label, text, center)
+    if label then
+      label:setText(text)
+      if center then
+        label:setTextAlign(AlignCenter)
+        label:setMarginLeft(0)
+      else
+        label:setMarginLeft(leftMargin)
+      end
+      label:setWidth(labelWidth)
+      label:setTextWrap(true) -- Permite quebra de linha se necessário
+    end
   end
   
-  if experienceLabel then 
-    experienceLabel:setText(tr('Experience: %s', task.reward and task.reward.exp or 1000))
-    experienceLabel:setMarginLeft(leftMargin)
-  end
-  
-  if goldLabel then 
-    goldLabel:setText(tr('Gold: %s', task.reward and task.reward.gold or 500))
-    goldLabel:setMarginLeft(leftMargin)
-  end
+  -- Atualizar os labels com a nova configuração
+  setupLabel(taskPointsLabel, tr('Task Points: %s', task.reward and task.reward.points or 1))
+  setupLabel(experienceLabel, tr('Experience: %s', task.reward and task.reward.exp or 1000))
+  setupLabel(goldLabel, tr('Gold: %s', task.reward and task.reward.gold or 500))
   
   -- Update items reward
-  if itemsLabel then
-    local itemText = "None"
-    if task.reward and task.reward.items and #task.reward.items > 0 then
-      itemText = ""
-      for i, item in ipairs(task.reward.items) do
-        if i > 1 then itemText = itemText .. ", " end
-        itemText = itemText .. (item.name or "Unknown Item")
-      end
+  local itemText = "None"
+  if task.reward and task.reward.items and #task.reward.items > 0 then
+    itemText = ""
+    for i, item in ipairs(task.reward.items) do
+      if i > 1 then itemText = itemText .. ", " end
+      itemText = itemText .. (item.name or "Unknown Item")
     end
-    itemsLabel:setText(itemText)
-    itemsLabel:setMarginLeft(leftMargin)
   end
+  setupLabel(itemsLabel, itemText)
   
   -- Update access and teleport rewards
-  if accessLabel then 
-    accessLabel:setText(task.reward and task.reward.access or "None")
-    accessLabel:setMarginLeft(leftMargin)
-  end
-  
-  if teleportLabel then 
-    teleportLabel:setText(task.reward and task.reward.teleport or "None")
-    teleportLabel:setMarginLeft(leftMargin)
-  end
+  setupLabel(accessLabel, task.reward and task.reward.access or "None")
+  setupLabel(teleportLabel, task.reward and task.reward.teleport or "None")
   
   -- Update monsters panel
   monstersPanel:destroyChildren()
   if task.monsters then
     local x = 10
     for _, monster in ipairs(task.monsters) do
-      -- Use task icons instead of creature widget
       local monsterType = monster:lower()
       local iconPath = taskIcons[monsterType] or taskIcons["default"]
       
@@ -804,7 +971,10 @@ function updateTaskDetails(task)
   local killsProgress = killsPanel:recursiveGetChildById('killsProgress')
   local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
   
-  if killsRequired then killsRequired:setText(tostring(task.total or task.count or 100)) end
+  -- Configurar labels do painel de kills
+  if killsRequired then 
+    setupLabel(killsRequired, tostring(task.total or task.count or 100), true)
+  end
   
   -- Update progress
   if killsProgress then
@@ -832,31 +1002,212 @@ function updateTaskDetails(task)
     killsProgress:setPercent(progressPercent)
   end
   
-  if bonusLabel then bonusLabel:setText(task.bonus or tr("No Bonuses")) end
+  if bonusLabel then 
+    setupLabel(bonusLabel, task.bonus or tr("No Bonuses"))
+  end
   
-  -- Update start button
-  local startTaskButton = tasksWindow:getChildById('startTaskButton')
+  -- Não precisamos declarar startTaskButton novamente, pois já foi declarado no início da função
   if startTaskButton then
-    local taskStatus = getTaskStatus(task.id)
-    local isStarted = (taskStatus == "in_progress")
+    -- Check if task is in progress
+    local isInProgress = false
     
-    startTaskButton:setText(isStarted and tr("In Progress") or tr("Start Task"))
-    startTaskButton:setEnabled(not isStarted)
+    -- Debug log to check task structure
+    g_logger.debug("Checking task status for: " .. (task.name or "unknown") .. " with ID: " .. tostring(task.id))
+    
+    -- Check if task status is STARTED
+    if task.status == TASK_STATUS_STARTED then
+      isInProgress = true
+      g_logger.debug("Task is already in progress based on its status")
+    end
+    
+    -- Check in currentTasks.normal if not already determined
+    if not isInProgress and currentTasks.normal then
+      for _, currentTask in ipairs(currentTasks.normal) do
+        if currentTask.id == task.id then
+          if currentTask.status == TASK_STATUS_STARTED then
+            isInProgress = true
+            g_logger.debug("Task found in progress in currentTasks.normal")
+          end
+          break
+        end
+      end
+    end
+    
+    -- Check in currentTasks.daily if not already determined
+    if not isInProgress and currentTasks.daily then
+      for _, currentTask in ipairs(currentTasks.daily) do
+        if currentTask.id == task.id then
+          if currentTask.status == TASK_STATUS_STARTED then
+            isInProgress = true
+            g_logger.debug("Task found in progress in currentTasks.daily")
+          end
+          break
+        end
+      end
+    end
+    
+    -- If task is in progress, change button text to "Cancel Task" instead of hiding it
+    if isInProgress then
+      g_logger.debug("Task is in progress, changing button to 'Cancel Task'")
+      startTaskButton:setText(tr("Cancel Task"))
+      startTaskButton:setEnabled(true)
+      startTaskButton:setVisible(true) -- Mantém o botão visível para permitir cancelar a tarefa
+    else
+      g_logger.debug("Task is not in progress, setting button to 'Start Task'")
+      startTaskButton:setText(tr("Start Task"))
+      startTaskButton:setEnabled(true)
+      startTaskButton:setVisible(true)
+    end
+    
+    -- Debug log the final decision
+    g_logger.debug("Task " .. (task.name or "unknown") .. " isInProgress: " .. tostring(isInProgress))
+    g_logger.debug("Button text is now: " .. startTaskButton:getText())
   end
 end
 
 function startTask()
-  if not selectedTask then return end
+  if not selectedTask then 
+    g_logger.debug("startTask called but no selectedTask")
+    return 
+  end
   
-  -- Send task start request to server
+  g_logger.debug("Starting/canceling task: " .. (selectedTask.name or "unknown") .. " with ID: " .. tostring(selectedTask.id))
+  
+  -- Check if task is already in progress (to determine if we should start or cancel)
+  local isInProgress = false
+  
+  -- Check if task status is STARTED
+  if selectedTask.status == TASK_STATUS_STARTED then
+    isInProgress = true
+    g_logger.debug("Task is already in progress based on its status")
+  end
+  
+  -- Check in currentTasks.normal if not already determined
+  if not isInProgress and currentTasks.normal then
+    for _, currentTask in ipairs(currentTasks.normal) do
+      if currentTask.id == selectedTask.id then
+        if currentTask.status == TASK_STATUS_STARTED then
+          isInProgress = true
+          g_logger.debug("Task found in progress in currentTasks.normal")
+        end
+        break
+      end
+    end
+  end
+  
+  -- Check in currentTasks.daily if not already determined
+  if not isInProgress and currentTasks.daily then
+    for _, currentTask in ipairs(currentTasks.daily) do
+      if currentTask.id == selectedTask.id then
+        if currentTask.status == TASK_STATUS_STARTED then
+          isInProgress = true
+          g_logger.debug("Task found in progress in currentTasks.daily")
+        end
+        break
+      end
+    end
+  end
+  
+  -- Send task start or cancel request to server
   if g_game.getFeature(GameExtendedClientPing) then
     local protocol = g_game.getProtocolGame()
     if protocol then
+      local action = isInProgress and "cancel" or "start"
+      g_logger.debug("Action to perform: " .. action .. " for task ID: " .. tostring(selectedTask.id))
+      
       local data = {
-        action = "start",
+        action = action,
         taskId = selectedTask.id
       }
       protocol:sendExtendedOpcode(ExtendedIds.TaskAction, json.encode(data))
+      
+      if action == "start" then
+        -- Marca a tarefa como em progresso na estrutura de dados local
+        selectedTask.status = TASK_STATUS_STARTED
+        g_logger.debug("Setting task status to STARTED: " .. tostring(TASK_STATUS_STARTED))
+        
+        -- Adiciona a tarefa selecionada à lista de tarefas atuais
+        if selectedTask.type == TASK_TYPE_DAILY then
+          if not currentTasks.daily then
+            currentTasks.daily = {}
+          end
+          
+          -- Verifica se a tarefa já existe na lista
+          local exists = false
+          for _, task in ipairs(currentTasks.daily) do
+            if task.id == selectedTask.id then
+              task.status = TASK_STATUS_STARTED
+              exists = true
+              g_logger.debug("Updated existing daily task to STARTED")
+              break
+            end
+          end
+          
+          -- Se não existir, adiciona à lista
+          if not exists then
+            local taskCopy = table.copy(selectedTask)
+            taskCopy.status = TASK_STATUS_STARTED
+            taskCopy.count = 0
+            table.insert(currentTasks.daily, taskCopy)
+            g_logger.debug("Added new daily task with STARTED status")
+          end
+        else
+          if not currentTasks.normal then
+            currentTasks.normal = {}
+          end
+          
+          -- Verifica se a tarefa já existe na lista
+          local exists = false
+          for _, task in ipairs(currentTasks.normal) do
+            if task.id == selectedTask.id then
+              task.status = TASK_STATUS_STARTED
+              exists = true
+              g_logger.debug("Updated existing normal task to STARTED")
+              break
+            end
+          end
+          
+          -- Se não existir, adiciona à lista
+          if not exists then
+            local taskCopy = table.copy(selectedTask)
+            taskCopy.status = TASK_STATUS_STARTED
+            taskCopy.count = 0
+            table.insert(currentTasks.normal, taskCopy)
+            g_logger.debug("Added new normal task with STARTED status")
+          end
+        end
+      else -- action == "cancel"
+        -- Remove a tarefa das tarefas atuais
+        if selectedTask.type == TASK_TYPE_DAILY and currentTasks.daily then
+          for i, task in ipairs(currentTasks.daily) do
+            if task.id == selectedTask.id then
+              table.remove(currentTasks.daily, i)
+              g_logger.debug("Removed daily task from currentTasks")
+              break
+            end
+          end
+        elseif currentTasks.normal then
+          for i, task in ipairs(currentTasks.normal) do
+            if task.id == selectedTask.id then
+              table.remove(currentTasks.normal, i)
+              g_logger.debug("Removed normal task from currentTasks")
+              break
+            end
+          end
+        end
+        
+        -- Restaura o status da tarefa
+        selectedTask.status = TASK_STATUS_AVAILABLE
+        selectedTask.count = 0
+        g_logger.debug("Reset task status to AVAILABLE: " .. tostring(TASK_STATUS_AVAILABLE))
+      end
+      
+      -- Use helper function to update the button text
+      updateTaskButton(selectedTask)
+      
+      -- Atualiza a lista de tarefas e detalhes
+      populateTaskList()
+      updateTaskDetails(selectedTask)
     end
   end
 end 
