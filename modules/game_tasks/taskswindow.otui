@@ -11,8 +11,6 @@ TaskLabel < Label
   icon-offset: 5 5
   text-offset: 50 15
   color: #aaaaaa
-  anchors.left: parent.left
-  anchors.right: parent.right
 
   $focus:
     background-color: #444444
@@ -27,219 +25,293 @@ TaskLabel < Label
   $daily:
     text-color: #ffcc00
 
+TaskSectionHeader < Label
+  height: 25
+  background-color: #222222
+  text-align: center
+  font: verdana-11px-rounded
+  color: #ffcc00
+  margin-top: 5
+  margin-bottom: 5
+  border: 1 #444444
+
 TaskContainer < Panel
   layout: verticalBox
   layout-spacing: 2
   padding: 2
-  anchors.fill: parent
+
+TaskPanel < UIWidget
+  height: 60
+  background-color: alpha
+  padding: 5
+  margin-bottom: 2
+  
+  UIWidget
+    id: taskIcon
+    size: 48 48
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 5
+    
+  Label
+    id: taskName
+    anchors.left: taskIcon.right
+    anchors.right: parent.right
+    anchors.verticalCenter: parent.verticalCenter
+    margin-left: 10
+    text-align: left
+    font: verdana-11px-monochrome
+    color: #cccccc
+    
+  $hover:
+    background-color: #444444
+    
+  $focus:
+    background-color: #555555
+    
+  $selected:
+    background-color: #666666
+    
+TaskContainer < ScrollablePanel
+  layout:
+    type: verticalBox
+    spacing: 2
 
 TasksWindow < MainWindow
   id: tasksWindow
   !text: tr('Tasks')
-  size: 650 450
-  @onEscape: self:destroy()
-
+  size: 800 600
+  @onEscape: self:hide()
+  @onEnter: self:hide()
+  
+  // Painel principal com gradiente
   Panel
-    id: leftPanel
-    anchors.top: parent.top
-    anchors.left: parent.left
-    anchors.bottom: bottomSeparator.top
-    width: 320
-    margin-bottom: 10
+    id: mainPanel
+    anchors.fill: parent
+    margin: 3
+    background-color: #20202088
+    border: 1 #333333
     
-    Label
-      id: searchHeader
-      !text: tr('Search by monster name')
+    // Campo de busca estilizado
+    TextEdit
+      id: searchText
       anchors.top: parent.top
       anchors.left: parent.left
       anchors.right: parent.right
-      height: 20
-      text-align: center
-      
-    TextEdit
-      id: searchText
-      anchors.top: searchHeader.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      height: 30
-      margin-top: 5
+      margin-top: 10
+      margin-left: 10
+      margin-right: 10
+      height: 25
+      !text: tr('Search by monster name')
+      background-color: #111111
+      color: #aaaaaa
+      font: verdana-11px-rounded
+      padding: 5
+      border: 1 #444444
       @onTextChange: modules.game_tasks.filterTasks()
-
+      
+    // Lista de tasks com scroll
     Panel
       id: taskListPanel
       anchors.top: searchText.bottom
       anchors.left: parent.left
-      anchors.right: parent.right
       anchors.bottom: parent.bottom
       margin-top: 10
+      margin-left: 10
+      width: 350
+      background-color: #15151588
+      border: 1 #333333
       
       ScrollablePanel
         id: taskList
         anchors.fill: parent
-        anchors.right: taskListScrollBar.left
-        margin-right: 5
+        margin: 2
         vertical-scrollbar: taskListScrollBar
-        layout: verticalBox
-        layout-spacing: 2
-        padding: 2
-        
+        layout:
+          type: verticalBox
+          spacing: 2
+          
       VerticalScrollBar
         id: taskListScrollBar
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        step: 50
+        step: 14
         pixels-scroll: true
-
-  Panel
-    id: rightPanel
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors.bottom: bottomSeparator.top
-    width: 300
-    margin-bottom: 10
-
-    Label
-      id: rewardsHeader
-      !text: tr('Base Rewards')
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      height: 20
-      text-align: center
-
+      
+    // Painel de detalhes
     Panel
-      id: rewardsPanel
-      anchors.top: rewardsHeader.bottom
-      anchors.left: parent.left
+      id: detailsPanel
+      anchors.top: searchText.bottom
+      anchors.left: taskListPanel.right
       anchors.right: parent.right
-      height: 120
-      margin: 5
-      layout:
-        type: verticalBox
-
-      Label
-        id: taskPointsLabel
-        !text: tr('Tasks Points: 1')
-        margin-bottom: 5
-        
-      Label
-        id: experienceLabel
-        !text: tr('Experience: 1000')
-        margin-bottom: 5
-        
-      Label
-        id: goldLabel
-        !text: tr('Gold: 500')
-        margin-bottom: 5
-        
-      Label
-        id: itemsLabel
-        !text: tr('Is burning heart')
-        margin-bottom: 5
-        
-      Label
-        id: accessLabel
-        !text: tr('Access to new hunting area')
-        margin-bottom: 5
-        
-      Label
-        id: teleportLabel
-        !text: tr('Teleport to Troll Boss fight')
-        margin-bottom: 5
-
-    Label
-      id: monstersHeader
-      !text: tr('Monsters')
-      anchors.top: rewardsPanel.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      margin-top: 10
-      height: 20
-      text-align: center
-
-    Panel
-      id: monstersPanel
-      anchors.top: monstersHeader.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      height: 80
-      margin: 5
-
-    Label
-      id: killsHeader
-      !text: tr('Required Kills')
-      anchors.top: monstersPanel.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      margin-top: 10
-      height: 20
-      text-align: center
-
-    Panel
-      id: killsPanel
-      anchors.top: killsHeader.bottom
-      anchors.left: parent.left
-      anchors.right: parent.right
-      height: 60
-      margin: 5
-
-      Label
-        id: killsRequired
-        anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      margin: 10
+      background-color: #15151588
+      border: 1 #333333
+      
+      // Painel de recompensas
+      Panel
+        id: rewardsPanel
         anchors.top: parent.top
-        margin-top: 5
-        text-align: center
-        !text: tr('100')
-        font: verdana-11px-rounded
-
-      ProgressBar
-        id: killsProgress
-        anchors.top: killsRequired.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        margin-top: 5
-        margin-left: 50
-        margin-right: 50
-        background-color: #222222
-        height: 10
+        height: 150
+        margin: 10
+        background-color: #10101088
+        border: 1 #444444
         
-      Label
-        id: bonusLabel
+        Label
+          !text: tr('Base Rewards')
+          anchors.top: parent.top
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffcc00
+          font: verdana-11px-rounded
+          
+        Label
+          id: taskPointsLabel
+          !text: tr('Tasks Points: 0')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 10
+          margin-left: 10
+          color: #00ff00
+          font: verdana-11px-rounded
+          
+        Label
+          id: experienceLabel
+          !text: tr('Experience: 0')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 5
+          margin-left: 10
+          color: #ffffff
+          font: verdana-11px-rounded
+          
+        Label
+          id: goldLabel
+          !text: tr('Gold: 0')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 5
+          margin-left: 10
+          color: #ffcc00
+          font: verdana-11px-rounded
+          
+        Label
+          id: itemsLabel
+          !text: tr('Items: None')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 5
+          margin-left: 10
+          color: #ffffff
+          font: verdana-11px-rounded
+          
+        Label
+          id: accessLabel
+          !text: tr('Access: None')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 5
+          margin-left: 10
+          color: #ffffff
+          font: verdana-11px-rounded
+          
+        Label
+          id: teleportLabel
+          !text: tr('Teleport: None')
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          margin-top: 5
+          margin-left: 10
+          color: #ffffff
+          font: verdana-11px-rounded
+          
+      // Painel de monstros
+      Panel
+        id: monstersPanel
+        anchors.top: rewardsPanel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 100
+        margin-top: 10
+        background-color: #10101088
+        border: 1 #444444
+        
+        Label
+          !text: tr('Monsters')
+          anchors.top: parent.top
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffcc00
+          font: verdana-11px-rounded
+          
+      // Painel de progresso
+      Panel
+        id: killsPanel
+        anchors.top: monstersPanel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 120
+        margin-top: 10
+        background-color: #10101088
+        border: 1 #444444
+        
+        Label
+          !text: tr('Required Kills')
+          anchors.top: parent.top
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffcc00
+          font: verdana-11px-rounded
+          
+        Label
+          id: killsRequired
+          !text: tr('0')
+          anchors.top: prev.bottom
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffffff
+          font: verdana-11px-rounded
+          
+        ProgressBar
+          id: killsProgress
+          anchors.top: prev.bottom
+          anchors.left: parent.left
+          anchors.right: parent.right
+          height: 20
+          margin: 10
+          background-color: #222222
+          border: 1 #444444
+          
+        Label
+          id: bonusLabel
+          !text: tr('No Bonuses')
+          anchors.top: prev.bottom
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #00ff00
+          font: verdana-11px-rounded
+          
+      Button
+        id: startTaskButton
+        !text: tr('Start Task')
+        width: 100
+        height: 30
+        anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: killsProgress.bottom
-        margin-top: 5
-        !text: tr('No Bonuses')
-        text-align: center
-
-    Button
-      id: startTaskButton
-      !text: tr('Start Task')
-      width: 200
-      height: 35
-      anchors.top: killsPanel.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
-      margin-top: 10
-      @onClick: modules.game_tasks.startTask()
-
-  HorizontalSeparator
-    id: bottomSeparator
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.bottom: closeButton.top
-    margin-bottom: 10
-
-  Label
-    id: currentTaskPoints
-    anchors.left: parent.left
-    anchors.bottom: parent.bottom
-    text-auto-resize: true
-    !text: tr('Current Tasks Points: 0')
-
-  Button
-    id: closeButton
-    anchors.bottom: parent.bottom
-    anchors.right: parent.right
-    !text: tr('Close')
-    width: 90
-    @onClick: self:getParent():destroy()
+        margin-bottom: 10
+        color: #ffffff
+        background-color: #1f6b1f
+        border: 1 #444444
+        font: verdana-11px-rounded
+        @onClick: modules.game_tasks.startTask()
+        $hover:
+          background-color: #2f8b2f
+        $pressed:
+          background-color: #0f4b0f
+        $disabled:
+          color: #666666
+          background-color: #333333
