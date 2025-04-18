@@ -370,13 +370,13 @@ TasksWindow < MainWindow
             font: verdana-11px-rounded
             color: #ffffff
       
-      // Kills panel with multiple columns
+      // Kills panel with progress bar
       Panel
         id: killsPanel
         anchors.top: monstersDisplayPanel.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 90
+        height: 110
         margin-top: 10
         background-color: #101010ee
         border: 1 #444444
@@ -389,38 +389,29 @@ TasksWindow < MainWindow
           color: #ffcc00
           font: verdana-11px-rounded
         
-        // Column 1
+        // Single kill requirement value
         Label
-          id: killsRequired1
-          !text: tr('100')
+          id: killsRequired
+          !text: tr('25')
           anchors.top: prev.bottom
-          anchors.left: parent.left
-          anchors.right: parent.horizontalCenter
+          anchors.horizontalCenter: parent.horizontalCenter
           margin-top: 10
           text-align: center
           font: verdana-11px-rounded
+          color: #ffffff
         
-        // Column 2  
-        Label
-          id: killsRequired2
-          !text: tr('100')
-          anchors.top: killsRequired1.top
-          anchors.left: parent.horizontalCenter
+        // Progress bar
+        ProgressBar
+          id: killsProgress
+          anchors.top: killsRequired.bottom
+          anchors.left: parent.left
           anchors.right: parent.right
-          margin-right: 100
-          text-align: center
-          font: verdana-11px-rounded
-          
-        // Column 3  
-        Label
-          id: killsRequired3
-          !text: tr('5000')
-          anchors.top: killsRequired1.top
-          anchors.right: parent.right
-          width: 100
-          text-align: center
-          font: verdana-11px-rounded
-          
+          height: 15
+          margin-left: 20
+          margin-right: 20
+          margin-top: 10
+          background-color: #333333
+        
         Button
           id: startTaskButton
           !text: tr('Start Task')
@@ -428,5 +419,5 @@ TasksWindow < MainWindow
           height: 30
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottom: parent.bottom
-          margin-bottom: 5
+          margin-bottom: 10
           @onClick: modules.game_tasks.startTask()

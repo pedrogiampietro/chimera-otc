@@ -1414,25 +1414,43 @@ function updateTaskDetails(task)
     setupMonsterPanel(monster1Panel, "Unknown", true)
   end
   
-  -- Update kill requirements - for simplicity, using fixed values
-  local killsRequired1 = killsPanel:getChildById('killsRequired1')
-  local killsRequired2 = killsPanel:getChildById('killsRequired2')
-  local killsRequired3 = killsPanel:getChildById('killsRequired3')
+  -- Update kill requirements - simplified version with one label and progress bar
+  local killsRequired = killsPanel:getChildById('killsRequired')
+  local killsProgress = killsPanel:getChildById('killsProgress')
   
-  -- Default kill requirements based on task level
-  local baseKills = task.total or 100
+  -- Default kill requirements based on task level or predefined total
+  local requiredKills = task.total or 100
   
-  if killsRequired1 then
-    killsRequired1:setText(tostring(baseKills))
+  -- Set the required kills label
+  if killsRequired then
+    killsRequired:setText(tostring(requiredKills))
   end
   
-  if killsRequired2 then
-    killsRequired2:setText(tostring(baseKills))
-  end
-  
-  if killsRequired3 then
-    -- Make the third column a higher number to match the reference image
-    killsRequired3:setText(tostring(baseKills * 5))
+  -- Update progress bar
+  if killsProgress then
+    local currentCount = 0
+    -- Check both normal and daily tasks for progress
+    if currentTasks.normal then
+      for _, currentTask in ipairs(currentTasks.normal) do
+        if currentTask.id == task.id then
+          currentCount = currentTask.count or 0
+          break
+        end
+      end
+    end
+    
+    if currentTasks.daily then
+      for _, currentTask in ipairs(currentTasks.daily) do
+        if currentTask.id == task.id then
+          currentCount = currentTask.count or 0
+          break
+        end
+      end
+    end
+    
+    local progressPercent = math.min(100, math.floor((currentCount / requiredKills) * 100))
+    g_logger.debug("Setting progress to " .. progressPercent .. "% (" .. currentCount .. "/" .. requiredKills .. ")")
+    killsProgress:setPercent(progressPercent)
   end
   
   -- Update start/cancel task button
