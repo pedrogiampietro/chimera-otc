@@ -35,8 +35,9 @@ local taskIcons = {
   minotaur = "/images/game/creatures/monsters/minotaur",
   dwarf = "/images/game/creatures/monsters/dwarf",
   elf = "/images/game/creatures/monsters/elf",
-  high_orc = "/images/game/creatures/monsters/orcberserker",
-  default = "/images/game/creatures/monsters/troll" 
+  dragon = "/images/game/creatures/monsters/dragon",
+  rat = "/images/game/creatures/monsters/rat",
+  default = "/images/game/creatures/monsters/troll"
 }
 
 -- Helper function to check task status
@@ -485,74 +486,54 @@ function populateTaskList()
   local function createSectionHeader(text)
     local header = g_ui.createWidget('TaskSectionHeader', taskList)
     header:setText(text)
-    header:setEnabled(false) -- Disable interaction with header
+    header:setEnabled(false)
     return header
-  end
-
-  -- Check if we have any tasks at all
-  local hasTasks = false
-  if (availableTasks.normal and #availableTasks.normal > 0) or
-     (availableTasks.daily and #availableTasks.daily > 0) or
-     (currentTasks.normal and #currentTasks.normal > 0) or
-     (currentTasks.daily and #currentTasks.daily > 0) then
-    hasTasks = true
-  end
-  
-  -- Display message if no tasks are available
-  if not hasTasks then
-    local noTasksLabel = g_ui.createWidget('Label', taskList)
-    noTasksLabel:setText("No tasks available. Check back later or talk to the Task Master.")
-    noTasksLabel:setColor('#aaaaaa')
-    noTasksLabel:setFont('verdana-11px-rounded')
-    noTasksLabel:setTextAlign(AlignCenter)
-    noTasksLabel:setHeight(40)
-    noTasksLabel:setMarginTop(50)
-    return
   end
 
   local itemCount = 0
 
-  -- Add available tasks section if there are any
-  if availableTasks and availableTasks.daily and #availableTasks.daily > 0 then
-    createSectionHeader("Available Daily Tasks")
+  -- Add Daily Tasks section
+  if currentTasks and currentTasks.daily and #currentTasks.daily > 0 then
+    createSectionHeader("Daily Tasks")
     
-    g_logger.info("Adding daily tasks: " .. tostring(#availableTasks.daily))
-    for i, task in ipairs(availableTasks.daily) do
+    g_logger.info("Adding daily tasks: " .. tostring(#currentTasks.daily))
+    for i, task in ipairs(currentTasks.daily) do
       g_logger.info("Adding daily task " .. i .. ": " .. (task.name or "Unknown"))
       local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
       itemCount = itemCount + 1
     end
   end
   
-  -- Add current normal tasks section
-  if currentTasks and currentTasks.normal and #currentTasks.normal > 0 then
+  -- Add Normal Tasks section
+  if availableTasks and availableTasks.normal and #availableTasks.normal > 0 then
     -- Add spacer before new section
     local spacer = g_ui.createWidget('UIWidget', taskList)
     spacer:setHeight(10)
     spacer:setPhantom(true)
     
-    createSectionHeader("Current Normal Tasks")
+    createSectionHeader("Normal Tasks")
     
-    g_logger.info("Adding current normal tasks: " .. tostring(#currentTasks.normal))
-    for i, task in ipairs(currentTasks.normal) do
-      g_logger.info("Adding current normal task " .. i .. ": " .. (task.name or "Unknown"))
+    g_logger.info("Adding normal tasks: " .. tostring(#availableTasks.normal))
+    for i, task in ipairs(availableTasks.normal) do
+      g_logger.info("Adding normal task " .. i .. ": " .. (task.name or "Unknown"))
       local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
       itemCount = itemCount + 1
     end
   end
-  
-  -- Add current daily tasks section
-  if currentTasks and currentTasks.daily and #currentTasks.daily > 0 then
-    -- Add spacer before new section
-    local spacer = g_ui.createWidget('UIWidget', taskList)
-    spacer:setHeight(10)
-    spacer:setPhantom(true)
+
+  -- Add current normal tasks if they exist and aren't already shown
+  if currentTasks and currentTasks.normal and #currentTasks.normal > 0 then
+    if not (availableTasks and availableTasks.normal and #availableTasks.normal > 0) then
+      -- Add spacer before section if it wasn't added before
+      local spacer = g_ui.createWidget('UIWidget', taskList)
+      spacer:setHeight(10)
+      spacer:setPhantom(true)
+      
+      createSectionHeader("Normal Tasks")
+    end
     
-    createSectionHeader("Current Daily Tasks")
-    
-    g_logger.info("Adding current daily tasks: " .. tostring(#currentTasks.daily))
-    for i, task in ipairs(currentTasks.daily) do
-      g_logger.info("Adding current daily task " .. i .. ": " .. (task.name or "Unknown"))
+    for i, task in ipairs(currentTasks.normal) do
+      g_logger.info("Adding current normal task " .. i .. ": " .. (task.name or "Unknown"))
       local widget = addTaskToList(task, taskList, itemCount % 2 == 0)
       itemCount = itemCount + 1
     end
@@ -596,6 +577,49 @@ function populateTaskList()
   end
 end
 
+function getMonsterTypeFromName(taskName)
+  if not taskName then return "default" end
+  
+  -- Converter para minúsculas para facilitar a comparação
+  local lowerName = taskName:lower()
+  
+  -- Mapeamento direto de nomes de tasks para tipos de monstros
+  local taskToMonster = {
+    ["daily amazon raid"] = "amazon",
+    ["daily rotworm hunt"] = "rotworm",
+    ["daily dragon lair"] = "dragon",
+    ["daily minotaur cleansing"] = "minotaur",
+    ["daily orc fortress"] = "orc",
+    ["rat extermination"] = "rat",
+    ["spider hunter"] = "spider",
+    ["orc slayer"] = "orc"
+  }
+  
+  -- Tentar encontrar correspondência exata primeiro
+  if taskToMonster[lowerName] then
+    return taskToMonster[lowerName]
+  end
+  
+  -- Se não encontrar correspondência exata, procurar por palavras-chave
+  local keywords = {
+    ["amazon"] = "amazon",
+    ["rotworm"] = "rotworm",
+    ["dragon"] = "dragon",
+    ["minotaur"] = "minotaur",
+    ["orc"] = "orc",
+    ["rat"] = "rat",
+    ["spider"] = "spider"
+  }
+  
+  for keyword, monsterType in pairs(keywords) do
+    if lowerName:find(keyword) then
+      return monsterType
+    end
+  end
+  
+  return "default"
+end
+
 function addTaskToList(task, container, isEven)
   if not container then return nil end
   
@@ -618,12 +642,28 @@ function addTaskToList(task, container, isEven)
   
   -- Get the monster type for the icon
   local monsterType = "default"
-  if task.monsters and #task.monsters > 0 then
+  
+  -- Log task information for debugging
+  g_logger.info("Processing task: " .. (task.name or "Unknown") .. ", Type: " .. (task.type == TASK_TYPE_DAILY and "Daily" or "Normal"))
+  
+  -- Get monster type from task name first
+  monsterType = getMonsterTypeFromName(task.name)
+  g_logger.info("Monster type from name: " .. monsterType)
+  
+  -- If we got a default type, try to get it from monsters array
+  if monsterType == "default" and task.monsters and #task.monsters > 0 then
     monsterType = task.monsters[1]:lower()
+    g_logger.info("Monster type from monsters array: " .. monsterType)
   end
   
   -- Use the task icon from taskIcons dictionary
-  local iconPath = taskIcons[monsterType] or taskIcons["default"]
+  local iconPath = taskIcons[monsterType]
+  if not iconPath then
+    g_logger.info("No icon found for monster type: " .. monsterType .. ", using default")
+    iconPath = taskIcons["default"]
+  else
+    g_logger.info("Using icon path: " .. iconPath)
+  end
   
   -- Set the icon
   local iconWidget = taskWidget:getChildById('taskIcon')
