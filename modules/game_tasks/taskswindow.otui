@@ -260,7 +260,7 @@ TasksWindow < MainWindow
         anchors.top: rewardsPanel.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 90
+        height: 100
         margin-top: 10
         background-color: #101010ee
         border: 1 #444444
@@ -279,8 +279,8 @@ TasksWindow < MainWindow
           anchors.left: parent.left
           anchors.top: prev.bottom
           anchors.bottom: parent.bottom
-          width: 80
-          margin-left: 30
+          width: 85
+          margin-left: 20
           margin-top: 5
           
           UIWidget
@@ -297,12 +297,13 @@ TasksWindow < MainWindow
             !text: tr('Troll')
             anchors.top: monster1Icon.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            margin-top: 2
-            text-auto-resize: true
+            margin-top: 3
+            text-auto-resize: false
             text-wrap: true
-            width: 75
+            width: 80
+            height: 30
             text-align: center
-            font: verdana-9px-rounded
+            font: verdana-11px-rounded
             color: #ffffff
           
         // Second monster with name
@@ -311,7 +312,7 @@ TasksWindow < MainWindow
           anchors.left: monster1Panel.right
           anchors.top: monster1Panel.top
           anchors.bottom: parent.bottom
-          width: 80
+          width: 85
           margin-left: 10
           
           UIWidget
@@ -328,12 +329,13 @@ TasksWindow < MainWindow
             !text: tr('Orc Spearman')
             anchors.top: monster2Icon.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            margin-top: 2
-            text-auto-resize: true
+            margin-top: 3
+            text-auto-resize: false
             text-wrap: true
-            width: 75
+            width: 80
+            height: 30
             text-align: center
-            font: verdana-9px-rounded
+            font: verdana-11px-rounded
             color: #ffffff
           
         // Third monster with name
@@ -342,7 +344,7 @@ TasksWindow < MainWindow
           anchors.left: monster2Panel.right
           anchors.top: monster1Panel.top
           anchors.bottom: parent.bottom
-          width: 80
+          width: 85
           margin-left: 10
           
           UIWidget
@@ -359,12 +361,13 @@ TasksWindow < MainWindow
             !text: tr('Orc Warrior')
             anchors.top: monster3Icon.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            margin-top: 2
-            text-auto-resize: true
+            margin-top: 3
+            text-auto-resize: false
             text-wrap: true
-            width: 75
+            width: 80
+            height: 30
             text-align: center
-            font: verdana-9px-rounded
+            font: verdana-11px-rounded
             color: #ffffff
       
       // Kills panel with multiple columns
@@ -401,9 +404,10 @@ TasksWindow < MainWindow
         Label
           id: killsRequired2
           !text: tr('100')
-          anchors.top: prev.top
+          anchors.top: killsRequired1.top
           anchors.left: parent.horizontalCenter
-          anchors.right: killsRequired3.left
+          anchors.right: parent.right
+          margin-right: 100
           text-align: center
           font: verdana-11px-rounded
           
@@ -411,7 +415,7 @@ TasksWindow < MainWindow
         Label
           id: killsRequired3
           !text: tr('5000')
-          anchors.top: prev.top
+          anchors.top: killsRequired1.top
           anchors.right: parent.right
           width: 100
           text-align: center
