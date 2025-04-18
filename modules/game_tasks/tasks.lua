@@ -1,6 +1,11 @@
 g_logger.info("Carregando módulo game_tasks...")
 g_logger.info("Inicializando módulo game_tasks...")
 
+-- ATUALIZAÇÃO: Este arquivo foi modificado para incluir recompensas fixas baseadas no NPC task_master.lua
+-- As recompensas são definidas localmente para garantir que a UI exiba valores corretos, mesmo se
+-- o servidor não enviar informações completas. Os valores correspondem às recompensas definidas no NPC.
+-- Última atualização: Recompensas atualizadas para usar os valores exatos do NPC.
+
 -- Constants
 local TASK_TYPE_NORMAL = 1
 local TASK_TYPE_DAILY = 2
@@ -38,6 +43,103 @@ local taskIcons = {
   dragon = "/images/game/creatures/monsters/dragon",
   rat = "/images/game/creatures/monsters/rat",
   default = "/images/game/creatures/monsters/troll"
+}
+
+-- Mapeamento fixo de recompensas para cada tipo de tarefa
+local taskRewards = {
+  -- Normal tasks
+  [1] = { -- Rat Extermination
+    points = 1,
+    exp = 200,
+    gold = 500, -- 5 platinum coins
+    access = "None",
+    teleport = "None",
+    bonus = "None",
+    monsters = {"rat", "cave rat"}
+  },
+  [2] = { -- Spider Hunter
+    points = 1,
+    exp = 500,
+    gold = 1000, -- 10 platinum coins
+    access = "None",
+    teleport = "None",
+    bonus = "+10% Loot chance",
+    monsters = {"spider"}
+  },
+  [3] = { -- Orc Slayer
+    points = 2,
+    exp = 1000,
+    gold = 2000, -- 20 platinum coins
+    access = "Orc Fortress",
+    teleport = "None",
+    bonus = "None",
+    monsters = {"orc", "orc spearman", "orc warrior"}
+  },
+  [4] = { -- Cyclops Elimination
+    points = 2,
+    exp = 3000,
+    gold = 4000, -- 40 platinum coins
+    access = "Cyclopolis",
+    teleport = "Cyclopolis shortcut",
+    bonus = "+5% Experience",
+    monsters = {"cyclops"}
+  },
+  [5] = { -- Dragon Hunt
+    points = 3,
+    exp = 5000,
+    gold = 6000, -- 60 platinum coins
+    access = "Dragon Lair",
+    teleport = "Dragon Boss fight",
+    bonus = "+15% Loot chance",
+    monsters = {"dragon"}
+  },
+  
+  -- Daily tasks
+  [101] = { -- Daily Rotworm Hunt
+    points = 1,
+    exp = 300,
+    gold = 300, -- 3 platinum coins
+    access = "None",
+    teleport = "None",
+    bonus = "+5% Loot chance (today)",
+    monsters = {"rotworm"}
+  },
+  [102] = { -- Daily Minotaur Cleansing
+    points = 1,
+    exp = 600,
+    gold = 600, -- 6 platinum coins
+    access = "Minotaur Cave",
+    teleport = "None",
+    bonus = "None",
+    monsters = {"minotaur", "minotaur guard", "minotaur archer"}
+  },
+  [103] = { -- Daily Amazon Raid
+    points = 1,
+    exp = 800,
+    gold = 800, -- 8 platinum coins
+    access = "Amazon Camp",
+    teleport = "None",
+    bonus = "+10% Experience (today)",
+    monsters = {"amazon", "valkyrie"}
+  },
+  [104] = { -- Daily Orc Fortress
+    points = 1,
+    exp = 1200,
+    gold = 1200, -- 12 platinum coins
+    access = "Orc Fortress",
+    teleport = "None",
+    bonus = "+5% Loot chance (today)",
+    monsters = {"orc", "orc spearman", "orc warrior", "orc berserker", "orc leader"}
+  },
+  [105] = { -- Daily Dragon Lair
+    points = 1,
+    exp = 3500,
+    gold = 3000, -- 30 platinum coins
+    access = "Dragon Lair",
+    teleport = "Dragon Boss Arena",
+    bonus = "+15% Experience (today)",
+    monsters = {"dragon", "dragon lord"}
+  }
 }
 
 -- Helper function to check task status
@@ -273,72 +375,120 @@ function onTaskData(data)
   currentTasks = data.currentTasks or { normal = {}, daily = {} }
   
   -- Process all tasks with default values if missing
-  for _, category in pairs({availableTasks, currentTasks}) do
-    for _, list in pairs(category) do
-      for _, task in ipairs(list) do
-        -- Set monster information if not present
-        if not task.monsters or #task.monsters == 0 then
-          -- Try to derive monster info from task name
-          local monsterName = string.match(task.name:lower(), "(%w+)")
-          if monsterName and monsterName ~= "daily" then
-            task.monsters = {monsterName}
-          elseif task.type == TASK_TYPE_DAILY then
-            -- For daily tasks, extract second word as monster name
-            local words = {}
-            for word in task.name:gmatch("%w+") do
-              table.insert(words, word:lower())
-            end
-            if words[2] then
-              task.monsters = {words[2]}
-            else
-              task.monsters = {"default"}
-            end
+  local function processTaskList(taskList, taskType)
+    for _, task in ipairs(taskList) do
+      -- Ensure task has an ID
+      if not task.id then
+        g_logger.error("Task missing ID: " .. task.name)
+        goto continue
+      end
+      
+      -- Verificar se há recompensas e monstros fixos para essa tarefa
+      local fixedRewards = taskRewards[task.id]
+      if fixedRewards then
+        g_logger.debug("Found fixed rewards for task ID " .. task.id)
+        
+        -- Usar os monstros definidos no mapeamento fixo
+        if fixedRewards.monsters and #fixedRewards.monsters > 0 then
+          task.monsters = fixedRewards.monsters
+          g_logger.debug("DEFINIDOS: Usando monstros fixos para tarefa " .. task.id .. ": " .. table.concat(task.monsters, ", "))
+        end
+      end
+      
+      -- Set monster information if not present
+      if not task.monsters or #task.monsters == 0 then
+        g_logger.debug("Nenhuma lista de monstros encontrada para tarefa " .. task.id .. ", derivando do nome")
+        
+        -- Try to derive monster info from task name
+        local monsterName = string.match(task.name:lower(), "(%w+)")
+        if monsterName and monsterName ~= "daily" then
+          task.monsters = {monsterName}
+        elseif task.type == TASK_TYPE_DAILY then
+          -- For daily tasks, extract second word as monster name
+          local words = {}
+          for word in task.name:gmatch("%w+") do
+            table.insert(words, word:lower())
+          end
+          if words[2] then
+            task.monsters = {words[2]}
           else
             task.monsters = {"default"}
           end
+        else
+          task.monsters = {"default"}
         end
-        
-        -- Ensure reward information exists
-        if not task.reward then
-          task.reward = {}
-        end
-        
-        -- Add default reward info if missing
-        if not task.reward.points then
-          task.reward.points = task.type == TASK_TYPE_DAILY and 1 or 2
-        end
-        
-        if not task.reward.exp then
-          -- Calculate default experience based on level
-          task.reward.exp = (task.level or 1) * 100
-        end
-        
-        if not task.reward.gold then
-          -- Calculate default gold based on level
-          task.reward.gold = (task.level or 1) * 50
-        end
-        
-        if not task.reward.access then
-          task.reward.access = "None"
-        end
-        
-        if not task.reward.teleport then
-          task.reward.teleport = "None"
-        end
-        
-        if not task.bonus then
-          task.bonus = "None"
-        end
+        g_logger.debug("DERIVADOS: Monstros para tarefa " .. task.id .. ": " .. table.concat(task.monsters, ", "))
       end
+      
+      -- Ensure reward information exists
+      if not task.reward then
+        task.reward = {}
+      end
+      
+      -- Add default reward info if missing
+      if not task.reward.points then
+        task.reward.points = task.type == TASK_TYPE_DAILY and 1 or 2
+      end
+      
+      if not task.reward.exp then
+        -- Calculate default experience based on level
+        task.reward.exp = (task.level or 1) * 100
+      end
+      
+      if not task.reward.gold then
+        -- Calculate default gold based on level
+        task.reward.gold = (task.level or 1) * 50
+      end
+      
+      if not task.reward.access then
+        task.reward.access = "None"
+      end
+      
+      if not task.reward.teleport then
+        task.reward.teleport = "None"
+      end
+      
+      if not task.bonus then
+        task.bonus = "None"
+      end
+      
+      -- Ensure task has a type (for UI processing)
+      if not task.type then
+        task.type = taskType
+      end
+      
+      ::continue::
     end
   end
   
+  -- Process the task lists
+  if availableTasks.normal then 
+    processTaskList(availableTasks.normal, TASK_TYPE_NORMAL)
+  end
+  
+  if availableTasks.daily then 
+    processTaskList(availableTasks.daily, TASK_TYPE_DAILY)
+  end
+  
+  if currentTasks.normal then 
+    processTaskList(currentTasks.normal, TASK_TYPE_NORMAL)
+  end
+  
+  if currentTasks.daily then 
+    processTaskList(currentTasks.daily, TASK_TYPE_DAILY)
+  end
+  
   -- Count tasks for debugging
-  local normalCount = #availableTasks.normal
-  local dailyCount = #availableTasks.daily
-  g_logger.info("Task counts - Normal: " .. normalCount .. ", Daily: " .. dailyCount)
+  local normalCount = availableTasks.normal and #availableTasks.normal or 0
+  local dailyCount = availableTasks.daily and #availableTasks.daily or 0
+  g_logger.info("Task counts - Available Normal: " .. normalCount .. ", Available Daily: " .. dailyCount)
+  
+  local currentNormalCount = currentTasks.normal and #currentTasks.normal or 0
+  local currentDailyCount = currentTasks.daily and #currentTasks.daily or 0
+  g_logger.info("Task counts - Current Normal: " .. currentNormalCount .. ", Current Daily: " .. currentDailyCount)
   
   local taskPoints = data.taskPoints or 0
+  g_logger.info("Player task points: " .. taskPoints)
   
   -- Display tasks window
   displayTasksWindow(taskPoints)
@@ -446,6 +596,13 @@ function onTaskUpdate(data)
       if selectedTask and selectedTask.id == data.taskId then
         updateTaskDetails(selectedTask)
         updateTaskButton(selectedTask)
+        
+        -- Por precaução, atualize a janela novamente após um breve período
+        scheduleEvent(function()
+          if selectedTask and tasksWindow and tasksWindow:isVisible() then
+            updateTaskDetails(selectedTask)
+          end
+        end, 500)
       end
       
       -- Always update task list to show progress
@@ -491,19 +648,71 @@ function displayTasksWindow(taskPoints)
   
   if children and #children > 0 then
     -- Find the first non-header task item
+    local firstTaskWidget = nil
     for _, child in ipairs(children) do
       if child.task then
-        selectedTask = child.task
-        updateTaskDetails(selectedTask)
-        updateTaskButton(selectedTask)
-        -- Highlight the selected task using proper UI methods
-        if type(child.setBackgroundColor) == "function" then
-          child:setBackgroundColor('#444444')
-        end
-        if type(child.setColor) == "function" then
-          child:setColor('#ffffff')
-        end
+        firstTaskWidget = child
         break
+      end
+    end
+    
+    if firstTaskWidget then
+      g_logger.info("Selecting initial task: " .. (firstTaskWidget.task.name or "Unknown"))
+      
+      -- Find the most complete task info for this task
+      local taskId = firstTaskWidget.task.id
+      local completeTask = nil
+      
+      -- Check in current tasks first for most complete info
+      if firstTaskWidget.task.type == TASK_TYPE_DAILY and currentTasks.daily then
+        for _, task in ipairs(currentTasks.daily) do
+          if task.id == taskId then
+            completeTask = task
+            break
+          end
+        end
+      elseif currentTasks.normal then
+        for _, task in ipairs(currentTasks.normal) do
+          if task.id == taskId then
+            completeTask = task
+            break
+          end
+        end
+      end
+      
+      -- If not found in current tasks, check available tasks
+      if not completeTask and firstTaskWidget.task.type == TASK_TYPE_DAILY and availableTasks.daily then
+        for _, task in ipairs(availableTasks.daily) do
+          if task.id == taskId then
+            completeTask = task
+            break
+          end
+        end
+      elseif not completeTask and availableTasks.normal then
+        for _, task in ipairs(availableTasks.normal) do
+          if task.id == taskId then
+            completeTask = task
+            break
+          end
+        end
+      end
+      
+      -- Use the found task or fallback to the widget's task
+      selectedTask = completeTask or firstTaskWidget.task
+      
+      -- Update the UI with selected task details
+      updateTaskDetails(selectedTask)
+      updateTaskButton(selectedTask)
+      
+      -- Highlight the selected task
+      if type(firstTaskWidget.setBackgroundColor) == "function" then
+        firstTaskWidget:setBackgroundColor('#444444')
+      end
+      
+      -- Update text color
+      local nameLabel = firstTaskWidget:getChildById('taskName')
+      if nameLabel and type(nameLabel.setColor) == "function" then
+        nameLabel:setColor('#ffffff')
       end
     end
   end
@@ -695,6 +904,10 @@ function populateTaskList()
   for _, child in pairs(children) do
     if child.task then
       child.onClick = function()
+        -- Log a seleção da tarefa
+        g_logger.info("Task selected: " .. (child.task.name or "unknown") .. " (ID: " .. tostring(child.task.id) .. ")")
+        g_logger.debug("Task data: " .. json.encode(child.task))
+        
         -- Reset all tasks to default appearance
         for _, otherChild in pairs(children) do
           if otherChild.task then
@@ -720,9 +933,64 @@ function populateTaskList()
         
         -- Update selected task and details
         selectedTask = child.task
+        
+        -- Ensure we have complete task information
+        local completeTask = nil
+        
+        -- Check if this task is in currentTasks for most complete information
+        if selectedTask.type == TASK_TYPE_DAILY and currentTasks.daily then
+          for _, task in ipairs(currentTasks.daily) do
+            if task.id == selectedTask.id then
+              completeTask = task
+              g_logger.debug("Found complete task info in currentTasks.daily")
+              break
+            end
+          end
+        elseif currentTasks.normal then
+          for _, task in ipairs(currentTasks.normal) do
+            if task.id == selectedTask.id then
+              completeTask = task
+              g_logger.debug("Found complete task info in currentTasks.normal")
+              break
+            end
+          end
+        end
+        
+        -- If not found in currentTasks, check in availableTasks
+        if not completeTask and selectedTask.type == TASK_TYPE_DAILY and availableTasks.daily then
+          for _, task in ipairs(availableTasks.daily) do
+            if task.id == selectedTask.id then
+              completeTask = task
+              g_logger.debug("Found complete task info in availableTasks.daily")
+              break
+            end
+          end
+        elseif not completeTask and availableTasks.normal then
+          for _, task in ipairs(availableTasks.normal) do
+            if task.id == selectedTask.id then
+              completeTask = task
+              g_logger.debug("Found complete task info in availableTasks.normal")
+              break
+            end
+          end
+        end
+        
+        -- Use the most complete task info if found
+        if completeTask then
+          selectedTask = completeTask
+        end
+        
+        -- Force detailed update
         updateTaskDetails(selectedTask)
-        -- Guarantees the button is in the correct state
         updateTaskButton(selectedTask)
+        
+        -- Adicionar um pequeno delay para garantir que a UI seja atualizada corretamente
+        scheduleEvent(function()
+          if selectedTask and tasksWindow and tasksWindow:isVisible() then
+            updateTaskDetails(selectedTask)
+            updateTaskButton(selectedTask)
+          end
+        end, 50)
       end
     end
   end
@@ -867,29 +1135,36 @@ function updateTaskDetails(task)
     return
   end
   
+  g_logger.debug("Updating details for task: " .. task.name .. " (ID: " .. task.id .. ")")
+  
+  -- Obter as recompensas específicas para esta tarefa do mapeamento fixo
+  local fixedRewards = taskRewards[task.id]
+  if fixedRewards then
+    g_logger.debug("ENCONTRADO! Usando recompensas fixas para tarefa ID " .. task.id)
+    g_logger.debug("Fixed rewards: " .. json.encode(fixedRewards))
+  else
+    g_logger.debug("AVISO! Não foram encontradas recompensas fixas para a tarefa ID " .. task.id .. ", usando padrões")
+  end
+  
+  -- Verificar explicitamente se esta tarefa tem recompensas definidas no servidor
+  if task.reward then
+    g_logger.debug("Recompensas do servidor para tarefa " .. task.id .. ": " .. json.encode(task.reward))
+  else
+    g_logger.debug("A tarefa " .. task.id .. " não tem recompensas definidas pelo servidor")
+  end
+  
+  -- Verificar a lista de monstros da tarefa
+  if task.monsters then
+    g_logger.debug("Monstros da tarefa do servidor: " .. json.encode(task.monsters))
+  else
+    g_logger.debug("Tarefa não tem lista de monstros do servidor")
+  end
+  
   -- Primeiro obter o painel de detalhes
   local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
   if not detailsPanel then
     g_logger.debug("Cannot find detailsPanel")
     return
-  end
-  
-  -- Verifica se o botão está presente antes de iniciar (como filho do detailsPanel)
-  local startTaskButton = detailsPanel:getChildById('startTaskButton')
-  g_logger.debug("Start task button found: " .. tostring(startTaskButton ~= nil))
-  
-  if not startTaskButton then
-    g_logger.debug("Cannot update task button: start task button not found in detailsPanel")
-    
-    -- Tentar encontrar de forma recursiva em todo o painel de detalhes
-    startTaskButton = detailsPanel:recursiveGetChildById('startTaskButton')
-    g_logger.debug("Start task button found recursively in detailsPanel: " .. tostring(startTaskButton ~= nil))
-    
-    -- Se ainda não encontrou, tentar na janela inteira como último recurso
-    if not startTaskButton then
-      startTaskButton = tasksWindow:recursiveGetChildById('startTaskButton')
-      g_logger.debug("Start task button found recursively in tasksWindow: " .. tostring(startTaskButton ~= nil))
-    end
   end
   
   -- Verify that we have all required panels first
@@ -902,17 +1177,25 @@ function updateTaskDetails(task)
     return
   end
   
+  -- Obter o botão de início de tarefa
+  local startTaskButton = detailsPanel:getChildById('startTaskButton')
+  if not startTaskButton then
+    startTaskButton = tasksWindow:recursiveGetChildById('startTaskButton')
+  end
+  
   -- Ajustar margem e largura dos labels
   local leftMargin = 10  -- Reduzido para dar mais espaço ao texto
   local labelWidth = 200 -- Aumentado para garantir que o texto caiba
   
-  -- Update rewards
+  -- Obter todos os labels de recompensa
   local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
   local experienceLabel = rewardsPanel:recursiveGetChildById('experienceLabel')
   local goldLabel = rewardsPanel:recursiveGetChildById('goldLabel')
   local itemsLabel = rewardsPanel:recursiveGetChildById('itemsLabel')
   local accessLabel = rewardsPanel:recursiveGetChildById('accessLabel')
   local teleportLabel = rewardsPanel:recursiveGetChildById('teleportLabel')
+  local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
+  local monstersLabel = rewardsPanel:recursiveGetChildById('monstersLabel')
   
   -- Função helper para configurar os labels
   local function setupLabel(label, text, center)
@@ -929,10 +1212,59 @@ function updateTaskDetails(task)
     end
   end
   
-  -- Atualizar os labels com a nova configuração
-  setupLabel(taskPointsLabel, tr('Task Points: %s', task.reward and task.reward.points or 1))
-  setupLabel(experienceLabel, tr('Experience: %s', task.reward and task.reward.exp or 1000))
-  setupLabel(goldLabel, tr('Gold: %s', task.reward and task.reward.gold or 500))
+  -- Determinar as recompensas a serem exibidas - priorizar as recompensas fixas do cliente
+  local points, exp, gold, access, teleport, bonus
+  local monstersList = task.monsters or {}
+  
+  g_logger.debug("Lista de monstros da tarefa no início: " .. json.encode(monstersList))
+  
+  if fixedRewards then
+    -- Use fixed rewards values
+    points = fixedRewards.points
+    exp = fixedRewards.exp
+    gold = fixedRewards.gold
+    access = fixedRewards.access
+    teleport = fixedRewards.teleport
+    bonus = fixedRewards.bonus
+    
+    -- Usar a lista de monstros do mapeamento fixo se disponível
+    if fixedRewards.monsters and #fixedRewards.monsters > 0 then
+      monstersList = fixedRewards.monsters
+      g_logger.debug("Substituindo por lista fixa de monstros: " .. json.encode(monstersList))
+    end
+    
+    g_logger.debug("Usando recompensas fixas")
+  else
+    -- Fallback to server reward values or defaults
+    points = task.reward and task.reward.points or 1
+    exp = task.reward and task.reward.exp or 1000
+    gold = task.reward and task.reward.gold or 500
+    access = task.reward and task.reward.access or "None"
+    teleport = task.reward and task.reward.teleport or "None"
+    bonus = task.bonus or "None"
+    g_logger.debug("Usando recompensas do servidor ou padrões")
+  end
+  
+  -- Garantir que monstersList nunca seja nil
+  if not monstersList or type(monstersList) ~= "table" then
+    g_logger.debug("Problema com a lista de monstros, criando lista vazia")
+    monstersList = {}
+  end
+  
+  g_logger.debug("Exibindo recompensas para tarefa " .. task.id .. ":")
+  g_logger.debug("  - Points: " .. tostring(points))
+  g_logger.debug("  - Experience: " .. tostring(exp))
+  g_logger.debug("  - Gold: " .. tostring(gold))
+  g_logger.debug("  - Access: " .. tostring(access))
+  g_logger.debug("  - Teleport: " .. tostring(teleport))
+  g_logger.debug("  - Bonus: " .. tostring(bonus))
+  
+  -- Atualizar os labels com os valores determinados
+  setupLabel(taskPointsLabel, tr('Task Points: %s', points))
+  setupLabel(experienceLabel, tr('Experience: %s', exp))
+  setupLabel(goldLabel, tr('Gold: %s', gold))
+  setupLabel(accessLabel, access)
+  setupLabel(teleportLabel, teleport)
   
   -- Update items reward
   local itemText = "None"
@@ -944,36 +1276,43 @@ function updateTaskDetails(task)
     end
   end
   setupLabel(itemsLabel, itemText)
-  
-  -- Update access and teleport rewards
-  setupLabel(accessLabel, task.reward and task.reward.access or "None")
-  setupLabel(teleportLabel, task.reward and task.reward.teleport or "None")
-  
-  -- Update monsters panel
-  monstersPanel:destroyChildren()
-  if task.monsters then
-    local x = 10
-    for _, monster in ipairs(task.monsters) do
-      local monsterType = monster:lower()
-      local iconPath = taskIcons[monsterType] or taskIcons["default"]
-      
-      local monsterWidget = g_ui.createWidget('UIWidget', monstersPanel)
-      monsterWidget:setImageSource(iconPath)
-      monsterWidget:setSize({width = 32, height = 32})
-      monsterWidget:setMarginLeft(x)
-      monsterWidget:setMarginTop(10)
-      x = x + 40
-    end
+
+  -- Pegar lista de monstros do mapeamento fixo
+  local monsters = {}
+  if task.id and taskRewards[task.id] then
+    monsters = taskRewards[task.id].monsters or {}
   end
+
+  -- Criar label para lista de monstros
+  if #monsters > 0 then
+    -- Formatar os nomes dos monstros com primeira letra maiúscula
+    local formattedMonsters = {}
+    for _, monster in ipairs(monsters) do
+      local formatted = monster:gsub("(%a)([%w_']*)", function(first, rest)
+        return first:upper() .. rest:lower()
+      end)
+      table.insert(formattedMonsters, formatted)
+    end
+    
+    -- Criar o texto dos monstros
+    local monsterText = table.concat(formattedMonsters, ", ")
+    setupLabel(monstersLabel, monsterText)
+  else
+    setupLabel(monstersLabel, "None")
+  end
+
+  -- Debug da task atual
+  g_logger.info("Atualizando task: " .. (task.name or "unknown"))
+  g_logger.info("Task ID: " .. (task.id or "no id"))
   
   -- Update kills panel
   local killsRequired = killsPanel:recursiveGetChildById('killsRequired')
   local killsProgress = killsPanel:recursiveGetChildById('killsProgress')
-  local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
   
   -- Configurar labels do painel de kills
   if killsRequired then 
-    setupLabel(killsRequired, tostring(task.total or task.count or 100), true)
+    local total = task.total or 100
+    setupLabel(killsRequired, tostring(total), true)
   end
   
   -- Update progress
@@ -997,22 +1336,60 @@ function updateTaskDetails(task)
       end
     end
     
-    local required = task.total or task.count or 100
+    local required = task.total or 100
     local progressPercent = math.min(100, math.floor((currentCount / required) * 100))
+    g_logger.debug("Setting progress to " .. progressPercent .. "% (" .. currentCount .. "/" .. required .. ")")
     killsProgress:setPercent(progressPercent)
   end
   
+  -- Update bonus label
+  local bonusToDisplay = bonus or "None"
   if bonusLabel then 
-    setupLabel(bonusLabel, task.bonus or tr("No Bonuses"))
+    setupLabel(bonusLabel, bonusToDisplay)
   end
   
-  -- Não precisamos declarar startTaskButton novamente, pois já foi declarado no início da função
+  -- Atualizar o painel de monstros
+  monstersPanel:destroyChildren()
+  
+  -- Criar container para os ícones dos monstros
+  local iconsContainer = g_ui.createWidget('UIWidget', monstersPanel)
+  iconsContainer:setId('monstersIconsContainer')
+  iconsContainer:setLayout(VerticalLayout)
+  iconsContainer:setMarginTop(10)
+  
+  -- Adicionar os ícones dos monstros
+  if monstersList and #monstersList > 0 then
+    -- Container horizontal para os ícones
+    local horizontalContainer = g_ui.createWidget('UIWidget', iconsContainer)
+    horizontalContainer:setLayout(HorizontalLayout)
+    horizontalContainer:setMarginLeft(10)
+    horizontalContainer:setHeight(40)
+    
+    for _, monster in ipairs(monstersList) do
+      local monsterType = monster:lower()
+      local iconPath = taskIcons[monsterType] or taskIcons["default"]
+      
+      local monsterIcon = g_ui.createWidget('UIWidget', horizontalContainer)
+      monsterIcon:setId('monsterIcon_' .. monsterType)
+      monsterIcon:setImageSource(iconPath)
+      monsterIcon:setSize({width = 32, height = 32})
+      monsterIcon:setMarginRight(5)
+      monsterIcon:setTooltip(monster:sub(1, 1):upper() .. monster:sub(2):lower())
+    end
+    
+    -- Ajustar altura do painel de monstros
+    monstersPanel:setHeight(60)
+  end
+  
+  -- Forçar atualização da UI
+  if tasksWindow then
+    tasksWindow:update()
+  end
+  
+  -- Update start/cancel task button
   if startTaskButton then
     -- Check if task is in progress
     local isInProgress = false
-    
-    -- Debug log to check task structure
-    g_logger.debug("Checking task status for: " .. (task.name or "unknown") .. " with ID: " .. tostring(task.id))
     
     -- Check if task status is STARTED
     if task.status == TASK_STATUS_STARTED then
@@ -1059,9 +1436,7 @@ function updateTaskDetails(task)
       startTaskButton:setVisible(true)
     end
     
-    -- Debug log the final decision
     g_logger.debug("Task " .. (task.name or "unknown") .. " isInProgress: " .. tostring(isInProgress))
-    g_logger.debug("Button text is now: " .. startTaskButton:getText())
   end
 end
 
@@ -1148,8 +1523,26 @@ function startTask()
             local taskCopy = table.copy(selectedTask)
             taskCopy.status = TASK_STATUS_STARTED
             taskCopy.count = 0
+            
+            -- Certifique-se de que as recompensas estão definidas
+            if not taskCopy.reward then
+              taskCopy.reward = {}
+            end
+            
+            -- Adicionar recompensas fixas se disponíveis
+            local fixedRewards = taskRewards[taskCopy.id]
+            if fixedRewards then
+              g_logger.debug("Adding fixed rewards to task")
+              taskCopy.reward.points = fixedRewards.points
+              taskCopy.reward.exp = fixedRewards.exp
+              taskCopy.reward.gold = fixedRewards.gold
+              taskCopy.reward.access = fixedRewards.access
+              taskCopy.reward.teleport = fixedRewards.teleport
+              taskCopy.bonus = fixedRewards.bonus
+            end
+            
             table.insert(currentTasks.daily, taskCopy)
-            g_logger.debug("Added new daily task with STARTED status")
+            g_logger.debug("Added new daily task with STARTED status: " .. json.encode(taskCopy))
           end
         else
           if not currentTasks.normal then
@@ -1172,8 +1565,26 @@ function startTask()
             local taskCopy = table.copy(selectedTask)
             taskCopy.status = TASK_STATUS_STARTED
             taskCopy.count = 0
+            
+            -- Certifique-se de que as recompensas estão definidas
+            if not taskCopy.reward then
+              taskCopy.reward = {}
+            end
+            
+            -- Adicionar recompensas fixas se disponíveis
+            local fixedRewards = taskRewards[taskCopy.id]
+            if fixedRewards then
+              g_logger.debug("Adding fixed rewards to task")
+              taskCopy.reward.points = fixedRewards.points
+              taskCopy.reward.exp = fixedRewards.exp
+              taskCopy.reward.gold = fixedRewards.gold
+              taskCopy.reward.access = fixedRewards.access
+              taskCopy.reward.teleport = fixedRewards.teleport
+              taskCopy.bonus = fixedRewards.bonus
+            end
+            
             table.insert(currentTasks.normal, taskCopy)
-            g_logger.debug("Added new normal task with STARTED status")
+            g_logger.debug("Added new normal task with STARTED status: " .. json.encode(taskCopy))
           end
         end
       else -- action == "cancel"
@@ -1208,6 +1619,63 @@ function startTask()
       -- Atualiza a lista de tarefas e detalhes
       populateTaskList()
       updateTaskDetails(selectedTask)
+      
+      -- Atualize a janela novamente após um breve período para garantir
+      -- que as recompensas sejam exibidas corretamente
+      scheduleEvent(function()
+        if selectedTask and tasksWindow and tasksWindow:isVisible() then
+          g_logger.debug("Atualizando detalhes da tarefa novamente após atraso")
+          updateTaskDetails(selectedTask)
+          updateTaskButton(selectedTask)
+        end
+      end, 500)
+      
+      -- Atualização final para garantir que as recompensas fixas sejam usadas
+      scheduleEvent(function()
+        if selectedTask and tasksWindow and tasksWindow:isVisible() then
+          g_logger.debug("Verificação final de recompensas para tarefa " .. selectedTask.id)
+          -- Forçar o uso de recompensas fixas
+          local fixedRewards = taskRewards[selectedTask.id]
+          if fixedRewards then
+            -- Atualizar os detalhes com os valores fixos
+            local rewardsPanel = tasksWindow:recursiveGetChildById('rewardsPanel')
+            local killsPanel = tasksWindow:recursiveGetChildById('killsPanel')
+            
+            if rewardsPanel and killsPanel then
+              local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
+              local experienceLabel = rewardsPanel:recursiveGetChildById('experienceLabel')
+              local goldLabel = rewardsPanel:recursiveGetChildById('goldLabel')
+              local accessLabel = rewardsPanel:recursiveGetChildById('accessLabel')
+              local teleportLabel = rewardsPanel:recursiveGetChildById('teleportLabel')
+              local bonusLabel = killsPanel:recursiveGetChildById('bonusLabel')
+              
+              -- Configurar labels com valores fixos
+              local function setupLabel(label, text, center)
+                if label then
+                  label:setText(text)
+                  if center then
+                    label:setTextAlign(AlignCenter)
+                    label:setMarginLeft(0)
+                  else
+                    label:setMarginLeft(10)
+                  end
+                  label:setWidth(200)
+                  label:setTextWrap(true)
+                end
+              end
+              
+              setupLabel(taskPointsLabel, tr('Task Points: %s', fixedRewards.points))
+              setupLabel(experienceLabel, tr('Experience: %s', fixedRewards.exp))
+              setupLabel(goldLabel, tr('Gold: %s', fixedRewards.gold))
+              setupLabel(accessLabel, fixedRewards.access)
+              setupLabel(teleportLabel, fixedRewards.teleport)
+              setupLabel(bonusLabel, fixedRewards.bonus)
+              
+              g_logger.debug("Recompensas finais forçadas para a tarefa")
+            end
+          end
+        end
+      end, 1000)
     end
   end
 end 
