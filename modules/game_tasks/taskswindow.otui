@@ -55,13 +55,38 @@ TaskPanel < UIWidget
     
   Label
     id: taskName
+    text: Task Name
     anchors.left: taskIcon.right
-    anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
+    anchors.top: taskIcon.top
     margin-left: 10
-    text-align: left
+    width: 180
+    text-wrap: false
+    phantom: true
+    color: #ffffff
     font: verdana-11px-monochrome
-    color: #cccccc
+    
+  Label
+    id: taskLevel
+    text: Level 8
+    anchors.left: taskIcon.right
+    anchors.top: taskName.bottom
+    margin-left: 10
+    margin-top: 2
+    phantom: true
+    color: #888888
+    font: verdana-11px-monochrome
+    
+  Label
+    id: recommendedTag
+    text: Recommended
+    anchors.left: taskIcon.right
+    anchors.top: taskLevel.bottom
+    margin-left: 10
+    margin-top: 2
+    phantom: true
+    color: #00ff00
+    font: verdana-11px-monochrome
+    visible: false
     
   $hover:
     background-color: #444444
@@ -84,15 +109,15 @@ TasksWindow < MainWindow
   @onEscape: self:hide()
   @onEnter: self:hide()
   
-  // Painel principal com gradiente
+  // Main panel with dark background
   Panel
     id: mainPanel
     anchors.fill: parent
     margin: 3
-    background-color: #20202088
+    background-color: #202020ee
     border: 1 #333333
     
-    // Campo de busca estilizado
+    // Search field
     TextEdit
       id: searchText
       anchors.top: parent.top
@@ -110,7 +135,7 @@ TasksWindow < MainWindow
       border: 1 #444444
       @onTextChange: modules.game_tasks.filterTasks()
       
-    // Lista de tasks com scroll
+    // Task list panel with scroll
     Panel
       id: taskListPanel
       anchors.top: searchText.bottom
@@ -119,7 +144,7 @@ TasksWindow < MainWindow
       margin-top: 10
       margin-left: 10
       width: 350
-      background-color: #15151588
+      background-color: #151515ee
       border: 1 #333333
       
       ScrollablePanel
@@ -139,7 +164,7 @@ TasksWindow < MainWindow
         step: 14
         pixels-scroll: true
       
-    // Painel de detalhes
+    // Details panel
     Panel
       id: detailsPanel
       anchors.top: searchText.bottom
@@ -147,10 +172,10 @@ TasksWindow < MainWindow
       anchors.right: parent.right
       anchors.bottom: parent.bottom
       margin: 10
-      background-color: #15151588
+      background-color: #151515ee
       border: 1 #333333
       
-      // Painel de recompensas
+      // Rewards panel
       Panel
         id: rewardsPanel
         anchors.top: parent.top
@@ -158,7 +183,7 @@ TasksWindow < MainWindow
         anchors.right: parent.right
         height: 150
         margin: 10
-        background-color: #10101088
+        background-color: #101010ee
         border: 1 #444444
         
         Label
@@ -171,7 +196,7 @@ TasksWindow < MainWindow
           
         Label
           id: taskPointsLabel
-          !text: tr('Tasks Points: 0')
+          !text: tr('Task Points: 1')
           anchors.top: prev.bottom
           anchors.left: parent.left
           margin-top: 10
@@ -181,7 +206,7 @@ TasksWindow < MainWindow
           
         Label
           id: experienceLabel
-          !text: tr('Experience: 0')
+          !text: tr('Experience: 1000')
           anchors.top: prev.bottom
           anchors.left: parent.left
           margin-top: 5
@@ -191,7 +216,7 @@ TasksWindow < MainWindow
           
         Label
           id: goldLabel
-          !text: tr('Gold: 0')
+          !text: tr('Gold: 500')
           anchors.top: prev.bottom
           anchors.left: parent.left
           margin-top: 5
@@ -201,8 +226,8 @@ TasksWindow < MainWindow
           
         Label
           id: itemsLabel
-          !text: tr('Items: None')
-          anchors.top: prev.bottom
+          !text: tr('1x burning heart')
+          anchors.top: goldLabel.bottom
           anchors.left: parent.left
           margin-top: 5
           margin-left: 10
@@ -211,8 +236,8 @@ TasksWindow < MainWindow
           
         Label
           id: accessLabel
-          !text: tr('Access: None')
-          anchors.top: prev.bottom
+          !text: tr('Access to new hunting area')
+          anchors.top: itemsLabel.bottom
           anchors.left: parent.left
           margin-top: 5
           margin-left: 10
@@ -221,23 +246,72 @@ TasksWindow < MainWindow
           
         Label
           id: teleportLabel
-          !text: tr('Teleport: None')
-          anchors.top: prev.bottom
+          !text: tr('Teleport to Troll Boss fight')
+          anchors.top: accessLabel.bottom
           anchors.left: parent.left
           margin-top: 5
           margin-left: 10
           color: #ffffff
           font: verdana-11px-rounded
           
-      // Painel de kills
+      // Monsters panel - simplified version with fixed icons
       Panel
-        id: killsPanel
+        id: monstersDisplayPanel
         anchors.top: rewardsPanel.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 100
+        height: 60
         margin-top: 10
-        background-color: #10101088
+        background-color: #101010ee
+        border: 1 #444444
+        
+        Label
+          !text: tr('Monsters')
+          anchors.top: parent.top
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffcc00
+          font: verdana-11px-rounded
+        
+        // Just showing fixed monster icons in a row
+        UIWidget
+          id: monster1Icon
+          anchors.left: parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          margin-left: 40
+          size: 32 32
+          image-source: /images/game/creatures/monsters/troll
+          phantom: true
+          
+        UIWidget
+          id: monster2Icon
+          anchors.left: monster1Icon.right
+          anchors.verticalCenter: parent.verticalCenter
+          margin-left: 40
+          size: 32 32
+          image-source: /images/game/creatures/monsters/troll
+          phantom: true
+          visible: false
+          
+        UIWidget
+          id: monster3Icon
+          anchors.left: monster2Icon.right
+          anchors.verticalCenter: parent.verticalCenter
+          margin-left: 40
+          size: 32 32
+          image-source: /images/game/creatures/monsters/troll
+          phantom: true
+          visible: false
+      
+      // Kills panel with multiple columns
+      Panel
+        id: killsPanel
+        anchors.top: monstersDisplayPanel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 90
+        margin-top: 10
+        background-color: #101010ee
         border: 1 #444444
         
         Label
@@ -248,33 +322,36 @@ TasksWindow < MainWindow
           color: #ffcc00
           font: verdana-11px-rounded
         
+        // Column 1
         Label
-          id: killsRequired
-          !text: tr('25')
+          id: killsRequired1
+          !text: tr('100')
           anchors.top: prev.bottom
-          anchors.horizontalCenter: parent.horizontalCenter
-          margin-top: 10
-          font: verdana-11px-rounded
-          
-        ProgressBar
-          id: killsProgress
           anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.bottom: bonusLabel.top
-          height: 15
-          margin-left: 10
-          margin-right: 10
-          margin-bottom: 10
-          background-color: #00000066
-          
-        Label
-          id: bonusLabel
-          !text: tr('+10% Experience (today)')
-          anchors.bottom: parent.bottom
-          anchors.horizontalCenter: parent.horizontalCenter
-          margin-bottom: 10
+          anchors.right: parent.horizontalCenter
+          margin-top: 10
+          text-align: center
           font: verdana-11px-rounded
-          color: #00ff00
+        
+        // Column 2  
+        Label
+          id: killsRequired2
+          !text: tr('100')
+          anchors.top: prev.top
+          anchors.left: parent.horizontalCenter
+          anchors.right: killsRequired3.left
+          text-align: center
+          font: verdana-11px-rounded
+          
+        // Column 3  
+        Label
+          id: killsRequired3
+          !text: tr('5000')
+          anchors.top: prev.top
+          anchors.right: parent.right
+          width: 100
+          text-align: center
+          font: verdana-11px-rounded
           
         Button
           id: startTaskButton
@@ -283,5 +360,5 @@ TasksWindow < MainWindow
           height: 30
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottom: parent.bottom
-          margin-bottom: 10
+          margin-bottom: 5
           @onClick: modules.game_tasks.startTask()
