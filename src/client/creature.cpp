@@ -64,8 +64,9 @@ Creature::Creature() : Thing()
     m_icon = Otc::NpcIconNone;
     m_lastStepDirection = Otc::InvalidDirection;
     m_footLastStep = 0;
-    m_nameCache.setFont(g_fonts.getFont("verdana-11px-rounded"));
+    m_nameCache.setFont(g_fonts.getFont("Sono-ExtraBold-11px_cp1252"));
     m_nameCache.setAlign(Fw::AlignTopCenter);
+    m_nameCache.setOutline(true);
     m_footStep = 0;
     //m_speedFormula.fill(-1);
     m_outfitColor = Color::white;
@@ -133,8 +134,106 @@ void Creature::drawOutfit(const Rect& destRect, Otc::Direction direction, const 
     m_outfit.draw(destRect, direction, 0, animate, ui, oldScaling);
 }
 
+// Helper function to draw rounded corners on rectangles
+void Creature::drawRoundedRect(const Rect& rect, const Color& fillColor, const Color& borderColor, int borderWidth, int cornerRadius)
+{
+    // First draw the border
+    g_drawQueue->addFilledRect(rect, borderColor);
+    
+    // Then draw the inner rectangle
+    Rect innerRect = rect.expanded(-borderWidth);
+    g_drawQueue->addFilledRect(innerRect, fillColor);
+    
+    // Draw corner arcs to simulate rounded corners
+    if (cornerRadius > 0) {
+        // Top-left outer corner (make it more rounded)
+        for (int x = 0; x < cornerRadius; ++x) {
+            for (int y = 0; y < cornerRadius; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance >= cornerRadius - borderWidth && distance <= cornerRadius) {
+                    g_drawQueue->addFilledRect(Rect(rect.x() + x, rect.y() + y, 1, 1), borderColor);
+                }
+            }
+        }
+        
+        // Top-right outer corner
+        for (int x = 0; x < cornerRadius; ++x) {
+            for (int y = 0; y < cornerRadius; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance >= cornerRadius - borderWidth && distance <= cornerRadius) {
+                    g_drawQueue->addFilledRect(Rect(rect.x() + rect.width() - x - 1, rect.y() + y, 1, 1), borderColor);
+                }
+            }
+        }
+        
+        // Bottom-left outer corner
+        for (int x = 0; x < cornerRadius; ++x) {
+            for (int y = 0; y < cornerRadius; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance >= cornerRadius - borderWidth && distance <= cornerRadius) {
+                    g_drawQueue->addFilledRect(Rect(rect.x() + x, rect.y() + rect.height() - y - 1, 1, 1), borderColor);
+                }
+            }
+        }
+        
+        // Bottom-right outer corner
+        for (int x = 0; x < cornerRadius; ++x) {
+            for (int y = 0; y < cornerRadius; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance >= cornerRadius - borderWidth && distance <= cornerRadius) {
+                    g_drawQueue->addFilledRect(Rect(rect.x() + rect.width() - x - 1, rect.y() + rect.height() - y - 1, 1, 1), borderColor);
+                }
+            }
+        }
+        
+        // Top-left inner corner (restore fill color)
+        for (int x = 0; x < cornerRadius - borderWidth; ++x) {
+            for (int y = 0; y < cornerRadius - borderWidth; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance <= cornerRadius - borderWidth) {
+                    g_drawQueue->addFilledRect(Rect(innerRect.x() + x, innerRect.y() + y, 1, 1), fillColor);
+                }
+            }
+        }
+        
+        // Top-right inner corner
+        for (int x = 0; x < cornerRadius - borderWidth; ++x) {
+            for (int y = 0; y < cornerRadius - borderWidth; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance <= cornerRadius - borderWidth) {
+                    g_drawQueue->addFilledRect(Rect(innerRect.x() + innerRect.width() - x - 1, innerRect.y() + y, 1, 1), fillColor);
+                }
+            }
+        }
+        
+        // Bottom-left inner corner
+        for (int x = 0; x < cornerRadius - borderWidth; ++x) {
+            for (int y = 0; y < cornerRadius - borderWidth; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance <= cornerRadius - borderWidth) {
+                    g_drawQueue->addFilledRect(Rect(innerRect.x() + x, innerRect.y() + innerRect.height() - y - 1, 1, 1), fillColor);
+                }
+            }
+        }
+        
+        // Bottom-right inner corner
+        for (int x = 0; x < cornerRadius - borderWidth; ++x) {
+            for (int y = 0; y < cornerRadius - borderWidth; ++y) {
+                float distance = std::sqrt(x*x + y*y);
+                if (distance <= cornerRadius - borderWidth) {
+                    g_drawQueue->addFilledRect(Rect(innerRect.x() + innerRect.width() - x - 1, innerRect.y() + innerRect.height() - y - 1, 1, 1), fillColor);
+                }
+            }
+        }
+    }
+}
+
 void Creature::drawInformation(const Point& point, bool useGray, const Rect& parentRect, int drawFlags)
 {
+    // Verify if it's an NPC and if GameHideNpcNames is enabled, if true don't draw any information
+    if (isNpc() && g_game.getFeature(Otc::GameHideNpcNames))
+        return;
+
     if (!g_game.getFeature(Otc::GameOldInformationBar) && g_game.getClientVersion() >= 760) {
         if (m_healthPercent < 1)  // creature is dead, we get rid of its information bar
             return;
@@ -200,15 +299,68 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
     if (g_game.getFeature(Otc::GameBlueNpcNameColor) && isNpc() && m_healthPercent == 100 && !useGray)
         fillColor = Color(0x66, 0xcc, 0xff);
 
-    if (drawFlags & Otc::DrawBars && (!isNpc() || !g_game.getFeature(Otc::GameHideNpcNames))) {
+    if (drawFlags & Otc::DrawBars) {
         if (healthBar) {
             TexturePtr barTexture = healthBar->getTexture();
             Rect barRect = Rect(backgroundRect.x() + healthBar->getOffset().x, backgroundRect.y() + healthBar->getOffset().y, barTexture->getSize());
             g_drawQueue->addTexturedRect(barRect, barTexture, Rect(0, 0, barTexture->getSize()));
         }
-        g_drawQueue->addFilledRect(backgroundRect, Color::black);
-        g_drawQueue->addFilledRect(healthRect, fillColor);
 
+        // Draw improved health bar with border and rounded corners
+        int borderSize = 1;
+        Rect healthBarBorder = backgroundRect;
+        healthBarBorder.setHeight(healthBarBorder.height() + 2); // Make the health bar slightly taller
+        healthBarBorder.setWidth(healthBarBorder.width() + 4);   // Make the health bar slightly wider
+        
+        // Use the new rounded rect function with proper corners
+        drawRoundedRect(healthBarBorder, Color::black, Color::black, 1, 2);
+        
+        // Calculate the health bar fill area
+        healthRect = healthBarBorder.expanded(-borderSize);
+        healthRect.setWidth((m_healthPercent / 100.0) * healthRect.width());
+
+        // Create gradient effect for low health
+        Color gradientEnd = fillColor;
+        if (m_healthPercent <= 60 && !useGray) {
+            // Add a subtle gradient for health bar
+            Color gradientStart = fillColor;
+            gradientStart.setRed(std::min<int>(gradientStart.r() + 40, 255));
+            gradientStart.setGreen(std::min<int>(gradientStart.g() + 20, 255));
+            
+            // Draw gradient fill
+            for (int i = 0; i < healthRect.width(); ++i) {
+                float ratio = (float)i / healthRect.width();
+                Color currentColor = gradientStart + (gradientEnd - gradientStart) * ratio;
+                
+                Rect lineRect = Rect(healthRect.x() + i, healthRect.y(), 1, healthRect.height());
+                g_drawQueue->addFilledRect(lineRect, currentColor);
+            }
+            
+            // Add pulsating effect for low health
+            if (m_healthPercent < 25) {
+                float pulseIntensity = (std::sin(g_clock.millis() / 150.0f) + 1.0f) / 4.0f;
+                Color pulseColor = fillColor;
+                pulseColor.setRed(std::min<int>(pulseColor.r() + 50 * pulseIntensity, 255));
+                
+                Rect pulseRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 2);
+                g_drawQueue->addFilledRect(pulseRect, pulseColor);
+            }
+        } else {
+            // For high health, just use the solid color
+            g_drawQueue->addFilledRect(healthRect, fillColor);
+            
+            // Add a lighter highlight at the top
+            if (m_healthPercent > 0) {
+                Color highlightColor = fillColor;
+                highlightColor.setRed(std::min<int>(fillColor.r() + 30, 255));
+                highlightColor.setGreen(std::min<int>(fillColor.g() + 30, 255));
+                highlightColor.setBlue(std::min<int>(fillColor.b() + 30, 255));
+                
+                Rect highlightRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 1);
+                g_drawQueue->addFilledRect(highlightRect, highlightColor);
+            }
+        }
+        
         if (drawFlags & Otc::DrawManaBar) {
             int8 manaPercent = m_manaPercent;
             if (isLocalPlayer()) {
@@ -239,28 +391,145 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
                     Rect barRect = Rect(backgroundRect.x() + manaBar->getOffset().x, backgroundRect.y() + manaBar->getOffset().y, barTexture->getSize());
                     g_drawQueue->addTexturedRect(barRect, barTexture, Rect(0, 0, barTexture->getSize()));
                 }
-                g_drawQueue->addFilledRect(backgroundRect, Color::black);
+                
+                // Draw improved mana bar with border
+                Rect manaBarBorder = backgroundRect;
+                manaBarBorder.setHeight(manaBarBorder.height() + 2); // Make the mana bar slightly taller
+                manaBarBorder.setWidth(manaBarBorder.width() + 4);   // Make the mana bar slightly wider
+                
+                // Use the new rounded rect function with proper corners
+                drawRoundedRect(manaBarBorder, Color::black, Color::black, 1, 2);
+                
+                // Calculate the mana bar fill area
+                Rect manaRect = manaBarBorder.expanded(-1);
+                manaRect.setWidth(((float)manaPercent / 100.f) * manaRect.width());
 
-                Rect manaRect = backgroundRect.expanded(-1);
-                manaRect.setWidth(((float)manaPercent / 100.f) * 25);
-                g_drawQueue->addFilledRect(manaRect, Color::blue);
+                if (manaPercent > 0) {
+                    // Create gradient effect
+                    Color manaGradientStart = Color(75, 115, 235); // Brighter royal blue
+                    Color manaGradientEnd = Color(25, 25, 180);    // Deeper blue
+                    
+                    // Draw gradient fill
+                    for (int i = 0; i < manaRect.width(); ++i) {
+                        float ratio = (float)i / manaRect.width();
+                        Color currentColor = manaGradientStart + (manaGradientEnd - manaGradientStart) * ratio;
+                        
+                        Rect lineRect = Rect(manaRect.x() + i, manaRect.y(), 1, manaRect.height());
+                        g_drawQueue->addFilledRect(lineRect, currentColor);
+                    }
+                    
+                    // Add a brighter highlight at the top
+                    Color manaHighlightColor = Color(130, 180, 255);
+                    Rect manaHighlightRect = Rect(manaRect.x(), manaRect.y(), manaRect.width(), 1);
+                    g_drawQueue->addFilledRect(manaHighlightRect, manaHighlightColor);
+                    
+                    // Add a subtle glow/shimmer effect for mana
+                    if (manaPercent > 70) {
+                        float shinePos = fmod(g_clock.millis() / 1000.0f, 3.0f);
+                        int xPos = shinePos * manaRect.width();
+                        int width = manaRect.width() / 5;
+                        
+                        if (xPos < manaRect.width()) {
+                            for (int i = 0; i < width; ++i) {
+                                if (xPos + i < 0 || xPos + i >= manaRect.width())
+                                    continue;
+                                
+                                float ratio = 1.0f - fabs((float)i - width/2) / (width/2);
+                                Color shineColor = manaHighlightColor;
+                                shineColor.setAlpha(120 * ratio);
+                                
+                                Rect shineRect = Rect(manaRect.x() + xPos + i, manaRect.y(), 1, manaRect.height());
+                                g_drawQueue->addFilledRect(shineRect, shineColor);
+                            }
+                        }
+                    }
+                }
             }
         }
 
         if (getProgressBarPercent()) {
             backgroundRect.moveTop(backgroundRect.bottom());
 
-            g_drawQueue->addFilledRect(backgroundRect, Color::black);
-
-            Rect progressBarRect = backgroundRect.expanded(-1);
+            // Draw improved progress bar with border
+            Rect progressBarBorder = backgroundRect;
+            progressBarBorder.setHeight(progressBarBorder.height() + 2);
+            progressBarBorder.setWidth(progressBarBorder.width() + 4);
+            
+            // Use the new rounded rect function with proper corners
+            drawRoundedRect(progressBarBorder, Color::black, Color::black, 1, 2);
+            
+            // Calculate the progress bar fill area
+            Rect progressBarRect = progressBarBorder.expanded(-1);
             double maxBar = 100;
-            progressBarRect.setWidth(getProgressBarPercent() / (maxBar * 1.0) * 25);
+            progressBarRect.setWidth(getProgressBarPercent() / (maxBar * 1.0) * progressBarRect.width());
 
-            g_drawQueue->addFilledRect(progressBarRect, Color::white);
+            if (getProgressBarPercent() > 0) {
+                // Create gradient effect
+                Color progressGradientStart = Color(240, 240, 240); // Brighter white
+                Color progressGradientEnd = Color(180, 180, 180);   // Darker gray
+                
+                // Draw gradient fill
+                for (int i = 0; i < progressBarRect.width(); ++i) {
+                    float ratio = (float)i / progressBarRect.width();
+                    Color currentColor = progressGradientStart + (progressGradientEnd - progressGradientStart) * ratio;
+                    
+                    Rect lineRect = Rect(progressBarRect.x() + i, progressBarRect.y(), 1, progressBarRect.height());
+                    g_drawQueue->addFilledRect(lineRect, currentColor);
+                }
+                
+                // Add a brighter highlight at the top
+                Color progressHighlightColor = Color(255, 255, 255);
+                Rect progressHighlightRect = Rect(progressBarRect.x(), progressBarRect.y(), progressBarRect.width(), 1);
+                g_drawQueue->addFilledRect(progressHighlightRect, progressHighlightColor);
+                
+                // Add subtle progress animation
+                float progressAnim = fmod(g_clock.millis() / 300.0f, 1.0f);
+                int progressAnimWidth = progressBarRect.width() / 8;
+                
+                for (int i = 0; i < progressAnimWidth; ++i) {
+                    int xPos = progressAnimWidth + progressBarRect.x() + (progressBarRect.width() - 2 * progressAnimWidth) * progressAnim + i;
+                    if (xPos >= progressBarRect.x() + progressBarRect.width())
+                        continue;
+                    
+                    float ratio = 1.0f - fabs((float)i - progressAnimWidth/2) / (progressAnimWidth/2);
+                    Color animColor = progressHighlightColor;
+                    animColor.setAlpha(50 * ratio);
+                    
+                    Rect animRect = Rect(xPos, progressBarRect.y(), 1, progressBarRect.height());
+                    g_drawQueue->addFilledRect(animRect, animColor);
+                }
+            }
         }
     }
 
     if (drawFlags & Otc::DrawNames) {
+        // Draw text outline/border
+        Color outlineColor = Color::black;
+        
+        // Draw thinner text outline using only 4 positions
+        Rect shadowRect;
+        
+        // Up
+        shadowRect = textRect;
+        shadowRect.moveTopLeft(textRect.topLeft() + Point(0, -1));
+        m_nameCache.draw(shadowRect, outlineColor);
+        
+        // Down
+        shadowRect = textRect;
+        shadowRect.moveTopLeft(textRect.topLeft() + Point(0, 1));
+        m_nameCache.draw(shadowRect, outlineColor);
+        
+        // Left
+        shadowRect = textRect;
+        shadowRect.moveTopLeft(textRect.topLeft() + Point(-1, 0));
+        m_nameCache.draw(shadowRect, outlineColor);
+        
+        // Right
+        shadowRect = textRect;
+        shadowRect.moveTopLeft(textRect.topLeft() + Point(1, 0));
+        m_nameCache.draw(shadowRect, outlineColor);
+        
+        // Draw the main text on top
         m_nameCache.draw(textRect, fillColor);
 
         if (m_titleCache.hasText()) {
@@ -1214,3 +1483,4 @@ void Creature::setTitle(const std::string& title, const std::string& font, const
     }
     m_titleColor = color;
 }
+

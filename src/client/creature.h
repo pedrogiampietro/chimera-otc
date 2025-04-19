@@ -51,6 +51,9 @@ public:
 
     void drawInformation(const Point& point, bool useGray, const Rect& parentRect, int drawFlags);
 
+    // Helper function to draw rounded corners on rectangles
+    void drawRoundedRect(const Rect& rect, const Color& fillColor, const Color& borderColor, int borderWidth, int cornerRadius);
+
     bool isInsideOffset(Point offset);
 
     void setId(uint32 id) { m_id = id; }

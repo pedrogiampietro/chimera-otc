@@ -524,6 +524,7 @@ protected:
     std::vector<std::pair<int, Color>> m_textColors;
     std::vector<std::pair<int, Color>> m_drawTextColors;
     stdext::boolean<false> m_shadow;
+    stdext::boolean<false> m_outline;
 
 public:
     void resizeToText() { setSize(getTextSize()); }
@@ -540,6 +541,7 @@ public:
     void setTextOnlyUpperCase(bool textOnlyUpperCase) { m_textOnlyUpperCase = textOnlyUpperCase; setText(m_text); }
     void setFont(const std::string& fontName);
     void setShadow(bool shadow) { m_shadow = shadow; }
+    void setOutline(bool outline) { m_outline = outline; }
 
     std::string getText() { return m_text; }
     std::string getDrawText() { return m_drawText; }

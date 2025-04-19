@@ -80,6 +80,8 @@ void UIWidget::parseTextStyle(const OTMLNodePtr& styleNode)
             setFont(node->value());
         else if (node->tag() == "shadow")
             setShadow(node->value<bool>());
+        else if(node->tag() == "outline")
+            setOutline(node->value<bool>());
     }
 }
 
@@ -92,6 +94,35 @@ void UIWidget::drawText(const Rect& screenCoords)
         Rect coords = Rect(screenCoords.topLeft() + m_textOffset, screenCoords.bottomRight());
         m_textMustRecache = false;
         m_textCachedScreenCoords = coords;
+    }
+
+    // Draw text outline/border by using 8 shadows in different positions
+    if(m_outline) {
+        if (!m_drawTextColors.empty()) {
+            // For colored text
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    if(x == 0 && y == 0)
+                        continue;
+                    
+                    Rect shadowRect = m_textCachedScreenCoords;
+                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
+                    m_font->drawColoredText(m_drawText, shadowRect, m_textAlign, m_drawTextColors, false);
+                }
+            }
+        } else {
+            // For regular text
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    if(x == 0 && y == 0)
+                        continue;
+                    
+                    Rect shadowRect = m_textCachedScreenCoords;
+                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
+                    m_font->drawText(m_drawText, shadowRect, m_textAlign, Color::black, false);
+                }
+            }
+        }
     }
 
     if (!m_drawTextColors.empty()) {

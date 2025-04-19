@@ -39,11 +39,13 @@ public:
     void setText(const std::string& text) { m_textColors.clear();  m_text = text; update(); }
     void setColoredText(const std::vector<std::string>& texts);
     void setAlign(Fw::AlignmentFlag align) { m_align = align; update(); }
+    void setOutline(bool outline) { m_outline = outline; }
 
     Size getTextSize() { return m_textSize; }
     std::string getText() const { return m_text; }
     BitmapFontPtr getFont() const { return m_font; }
     Fw::AlignmentFlag getAlign() { return m_align; }
+    bool hasOutline() const { return m_outline; }
 
     bool hasText() { return !m_text.empty(); }
 
@@ -57,6 +59,7 @@ private:
     Rect m_textCachedScreenCoords;
     BitmapFontPtr m_font;
     Fw::AlignmentFlag m_align;
+    stdext::boolean<false> m_outline;
 };
 
 #endif

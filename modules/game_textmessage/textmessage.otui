@@ -1,8 +1,9 @@
 TextMessageLabel < UILabel
-  font: verdana-11px-rounded
+  font: Sono-ExtraBold-11px_cp1252
   text-align: center
   text-wrap: true
   text-auto-resize: true
+  outline: true
   margin-bottom: 2
   visible: false
 

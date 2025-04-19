@@ -50,7 +50,7 @@ NextChannelButton < UIButton
     color: #dfdfdf
 
 ConsoleLabel < UITextEdit
-  font: verdana-11px-antialised
+  font: Sono-ExtraBold-11px_cp1252
   height: 14
   color: yellow
   margin-left: 1
@@ -66,7 +66,7 @@ ConsoleLabel < UITextEdit
   focusable: false
 
 ConsolePhantomLabel < UILabel
-  font: verdana-11px-antialised
+  font: Sono-ExtraBold-11px_cp1252
   height: 14
   color: yellow
   text-wrap: true

@@ -29,6 +29,7 @@ CachedText::CachedText()
 {
     m_font = g_fonts.getDefaultFont();
     m_align = Fw::AlignCenter;
+    m_outline = false;
 }
 
 void CachedText::draw(const Rect& rect, const Color& color)
@@ -39,6 +40,35 @@ void CachedText::draw(const Rect& rect, const Color& color)
     if(m_textMustRecache || m_textCachedScreenCoords != rect) {
         m_textMustRecache = false;
         m_textCachedScreenCoords = rect;
+    }
+
+    // Draw text outline/border by using 8 shadows in different positions
+    if(m_outline) {
+        if (!m_textColors.empty()) {
+            // For colored text
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    if(x == 0 && y == 0)
+                        continue;
+                    
+                    Rect shadowRect = m_textCachedScreenCoords;
+                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
+                    m_font->drawColoredText(m_text, shadowRect, Fw::AlignCenter, m_textColors);
+                }
+            }
+        } else {
+            // For regular text
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    if(x == 0 && y == 0)
+                        continue;
+                    
+                    Rect shadowRect = m_textCachedScreenCoords;
+                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
+                    m_font->drawText(m_text, shadowRect, Fw::AlignCenter, Color::black);
+                }
+            }
+        }
     }
 
     if (m_textColors.empty()) {

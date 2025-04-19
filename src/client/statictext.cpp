@@ -32,7 +32,7 @@ StaticText::StaticText()
 {
     m_mode = Otc::MessageNone;
     m_color = Color::white;
-    m_cachedText.setFont(g_fonts.getFont("verdana-11px-rounded"));
+    m_cachedText.setFont(g_fonts.getFont("Sono-ExtraBold-11px_cp1252"));
     m_cachedText.setAlign(Fw::AlignCenter);
 }
 
@@ -45,7 +45,7 @@ void StaticText::drawText(const Point& dest, const Rect& parentRect)
 
     // draw only if the real center is not too far from the parent center, or its a yell
     //if(g_map.isAwareOfPosition(m_position) || isYell()) {
-        m_cachedText.draw(boundRect, m_color);
+    m_cachedText.draw(boundRect, m_color);
     //}
 }
 
