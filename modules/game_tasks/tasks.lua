@@ -203,7 +203,7 @@ function setupTopMenuButton()
   g_logger.info("Configurando botão de tarefas...")
   if not g_app.isMobile() then
     g_logger.info("Não é dispositivo móvel, criando botão...")
-    tasksButton = modules.client_topmenu.addRightGameToggleButton('tasksButton', tr('Tasks'), '/modules/client_topmenu/icons/tasks', 
+    tasksButton = modules.client_topmenu.addRightGameToggleButton('tasksButton', tr('Tasks'), '/images/topbuttons/new/battle', 
     function()
       if tasksWindow and tasksWindow:isVisible() then
         tasksWindow:hide()
@@ -1672,8 +1672,8 @@ function updateTaskDetails(task)
   local killsRequired = killsPanel:getChildById('killsRequired')
   local killsProgress = killsPanel:getChildById('killsProgress')
   
-  -- Default kill requirements based on task count (not total)
-  local requiredKills = task.count or 100
+  -- Corrigindo: usar o total de kills requeridos, não o progresso atual
+  local requiredKills = task.total or task.count
   
   -- Set the required kills label
   if killsRequired then
