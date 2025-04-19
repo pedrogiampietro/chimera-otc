@@ -1439,9 +1439,6 @@ function updateTaskDetails(task)
     return 
   end
   
-  -- Initialize processedItems table
-  local processedItems = {}
-  
   -- Verificação adicional para garantir que a tarefa tenha um ID
   if not task.id then
     g_logger.debug("Cannot update task details: task has no ID")
@@ -1463,6 +1460,15 @@ function updateTaskDetails(task)
   end
   
   g_logger.debug("Task reward structure: " .. json.encode(task.reward or {}))
+  
+  -- Verificar se há algum problema específico com o campo exp
+  if task.reward.exp == nil then
+    g_logger.warn("Experience is nil, setting default value")
+    task.reward.exp = 1000
+  end
+  
+  -- Verificando especificamente o campo de experiência
+  g_logger.debug("Exp field in task.reward: " .. type(task.reward.exp) .. " = " .. tostring(task.reward.exp))
   
   -- Primeiro obter o painel de detalhes
   local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
@@ -1487,14 +1493,10 @@ function updateTaskDetails(task)
     startTaskButton = tasksWindow:recursiveGetChildById('startTaskButton')
   end
   
-  -- Ajustar margem e largura dos labels
-  local leftMargin = 10  -- Reduzido para dar mais espaço ao texto
-  local labelWidth = 200 -- Aumentado para garantir que o texto caiba
-  
   -- Obter todos os labels de recompensa
-  local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
   local experienceLabel = rewardsPanel:recursiveGetChildById('experienceLabel')
   local goldLabel = rewardsPanel:recursiveGetChildById('goldLabel')
+  local taskPointsLabel = rewardsPanel:recursiveGetChildById('taskPointsLabel')
   local itemsLabel = rewardsPanel:recursiveGetChildById('itemsLabel')
   
   -- Esconder ou remover os labels de acesso e teleporte que não serão mais utilizados
@@ -1515,25 +1517,17 @@ function updateTaskDetails(task)
   end
   
   -- Função helper para configurar os labels
-  local function setupLabel(label, text, center)
+  local function setupLabel(label, text)
     if label then
       label:setText(text)
-      if center then
-        label:setTextAlign(AlignCenter)
-        label:setMarginLeft(0)
-      else
-        label:setMarginLeft(leftMargin)
-      end
-      label:setWidth(labelWidth)
+      label:setTextWrap(false)
       
-      -- Para texto longo (como itens), garanta que tenha quebra de linha
-      if text:len() > 40 or text:find("\n") then
-        label:setTextWrap(true) 
-        label:setHeight(50) -- Altura aumentada para acomodar múltiplas linhas
-      else
-        label:setTextWrap(false)
-        label:setHeight(nil) -- Ajustar automaticamente
+      -- Para texto longo, garantir que tenha quebra de linha
+      if string.len(text) > 40 then
+        label:setTextWrap(true)
       end
+    else
+      g_logger.error("Label not found when trying to set text: " .. text)
     end
   end
   
@@ -1548,29 +1542,15 @@ function updateTaskDetails(task)
   g_logger.debug("  - Experience: " .. tostring(exp))
   g_logger.debug("  - Gold: " .. tostring(gold))
   
-  -- Check if the task has item rewards and log them
-  if task.reward and task.reward.items then
-    g_logger.debug("  - Items: " .. json.encode(task.reward.items))
-  else
-    g_logger.debug("  - No item rewards found")
-    -- Ensure task.reward.items exists
-    if task.reward then
-      task.reward.items = {}
-    end
-  end
-  
   -- Atualizar os labels com os valores determinados
-  setupLabel(taskPointsLabel, tr('Task Points: %s', points))
-  setupLabel(experienceLabel, tr('Experience: %s', exp))
-  setupLabel(goldLabel, tr('Gold: %s', gold))
+  setupLabel(taskPointsLabel, tr('Task Points: %s', tostring(points)))
+  setupLabel(experienceLabel, tr('Experience: %s', tostring(exp)))
+  setupLabel(goldLabel, tr('Gold: %s', tostring(gold)))
   
   -- Set appropriate item text (example: "1x burning heart")
   local itemText = "None"
   if task.reward and task.reward.items and #task.reward.items > 0 then
-    local itemsCount = #task.reward.items
-    g_logger.debug("Task has " .. itemsCount .. " item rewards:")
-    g_logger.debug("Task reward items array type: " .. type(task.reward.items))
-    g_logger.debug("Task reward items dump: " .. json.encode(task.reward.items))
+    g_logger.debug("Task has " .. #task.reward.items .. " item rewards")
     
     itemText = ""
     for i, item in ipairs(task.reward.items) do
@@ -1579,17 +1559,6 @@ function updateTaskDetails(task)
       -- Usar o nome do item se disponível, caso contrário exibir o ID
       local displayName = item.name or ("Item #" .. (item.id or "unknown"))
       local count = item.count or 1
-      
-      -- Process item for internal data structure
-      local itemId = item.id or 0
-      local itemName = item.name or displayName
-      
-      -- Add to processed items
-      table.insert(processedItems, {
-        id = itemId,
-        count = count,
-        name = itemName
-      })
       
       -- Formatar nome do item (capitalizar palavras)
       displayName = displayName:gsub("(%a)([%w_']*)", function(first, rest)
@@ -1602,12 +1571,6 @@ function updateTaskDetails(task)
       end
       itemText = itemText .. count .. "x " .. displayName
     end
-    
-    -- Update the task's reward items with the processed items if needed
-    if #processedItems > 0 then
-      task.reward.items = processedItems
-      g_logger.debug("Updated task.reward.items with " .. #processedItems .. " processed items")
-    end
   else
     g_logger.debug("Task has no item rewards")
     itemText = "None"
@@ -1615,20 +1578,8 @@ function updateTaskDetails(task)
   
   g_logger.debug("Final items text: " .. itemText)
   
-  -- Make sure itemsLabel has proper settings for multiple item entries
-  if itemsLabel then
-    itemsLabel:setText(itemText)
-    itemsLabel:setMarginLeft(10)
-    itemsLabel:setWidth(180)
-    itemsLabel:setTextWrap(true)
-    
-    -- Adjust height based on number of items
-    local numItems = task.reward and task.reward.items and #task.reward.items or 1
-    local itemsHeight = math.max(20, numItems * 16)  -- At least 20px, 16px per item
-    itemsLabel:setHeight(itemsHeight)
-    
-    g_logger.debug("Setting itemsLabel height to " .. itemsHeight .. " for " .. numItems .. " items")
-  end
+  -- Update items label
+  setupLabel(itemsLabel, itemText)
   
   -- Update monster icons in the monster display panel
   local monster1Panel = monstersDisplayPanel:getChildById('monster1Panel')

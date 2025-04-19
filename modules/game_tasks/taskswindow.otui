@@ -194,81 +194,86 @@ TasksWindow < MainWindow
           margin-top: 5
           color: #ffcc00
           font: verdana-11px-rounded
-          
-        Label
-          id: taskPointsLabel
-          !text: tr('Task Points: 1')
-          anchors.top: prev.bottom
-          anchors.left: parent.left
-          margin-top: 10
-          margin-left: 10
-          color: #00ff00
-          font: verdana-11px-rounded
-          
-        Label
-          id: experienceLabel
-          !text: tr('Experience: 1000')
-          anchors.top: prev.bottom
-          anchors.left: parent.left
-          margin-top: 5
-          margin-left: 10
-          color: #ffffff
-          font: verdana-11px-rounded
-          
-        Label
-          id: goldLabel
-          !text: tr('Gold: 500')
-          anchors.top: prev.bottom
-          anchors.left: parent.left
-          margin-top: 5
-          margin-left: 10
-          color: #ffcc00
-          font: verdana-11px-rounded
-          
-        Label
-          id: itemsHeader
-          !text: tr('Items:')
-          anchors.top: goldLabel.bottom
-          anchors.left: parent.left
-          margin-top: 5
-          margin-left: 10
-          color: #ffffff
-          font: verdana-11px-rounded
-          
-        Label
-          id: itemsLabel
-          !text: tr('1x burning heart')
-          anchors.top: itemsHeader.bottom
+        
+        // Único painel para todas as recompensas
+        Panel
+          id: rewardsContentPanel
+          anchors.top: rewardsTitle.bottom
           anchors.left: parent.left
           anchors.right: parent.right
-          margin-top: 2
-          margin-left: 20
+          anchors.bottom: parent.bottom
+          margin-top: 10
+          margin-left: 10
           margin-right: 10
-          color: #ffffff
-          font: verdana-11px-rounded
-          text-wrap: true
-          height: 60
           
+          // Experiência diretamente sem ícone
+          Label
+            id: experienceLabel
+            !text: tr('Experience: 1000')
+            anchors.top: parent.top
+            anchors.left: parent.left
+            margin-top: 5
+            color: #00ccff
+            font: verdana-11px-rounded
+            text-auto-resize: true
+            
+          // Gold diretamente sem ícone
+          Label
+            id: goldLabel
+            !text: tr('Gold: 500')
+            anchors.top: experienceLabel.bottom
+            anchors.left: parent.left
+            margin-top: 10
+            color: #ffcc00
+            font: verdana-11px-rounded
+            text-auto-resize: true
+            
+          // Pontos de task diretamente sem ícone
+          Label
+            id: taskPointsLabel
+            !text: tr('Task Points: 1')
+            anchors.top: goldLabel.bottom
+            anchors.left: parent.left
+            margin-top: 10
+            color: #00ff00
+            font: verdana-11px-rounded
+            text-auto-resize: true
+          
+          // Items label
+          Label
+            id: itemsHeader
+            !text: tr('Items:')
+            anchors.top: taskPointsLabel.bottom
+            anchors.left: parent.left
+            margin-top: 15
+            color: #ffffff
+            font: verdana-11px-rounded
+            
+          // Items content
+          Label
+            id: itemsLabel
+            !text: tr('1x burning heart')
+            anchors.top: itemsHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            margin-top: 5
+            margin-left: 10
+            color: #ffffff
+            font: verdana-11px-rounded
+            text-wrap: true
+            height: 70
+          
+        // Labels escondidos para manter compatibilidade
         Label
           id: accessLabel
-          !text: tr('Access to new hunting area')
-          anchors.top: itemsLabel.bottom
+          anchors.top: parent.top
           anchors.left: parent.left
-          margin-top: 5
-          margin-left: 10
-          color: #ffffff
-          font: verdana-11px-rounded
           visible: false
           
         Label
           id: teleportLabel
-          !text: tr('Teleport to Troll Boss fight')
-          anchors.top: accessLabel.bottom
+          anchors.top: parent.top
           anchors.left: parent.left
-          margin-top: 5
-          margin-left: 10
-          color: #ffffff
-          font: verdana-11px-rounded
           visible: false
       
       // Monsters panel - simplified version with fixed icons
@@ -306,7 +311,7 @@ TasksWindow < MainWindow
             anchors.horizontalCenter: parent.horizontalCenter
             margin-top: 3
             size: 32 32
-            image-source: /images/game/creatures/monsters/troll
+            image-source: /modules/images/game/creatures/monsters/rat
             phantom: true
             
           Label
@@ -338,7 +343,7 @@ TasksWindow < MainWindow
             anchors.horizontalCenter: parent.horizontalCenter
             margin-top: 3
             size: 32 32
-            image-source: /images/game/creatures/monsters/troll
+            image-source: /modules/images/game/creatures/monsters/rat
             phantom: true
             
           Label
@@ -370,7 +375,7 @@ TasksWindow < MainWindow
             anchors.horizontalCenter: parent.horizontalCenter
             margin-top: 3
             size: 32 32
-            image-source: /images/game/creatures/monsters/troll
+            image-source: /modules/images/game/creatures/monsters/rat
             phantom: true
             
           Label
