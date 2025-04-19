@@ -242,8 +242,14 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
 
     Color fillColor = Color(96, 96, 96);
 
-    if (!useGray)
-        fillColor = m_informationColor;
+    if (!useGray) {
+        // For NPCs, use blue color instead of health bar color
+        if (isNpc()) {
+            fillColor = Color(0x66, 0xcc, 0xff); // Light blue color for NPCs
+        } else {
+            fillColor = m_informationColor;
+        }
+    }
 
     // calculate main rects - hp/mana
     Rect backgroundRect = Rect(point.x + m_informationOffset.x - (13.5), point.y + m_informationOffset.y, 27, 4);
@@ -301,67 +307,70 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
         fillColor = Color(0x66, 0xcc, 0xff);
 
     if (drawFlags & Otc::DrawBars) {
-        if (healthBar) {
-            TexturePtr barTexture = healthBar->getTexture();
-            Rect barRect = Rect(backgroundRect.x() + healthBar->getOffset().x, backgroundRect.y() + healthBar->getOffset().y, barTexture->getSize());
-            g_drawQueue->addTexturedRect(barRect, barTexture, Rect(0, 0, barTexture->getSize()));
+        // Skip drawing the health bar for NPCs
+        if (!isNpc()) {
+            if (healthBar) {
+                TexturePtr barTexture = healthBar->getTexture();
+                Rect barRect = Rect(backgroundRect.x() + healthBar->getOffset().x, backgroundRect.y() + healthBar->getOffset().y, barTexture->getSize());
+                g_drawQueue->addTexturedRect(barRect, barTexture, Rect(0, 0, barTexture->getSize()));
+            }
+
+            // Draw improved health bar with border and rounded corners
+            int borderSize = 1;
+            Rect healthBarBorder = backgroundRect;
+            healthBarBorder.setHeight(healthBarBorder.height() + 2); // Make the health bar slightly taller
+            healthBarBorder.setWidth(healthBarBorder.width() + 4);   // Make the health bar slightly wider
+            
+            // Use the new rounded rect function with proper corners
+            drawRoundedRect(healthBarBorder, Color::black, Color::black, 1, 2);
+            
+            // Calculate the health bar fill area
+            healthRect = healthBarBorder.expanded(-borderSize);
+            healthRect.setWidth((m_healthPercent / 100.0) * healthRect.width());
+
+            // Create gradient effect for low health
+            Color gradientEnd = fillColor;
+            if (m_healthPercent <= 60 && !useGray) {
+                // Add a subtle gradient for health bar
+                Color gradientStart = fillColor;
+                gradientStart.setRed(std::min<int>(gradientStart.r() + 40, 255));
+                gradientStart.setGreen(std::min<int>(gradientStart.g() + 20, 255));
+                
+                // Draw gradient fill
+                for (int i = 0; i < healthRect.width(); ++i) {
+                    float ratio = (float)i / healthRect.width();
+                    Color currentColor = gradientStart + (gradientEnd - gradientStart) * ratio;
+                    
+                    Rect lineRect = Rect(healthRect.x() + i, healthRect.y(), 1, healthRect.height());
+                    g_drawQueue->addFilledRect(lineRect, currentColor);
+                }
+                
+                // Add pulsating effect for low health
+                if (m_healthPercent < 25) {
+                    float pulseIntensity = (std::sin(g_clock.millis() / 150.0f) + 1.0f) / 4.0f;
+                    Color pulseColor = fillColor;
+                    pulseColor.setRed(std::min<int>(pulseColor.r() + 50 * pulseIntensity, 255));
+                    
+                    Rect pulseRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 2);
+                    g_drawQueue->addFilledRect(pulseRect, pulseColor);
+                }
+            } else {
+                // For high health, just use the solid color
+                g_drawQueue->addFilledRect(healthRect, fillColor);
+                
+                // Add a lighter highlight at the top
+                if (m_healthPercent > 0) {
+                    Color highlightColor = fillColor;
+                    highlightColor.setRed(std::min<int>(fillColor.r() + 30, 255));
+                    highlightColor.setGreen(std::min<int>(fillColor.g() + 30, 255));
+                    highlightColor.setBlue(std::min<int>(fillColor.b() + 30, 255));
+                    
+                    Rect highlightRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 1);
+                    g_drawQueue->addFilledRect(highlightRect, highlightColor);
+                }
+            }
         }
 
-        // Draw improved health bar with border and rounded corners
-        int borderSize = 1;
-        Rect healthBarBorder = backgroundRect;
-        healthBarBorder.setHeight(healthBarBorder.height() + 2); // Make the health bar slightly taller
-        healthBarBorder.setWidth(healthBarBorder.width() + 4);   // Make the health bar slightly wider
-        
-        // Use the new rounded rect function with proper corners
-        drawRoundedRect(healthBarBorder, Color::black, Color::black, 1, 2);
-        
-        // Calculate the health bar fill area
-        healthRect = healthBarBorder.expanded(-borderSize);
-        healthRect.setWidth((m_healthPercent / 100.0) * healthRect.width());
-
-        // Create gradient effect for low health
-        Color gradientEnd = fillColor;
-        if (m_healthPercent <= 60 && !useGray) {
-            // Add a subtle gradient for health bar
-            Color gradientStart = fillColor;
-            gradientStart.setRed(std::min<int>(gradientStart.r() + 40, 255));
-            gradientStart.setGreen(std::min<int>(gradientStart.g() + 20, 255));
-            
-            // Draw gradient fill
-            for (int i = 0; i < healthRect.width(); ++i) {
-                float ratio = (float)i / healthRect.width();
-                Color currentColor = gradientStart + (gradientEnd - gradientStart) * ratio;
-                
-                Rect lineRect = Rect(healthRect.x() + i, healthRect.y(), 1, healthRect.height());
-                g_drawQueue->addFilledRect(lineRect, currentColor);
-            }
-            
-            // Add pulsating effect for low health
-            if (m_healthPercent < 25) {
-                float pulseIntensity = (std::sin(g_clock.millis() / 150.0f) + 1.0f) / 4.0f;
-                Color pulseColor = fillColor;
-                pulseColor.setRed(std::min<int>(pulseColor.r() + 50 * pulseIntensity, 255));
-                
-                Rect pulseRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 2);
-                g_drawQueue->addFilledRect(pulseRect, pulseColor);
-            }
-        } else {
-            // For high health, just use the solid color
-            g_drawQueue->addFilledRect(healthRect, fillColor);
-            
-            // Add a lighter highlight at the top
-            if (m_healthPercent > 0) {
-                Color highlightColor = fillColor;
-                highlightColor.setRed(std::min<int>(fillColor.r() + 30, 255));
-                highlightColor.setGreen(std::min<int>(fillColor.g() + 30, 255));
-                highlightColor.setBlue(std::min<int>(fillColor.b() + 30, 255));
-                
-                Rect highlightRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 1);
-                g_drawQueue->addFilledRect(highlightRect, highlightColor);
-            }
-        }
-        
         if (drawFlags & Otc::DrawManaBar) {
             int8 manaPercent = m_manaPercent;
             if (isLocalPlayer()) {
@@ -504,6 +513,11 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
     }
 
     if (drawFlags & Otc::DrawNames) {
+        // For NPCs, always use blue color
+        if (isNpc()) {
+            fillColor = Color(0x66, 0xcc, 0xff); // Light blue color for NPC names
+        }
+      
         // Draw text outline/border
         Color outlineColor = Color::black;
         
