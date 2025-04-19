@@ -27,6 +27,9 @@
 #include "outfit.h"
 #include "tile.h"
 #include "mapview.h"
+#include "thingtype.h"
+#include "animatedtext.h"
+#include "statictext.h"
 #include <framework/core/scheduledevent.h>
 #include <framework/core/declarations.h>
 #include <framework/core/timer.h>
@@ -34,7 +37,7 @@
 #include <framework/graphics/cachedtext.h>
 #include <framework/ui/uiwidget.h>
 
- // @bindclass
+// @bindclass
 class Creature : public Thing
 {
 public:

@@ -73,6 +73,7 @@ Creature::Creature() : Thing()
     m_outfitColor = Color::white;
     m_progressBarPercent = 0;
     m_progressBarUpdateEvent = nullptr;
+    m_informationOffset = Point(0, -5);
     g_stats.addCreature();
 }
 
@@ -251,8 +252,14 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
         }
     }
 
+    // Increase vertical spacing from the creature - reduced to bring UI closer to outfit
+    int verticalSpacing = 4; // Reduced from 8 to 4
+
+    // Increase width of health/mana bars
+    int barWidth = 35; // Increased from default 27
+
     // calculate main rects - hp/mana
-    Rect backgroundRect = Rect(point.x + m_informationOffset.x - (13.5), point.y + m_informationOffset.y, 27, 4);
+    Rect backgroundRect = Rect(point.x + m_informationOffset.x - (barWidth/2), point.y + m_informationOffset.y - verticalSpacing, barWidth, 4);
     backgroundRect.bind(parentRect);
 
     //debug
@@ -267,11 +274,12 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
     }
 
     Size nameSize = m_nameCache.getTextSize();
-    Rect textRect = Rect(point.x + m_informationOffset.x - nameSize.width() / 2.0, point.y + m_informationOffset.y - 12, nameSize);
+    // Keep more space between name and health bar
+    Rect textRect = Rect(point.x + m_informationOffset.x - nameSize.width() / 2.0, point.y + m_informationOffset.y - 18 - verticalSpacing, nameSize);
     textRect.bind(parentRect);
 
     // distance them
-    uint32 offset = 12;
+    uint32 offset = 18; // Adjusted from 20 to 18 for slightly less spacing
     if (isLocalPlayer()) {
         offset *= 2;
     }
@@ -300,7 +308,7 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
 
     // health rect is based on background rect, so no worries
     Rect healthRect = backgroundRect.expanded(-1);
-    healthRect.setWidth((m_healthPercent / 100.0) * 25);
+    healthRect.setWidth((m_healthPercent / 100.0) * (barWidth - 2)); // Adjust fill width based on the new bar width
 
     // draw
     if (g_game.getFeature(Otc::GameBlueNpcNameColor) && isNpc() && m_healthPercent == 100 && !useGray)
@@ -385,7 +393,8 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
                 }
             }
             if (manaPercent >= 0) {
-                backgroundRect.moveTop(backgroundRect.bottom());
+                // Add spacing between health and mana bars
+                backgroundRect.moveTop(backgroundRect.bottom() + 1);
                 if (healthBar) {
                     backgroundRect.moveTop(backgroundRect.top() + healthBar->getBarOffset().y + 1);
                 }
@@ -458,7 +467,8 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
         }
 
         if (getProgressBarPercent()) {
-            backgroundRect.moveTop(backgroundRect.bottom());
+            // Add spacing between bars
+            backgroundRect.moveTop(backgroundRect.bottom() + 1);
 
             // Draw improved progress bar with border
             Rect progressBarBorder = backgroundRect;
