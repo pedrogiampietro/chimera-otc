@@ -69,6 +69,11 @@ function init()
   
   updateFps()  
   updateStatus()
+  
+  -- Garantir que as estatísticas sejam mostradas desde o início
+  if modules.game_stats then
+    scheduleEvent(function() modules.game_stats.show() end, 100)
+  end
 end
 
 function terminate()
@@ -120,6 +125,10 @@ function online()
         topMenu.pingLabel:hide()      
       end
     end)
+  end
+  
+  if modules.game_stats then
+    modules.game_stats.show()
   end
 end
 
@@ -284,7 +293,7 @@ function show()
     modules.game_interface.getRootPanel():addAnchor(AnchorTop, 'topMenu', AnchorBottom)
   end
   if modules.game_stats then
-    modules.game_stats.hide()
+    modules.game_stats.show()
   end
 end
 

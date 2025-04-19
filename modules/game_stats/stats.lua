@@ -11,6 +11,8 @@ function init()
     ui.ping:hide()
   end
   
+  show()
+  
   updateEvent = scheduleEvent(update, 200)
 end
 

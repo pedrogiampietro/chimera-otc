@@ -3,6 +3,7 @@ UIWidget
   anchors.top: parent.top
   anchors.left: parent.left
   margin-left: 3
+  margin-top: 36
   size: 100 100
   visible: false
   layout:
