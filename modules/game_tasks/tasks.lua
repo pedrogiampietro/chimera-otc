@@ -1672,8 +1672,8 @@ function updateTaskDetails(task)
   local killsRequired = killsPanel:getChildById('killsRequired')
   local killsProgress = killsPanel:getChildById('killsProgress')
   
-  -- Default kill requirements based on task level or predefined total
-  local requiredKills = task.total or 100
+  -- Default kill requirements based on task count (not total)
+  local requiredKills = task.count or 100
   
   -- Set the required kills label
   if killsRequired then
