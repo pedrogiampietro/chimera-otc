@@ -118,6 +118,8 @@ MainWindow
         margin-top: 3
         margin-left: 10
         font: verdana-11px-rounded
+        text-wrap: true
+        height: 50
       
       Label
         id: accessLabel

@@ -181,12 +181,13 @@ TasksWindow < MainWindow
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 150
+        height: 180
         margin: 10
         background-color: #101010ee
         border: 1 #444444
         
         Label
+          id: rewardsTitle
           !text: tr('Base Rewards')
           anchors.top: parent.top
           anchors.horizontalCenter: parent.horizontalCenter
@@ -225,14 +226,28 @@ TasksWindow < MainWindow
           font: verdana-11px-rounded
           
         Label
-          id: itemsLabel
-          !text: tr('1x burning heart')
+          id: itemsHeader
+          !text: tr('Items:')
           anchors.top: goldLabel.bottom
           anchors.left: parent.left
           margin-top: 5
           margin-left: 10
           color: #ffffff
           font: verdana-11px-rounded
+          
+        Label
+          id: itemsLabel
+          !text: tr('1x burning heart')
+          anchors.top: itemsHeader.bottom
+          anchors.left: parent.left
+          anchors.right: parent.right
+          margin-top: 2
+          margin-left: 20
+          margin-right: 10
+          color: #ffffff
+          font: verdana-11px-rounded
+          text-wrap: true
+          height: 60
           
         Label
           id: accessLabel
@@ -243,6 +258,7 @@ TasksWindow < MainWindow
           margin-left: 10
           color: #ffffff
           font: verdana-11px-rounded
+          visible: false
           
         Label
           id: teleportLabel
@@ -253,7 +269,8 @@ TasksWindow < MainWindow
           margin-left: 10
           color: #ffffff
           font: verdana-11px-rounded
-          
+          visible: false
+      
       // Monsters panel - simplified version with fixed icons
       Panel
         id: monstersDisplayPanel

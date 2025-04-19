@@ -308,6 +308,50 @@ function onTaskData(data)
   g_logger.debug("Structure of availableTasks: " .. json.encode(data.availableTasks or {}))
   g_logger.debug("Structure of currentTasks: " .. json.encode(data.currentTasks or {}))
   
+  -- Debug all daily tasks to check reward structure
+  if data.currentTasks and data.currentTasks.daily then
+    for _, task in ipairs(data.currentTasks.daily) do
+      g_logger.info("DAILY TASK " .. task.id .. " (" .. task.name .. ") DETAILS: " .. json.encode(task))
+      
+      if task.reward then
+        g_logger.info("DAILY TASK " .. task.id .. " REWARDS: " .. json.encode(task.reward))
+        
+        if task.reward.items then
+          g_logger.info("DAILY TASK " .. task.id .. " ITEMS COUNT: " .. #task.reward.items)
+          for i, item in ipairs(task.reward.items) do
+            g_logger.info("DAILY TASK " .. task.id .. " ITEM " .. i .. ": " .. json.encode(item))
+          end
+        else
+          g_logger.info("DAILY TASK " .. task.id .. " HAS NO ITEM REWARDS DEFINED!")
+        end
+      else
+        g_logger.info("DAILY TASK " .. task.id .. " HAS NO REWARDS STRUCTURE!")
+      end
+    end
+  end
+  
+  -- Debug all normal tasks too
+  if data.currentTasks and data.currentTasks.normal then
+    for _, task in ipairs(data.currentTasks.normal) do
+      g_logger.info("NORMAL TASK " .. task.id .. " (" .. task.name .. ") DETAILS: " .. json.encode(task))
+      
+      if task.reward then
+        g_logger.info("NORMAL TASK " .. task.id .. " REWARDS: " .. json.encode(task.reward))
+        
+        if task.reward.items then
+          g_logger.info("NORMAL TASK " .. task.id .. " ITEMS COUNT: " .. #task.reward.items)
+          for i, item in ipairs(task.reward.items) do
+            g_logger.info("NORMAL TASK " .. task.id .. " ITEM " .. i .. ": " .. json.encode(item))
+          end
+        else
+          g_logger.info("NORMAL TASK " .. task.id .. " HAS NO ITEM REWARDS DEFINED!")
+        end
+      else
+        g_logger.info("NORMAL TASK " .. task.id .. " HAS NO REWARDS STRUCTURE!")
+      end
+    end
+  end
+  
   -- Checando especificamente a tarefa do minotauro
   if data.currentTasks and data.currentTasks.daily then
     for _, task in ipairs(data.currentTasks.daily) do
@@ -317,6 +361,35 @@ function onTaskData(data)
           g_logger.info("MINOTAUR MONSTERS: " .. json.encode(task.monsters))
         else
           g_logger.info("MINOTAUR TASK HAS NO MONSTERS DEFINED!")
+        end
+        
+        -- Log item rewards specifically
+        if task.reward and task.reward.items then
+          g_logger.info("MINOTAUR TASK ITEMS: " .. json.encode(task.reward.items))
+        else
+          g_logger.info("MINOTAUR TASK HAS NO ITEM REWARDS DEFINED!")
+        end
+      end
+      
+      -- Debug para a tarefa Dragon Lair
+      if task.id == 105 then
+        g_logger.info("DRAGON LAIR TASK DETAILS: " .. json.encode(task))
+        if task.monsters then
+          g_logger.info("DRAGON LAIR MONSTERS: " .. json.encode(task.monsters))
+        else
+          g_logger.info("DRAGON LAIR TASK HAS NO MONSTERS DEFINED!")
+        end
+        
+        -- Log item rewards specifically
+        if task.reward and task.reward.items then
+          g_logger.info("DRAGON LAIR TASK ITEMS: " .. json.encode(task.reward.items))
+          
+          -- Verificar cada item individualmente
+          for i, item in ipairs(task.reward.items) do
+            g_logger.info("DRAGON LAIR ITEM " .. i .. ": " .. json.encode(item))
+          end
+        else
+          g_logger.info("DRAGON LAIR TASK HAS NO ITEM REWARDS DEFINED!")
         end
       end
     end
@@ -330,6 +403,27 @@ function onTaskData(data)
           g_logger.info("AVAILABLE MINOTAUR MONSTERS: " .. json.encode(task.monsters))
         else
           g_logger.info("AVAILABLE MINOTAUR TASK HAS NO MONSTERS DEFINED!")
+        end
+        
+        -- Log item rewards specifically
+        if task.reward and task.reward.items then
+          g_logger.info("AVAILABLE MINOTAUR TASK ITEMS: " .. json.encode(task.reward.items))
+        else
+          g_logger.info("AVAILABLE MINOTAUR TASK HAS NO ITEM REWARDS DEFINED!")
+        end
+      end
+    end
+  end
+  
+  -- Also log a normal task for comparison
+  if data.currentTasks and data.currentTasks.normal then
+    for _, task in ipairs(data.currentTasks.normal) do
+      if task.id == 1 then -- Rat task
+        g_logger.info("RAT TASK DETAILS: " .. json.encode(task))
+        if task.reward and task.reward.items then
+          g_logger.info("RAT TASK ITEMS: " .. json.encode(task.reward.items))
+        else
+          g_logger.info("RAT TASK HAS NO ITEM REWARDS DEFINED!")
         end
       end
     end
@@ -345,96 +439,138 @@ function onTaskData(data)
       -- Ensure task has an ID
       if not task.id then
         g_logger.error("Task missing ID: " .. task.name)
-        goto continue
-      end
-      
-      -- Log the monsters received from the server
-      if task.monsters and #task.monsters > 0 then
-        g_logger.debug("Task " .. task.id .. " already has monsters defined: " .. table.concat(task.monsters, ", "))
       else
-        g_logger.debug("Task " .. task.id .. " has no monsters defined, will try to determine them")
-      end
-      
-      -- Set monster information if not present
-      if not task.monsters or #task.monsters == 0 then
-        -- Try to derive monster info from task name
-        local monsterName = string.match(task.name:lower(), "(%w+)")
-        if monsterName and monsterName ~= "daily" then
-          task.monsters = {monsterName}
-        elseif task.type == TASK_TYPE_DAILY then
-          -- For daily tasks, extract second word as monster name
-          local words = {}
-          for word in task.name:gmatch("%w+") do
-            table.insert(words, word:lower())
-          end
-          if words[2] then
-            task.monsters = {words[2]}
+        -- Log the monsters received from the server
+        if task.monsters and #task.monsters > 0 then
+          g_logger.debug("Task " .. task.id .. " already has monsters defined: " .. table.concat(task.monsters, ", "))
+        else
+          g_logger.debug("Task " .. task.id .. " has no monsters defined, will try to determine them")
+        end
+        
+        -- Log item rewards received from the server
+        if task.reward and task.reward.items then
+          g_logger.debug("Task " .. task.id .. " has item rewards: " .. json.encode(task.reward.items))
+        else
+          g_logger.debug("Task " .. task.id .. " has no item rewards, will use defaults if needed")
+        end
+        
+        -- Set monster information if not present
+        if not task.monsters or #task.monsters == 0 then
+          -- Try to derive monster info from task name
+          local monsterName = string.match(task.name:lower(), "(%w+)")
+          if monsterName and monsterName ~= "daily" then
+            task.monsters = {monsterName}
+          elseif task.type == TASK_TYPE_DAILY then
+            -- For daily tasks, extract second word as monster name
+            local words = {}
+            for word in task.name:gmatch("%w+") do
+              table.insert(words, word:lower())
+            end
+            if words[2] then
+              task.monsters = {words[2]}
+            else
+              task.monsters = {"default"}
+            end
           else
             task.monsters = {"default"}
           end
-        else
-          task.monsters = {"default"}
+          g_logger.debug("Derived monsters for task " .. task.id .. ": " .. table.concat(task.monsters, ", "))
         end
-        g_logger.debug("Derived monsters for task " .. task.id .. ": " .. table.concat(task.monsters, ", "))
-      end
-      
-      -- Ensure reward information exists
-      if not task.reward then
-        task.reward = {}
-      end
-      
-      -- Add default reward info if missing
-      if not task.reward.points then
-        task.reward.points = task.type == TASK_TYPE_DAILY and 1 or 2
-      end
-      
-      if not task.reward.exp then
-        -- Calculate default experience based on level
-        task.reward.exp = (task.level or 1) * 100
-      end
-      
-      if not task.reward.gold then
-        -- Calculate default gold based on level
-        task.reward.gold = (task.level or 1) * 50
-      end
-      
-      -- Remover atribuições de acesso, teleporte e bonus
-      if not task.reward.access then
-        task.reward.access = nil
-      end
-      
-      if not task.reward.teleport then
-        task.reward.teleport = nil
-      end
-      
-      if not task.bonus then
-        task.bonus = nil
-      end
-      
-      -- Ensure task has a type (for UI processing)
-      if not task.type then
-        task.type = taskType
-      end
-      
-      -- MARK SOME TASKS AS RECOMMENDED
-      -- For demonstration purposes, mark specific tasks as recommended
-      if task.name:lower():find("troll") or 
-         task.name:lower():find("rotworm") or 
-         task.name:lower():find("spider") or 
-         task.name:lower():find("orc") then
-        task.recommended = true
-      end
-      
-      -- Alternatively, you can use an ID-based approach
-      local recommendedIds = {1, 2, 3, 4} -- Specific task IDs that are recommended
-      for _, id in ipairs(recommendedIds) do
-        if task.id == id then
+        
+        -- Ensure reward information exists
+        if not task.reward then
+          task.reward = {}
+        end
+        
+        -- Add default reward info if missing
+        if not task.reward.points then
+          task.reward.points = task.type == TASK_TYPE_DAILY and 1 or 2
+        end
+        
+        if not task.reward.exp then
+          -- Calculate default experience based on level
+          task.reward.exp = (task.level or 1) * 100
+        end
+        
+        if not task.reward.gold then
+          -- Calculate default gold based on level
+          task.reward.gold = (task.level or 1) * 50
+        end
+        
+        -- Make sure reward.items is a properly formatted array
+        if task.reward.items then
+          -- Verify each item has the required fields
+          local processedItems = {}
+          
+          for i, item in ipairs(task.reward.items) do
+            -- If item is not in the expected format, try to fix it
+            if type(item) ~= "table" then
+              g_logger.error("Item " .. i .. " for task " .. task.id .. " is not a table: " .. tostring(item))
+            else
+              -- Verificar se temos um ID válido
+              local itemId = item.id or item[1]
+              if not itemId then
+                g_logger.error("Item " .. i .. " for task " .. task.id .. " has no ID")
+              else
+                -- Obter a contagem do item
+                local itemCount = item.count or item[2] or 1
+                
+                -- Obter o nome do item
+                local itemName = item.name or ("Item #" .. itemId)
+                
+                -- Adicionar o item processado à lista no formato esperado pelo cliente
+                table.insert(processedItems, {
+                  id = itemId,
+                  count = itemCount,
+                  name = itemName
+                })
+                
+                g_logger.debug("Processed item " .. i .. " for task " .. task.id .. ": " .. json.encode(processedItems[#processedItems]))
+              end
+            end
+          end
+          
+          -- Substituir a lista original com os itens processados
+          if #processedItems > 0 then
+            task.reward.items = processedItems
+          end
+          
+          g_logger.debug("Final processed items for task " .. task.id .. ": " .. json.encode(task.reward.items))
+        end
+        
+        -- Garantir que todos os campos esperados existam
+        if not task.reward.teleport then
+          task.reward.teleport = "None"
+        end
+        
+        -- Remover atribuições de acesso, teleporte e bonus
+        if not task.reward.access then
+          task.reward.access = nil
+        end
+        
+        -- Ensure task has a type (for UI processing)
+        if not task.type then
+          task.type = taskType
+        end
+        
+        -- MARK SOME TASKS AS RECOMMENDED
+        -- For demonstration purposes, mark specific tasks as recommended
+        if task.name:lower():find("troll") or 
+           task.name:lower():find("rotworm") or 
+           task.name:lower():find("spider") or 
+           task.name:lower():find("orc") then
           task.recommended = true
-          break
+        end
+        
+        -- Alternatively, you can use an ID-based approach
+        local recommendedIds = {1, 2, 3, 4} -- Specific task IDs that are recommended
+        for _, id in ipairs(recommendedIds) do
+          if task.id == id then
+            task.recommended = true
+            break
+          end
         end
       end
-      
-      ::continue::
     end
   end
   
@@ -455,6 +591,58 @@ function onTaskData(data)
     processTaskList(currentTasks.daily, TASK_TYPE_DAILY)
   end
   
+  -- Additional validation to ensure all tasks have properly formatted rewards
+  local function validateTaskRewards(taskList)
+    if not taskList then return end
+    
+    for _, task in ipairs(taskList) do
+      -- Make sure reward structure exists
+      if not task.reward then
+        task.reward = {}
+      end
+      
+      -- Ensure all required reward fields exist
+      task.reward.exp = task.reward.exp or ((task.level or 1) * 100)
+      task.reward.gold = task.reward.gold or ((task.level or 1) * 50)
+      task.reward.points = task.reward.points or (task.type == TASK_TYPE_DAILY and 1 or 2)
+      task.reward.teleport = task.reward.teleport or "None"
+      
+      -- Ensure items array exists
+      if not task.reward.items then
+        task.reward.items = {}
+      end
+      
+      -- Validate the item structure is correct for each item
+      local processedItems = {}
+      for i, item in ipairs(task.reward.items) do
+        if type(item) == "table" then
+          local itemId = item.id or item[1]
+          if itemId then
+            local itemCount = item.count or item[2] or 1
+            local itemName = item.name or ("Item #" .. itemId)
+            
+            table.insert(processedItems, {
+              id = itemId,
+              count = itemCount,
+              name = itemName
+            })
+          end
+        end
+      end
+      
+      -- Always update the items array with processed items
+      task.reward.items = processedItems
+      
+      g_logger.debug("Validated rewards for task " .. task.id .. ": " .. json.encode(task.reward))
+    end
+  end
+  
+  -- Validate all task reward structures
+  validateTaskRewards(availableTasks.normal)
+  validateTaskRewards(availableTasks.daily)
+  validateTaskRewards(currentTasks.normal)
+  validateTaskRewards(currentTasks.daily)
+  
   -- Count tasks for debugging
   local normalCount = availableTasks.normal and #availableTasks.normal or 0
   local dailyCount = availableTasks.daily and #availableTasks.daily or 0
@@ -466,6 +654,73 @@ function onTaskData(data)
   
   local taskPoints = data.taskPoints or 0
   g_logger.info("Player task points: " .. taskPoints)
+  
+  -- Final validation before displaying the tasks window
+  local function ensureCompleteRewards(task)
+    if not task or not task.id then return end
+    
+    g_logger.debug("Ensuring complete rewards for task " .. task.id)
+    
+    -- Create reward structure if it doesn't exist
+    if not task.reward then
+      task.reward = {}
+      g_logger.debug("Created reward structure for task " .. task.id)
+    end
+    
+    -- Set defaults for all required reward fields
+    task.reward.points = task.reward.points or (task.type == TASK_TYPE_DAILY and 1 or 2)
+    task.reward.exp = task.reward.exp or ((task.level or 1) * 100)
+    task.reward.gold = task.reward.gold or ((task.level or 1) * 50)
+    task.reward.teleport = task.reward.teleport or "None"
+    
+    -- Ensure item rewards exist
+    if not task.reward.items then
+      task.reward.items = {}
+      g_logger.debug("Created empty items array for task " .. task.id)
+    end
+    
+    -- Ensure each item has proper structure
+    for i, item in ipairs(task.reward.items) do
+      -- Skip non-table items
+      if type(item) ~= "table" then
+        g_logger.error("Item " .. i .. " for task " .. task.id .. " is not a table: " .. tostring(item))
+      else
+        -- Ensure all items have id, count, and name fields
+        item.id = item.id or item[1] or 0
+        item.count = item.count or item[2] or 1
+        item.name = item.name or ("Item #" .. item.id)
+        
+        g_logger.debug("Ensured item " .. i .. " structure for task " .. task.id .. ": " .. json.encode(item))
+      end
+    end
+    
+    return task
+  end
+  
+  -- Apply validation to all tasks
+  if availableTasks.normal then
+    for i, task in ipairs(availableTasks.normal) do
+      availableTasks.normal[i] = ensureCompleteRewards(task)
+    end
+  end
+  
+  if availableTasks.daily then
+    for i, task in ipairs(availableTasks.daily) do
+      availableTasks.daily[i] = ensureCompleteRewards(task)
+    end
+  end
+  
+  if currentTasks.normal then
+    for i, task in ipairs(currentTasks.normal) do
+      currentTasks.normal[i] = ensureCompleteRewards(task)
+    end
+  end
+  
+  if currentTasks.daily then
+    for i, task in ipairs(currentTasks.daily) do
+      currentTasks.daily[i] = ensureCompleteRewards(task)
+    end
+  end
   
   -- Display tasks window
   displayTasksWindow(taskPoints)
@@ -674,8 +929,10 @@ function displayTasksWindow(taskPoints)
         end
       end
       
-      -- Use the found task or fallback to the widget's task
-      selectedTask = completeTask or firstTaskWidget.task
+      -- Use the most complete task info if found
+      if completeTask then
+        selectedTask = completeTask
+      end
       
       -- Update the UI with selected task details
       updateTaskDetails(selectedTask)
@@ -691,6 +948,29 @@ function displayTasksWindow(taskPoints)
       if nameLabel and type(nameLabel.setColor) == "function" then
         nameLabel:setColor('#ffffff')
       end
+      
+      -- Add a short delay before updating task details to ensure UI is ready
+      scheduleEvent(function()
+        -- Force detailed update
+        if tasksWindow and tasksWindow:isVisible() and selectedTask then
+          g_logger.debug("Refreshing task details after selection for: " .. selectedTask.id)
+          
+          -- Ensure the reward structure exists
+          if not selectedTask.reward then
+            selectedTask.reward = {
+              points = (selectedTask.type == TASK_TYPE_DAILY and 1 or 2),
+              exp = ((selectedTask.level or 1) * 100),
+              gold = ((selectedTask.level or 1) * 50),
+              items = {},
+              teleport = "None"
+            }
+            g_logger.debug("Created default reward structure for task: " .. selectedTask.id)
+          end
+          
+          updateTaskDetails(selectedTask)
+          updateTaskButton(selectedTask)
+        end
+      end, 100)
     end
   end
   
@@ -957,9 +1237,28 @@ function populateTaskList()
           selectedTask = completeTask
         end
         
-        -- Force detailed update
-        updateTaskDetails(selectedTask)
-        updateTaskButton(selectedTask)
+        -- Add a short delay before updating task details to ensure UI is ready
+        scheduleEvent(function()
+          -- Force detailed update
+          if tasksWindow and tasksWindow:isVisible() and selectedTask then
+            g_logger.debug("Refreshing task details after selection for: " .. selectedTask.id)
+            
+            -- Ensure the reward structure exists
+            if not selectedTask.reward then
+              selectedTask.reward = {
+                points = (selectedTask.type == TASK_TYPE_DAILY and 1 or 2),
+                exp = ((selectedTask.level or 1) * 100),
+                gold = ((selectedTask.level or 1) * 50),
+                items = {},
+                teleport = "None"
+              }
+              g_logger.debug("Created default reward structure for task: " .. selectedTask.id)
+            end
+            
+            updateTaskDetails(selectedTask)
+            updateTaskButton(selectedTask)
+          end
+        end, 100)
       end
     end
   end
@@ -1140,6 +1439,9 @@ function updateTaskDetails(task)
     return 
   end
   
+  -- Initialize processedItems table
+  local processedItems = {}
+  
   -- Verificação adicional para garantir que a tarefa tenha um ID
   if not task.id then
     g_logger.debug("Cannot update task details: task has no ID")
@@ -1147,6 +1449,20 @@ function updateTaskDetails(task)
   end
   
   g_logger.debug("Updating details for task: " .. task.name .. " (ID: " .. task.id .. ")")
+  
+  -- Ensure task has reward structure before displaying
+  if not task.reward then
+    task.reward = {
+      points = task.type == TASK_TYPE_DAILY and 1 or 2,
+      exp = (task.level or 1) * 100,
+      gold = (task.level or 1) * 50,
+      items = {},
+      teleport = "None"
+    }
+    g_logger.debug("Created default reward structure for task: " .. task.id)
+  end
+  
+  g_logger.debug("Task reward structure: " .. json.encode(task.reward or {}))
   
   -- Primeiro obter o painel de detalhes
   local detailsPanel = tasksWindow:recursiveGetChildById('detailsPanel')
@@ -1209,7 +1525,15 @@ function updateTaskDetails(task)
         label:setMarginLeft(leftMargin)
       end
       label:setWidth(labelWidth)
-      label:setTextWrap(true) -- Permite quebra de linha se necessário
+      
+      -- Para texto longo (como itens), garanta que tenha quebra de linha
+      if text:len() > 40 or text:find("\n") then
+        label:setTextWrap(true) 
+        label:setHeight(50) -- Altura aumentada para acomodar múltiplas linhas
+      else
+        label:setTextWrap(false)
+        label:setHeight(nil) -- Ajustar automaticamente
+      end
     end
   end
   
@@ -1224,6 +1548,17 @@ function updateTaskDetails(task)
   g_logger.debug("  - Experience: " .. tostring(exp))
   g_logger.debug("  - Gold: " .. tostring(gold))
   
+  -- Check if the task has item rewards and log them
+  if task.reward and task.reward.items then
+    g_logger.debug("  - Items: " .. json.encode(task.reward.items))
+  else
+    g_logger.debug("  - No item rewards found")
+    -- Ensure task.reward.items exists
+    if task.reward then
+      task.reward.items = {}
+    end
+  end
+  
   -- Atualizar os labels com os valores determinados
   setupLabel(taskPointsLabel, tr('Task Points: %s', points))
   setupLabel(experienceLabel, tr('Experience: %s', exp))
@@ -1232,13 +1567,68 @@ function updateTaskDetails(task)
   -- Set appropriate item text (example: "1x burning heart")
   local itemText = "None"
   if task.reward and task.reward.items and #task.reward.items > 0 then
+    local itemsCount = #task.reward.items
+    g_logger.debug("Task has " .. itemsCount .. " item rewards:")
+    g_logger.debug("Task reward items array type: " .. type(task.reward.items))
+    g_logger.debug("Task reward items dump: " .. json.encode(task.reward.items))
+    
     itemText = ""
     for i, item in ipairs(task.reward.items) do
-      if i > 1 then itemText = itemText .. ", " end
-      itemText = itemText .. (item.count or "1") .. "x " .. (item.name or "Unknown Item")
+      g_logger.debug("  Item " .. i .. ": " .. json.encode(item))
+      
+      -- Usar o nome do item se disponível, caso contrário exibir o ID
+      local displayName = item.name or ("Item #" .. (item.id or "unknown"))
+      local count = item.count or 1
+      
+      -- Process item for internal data structure
+      local itemId = item.id or 0
+      local itemName = item.name or displayName
+      
+      -- Add to processed items
+      table.insert(processedItems, {
+        id = itemId,
+        count = count,
+        name = itemName
+      })
+      
+      -- Formatar nome do item (capitalizar palavras)
+      displayName = displayName:gsub("(%a)([%w_']*)", function(first, rest)
+        return first:upper() .. rest:lower()
+      end)
+      
+      -- Format the item text for display
+      if i > 1 then 
+        itemText = itemText .. ",\n" 
+      end
+      itemText = itemText .. count .. "x " .. displayName
     end
+    
+    -- Update the task's reward items with the processed items if needed
+    if #processedItems > 0 then
+      task.reward.items = processedItems
+      g_logger.debug("Updated task.reward.items with " .. #processedItems .. " processed items")
+    end
+  else
+    g_logger.debug("Task has no item rewards")
+    itemText = "None"
   end
-  setupLabel(itemsLabel, itemText)
+  
+  g_logger.debug("Final items text: " .. itemText)
+  
+  -- Make sure itemsLabel has proper settings for multiple item entries
+  if itemsLabel then
+    itemsLabel:setText(itemText)
+    itemsLabel:setMarginLeft(10)
+    itemsLabel:setWidth(180)
+    itemsLabel:setTextWrap(true)
+    
+    -- Adjust height based on number of items
+    local numItems = task.reward and task.reward.items and #task.reward.items or 1
+    local itemsHeight = math.max(20, numItems * 16)  -- At least 20px, 16px per item
+    itemsLabel:setHeight(itemsHeight)
+    
+    g_logger.debug("Setting itemsLabel height to " .. itemsHeight .. " for " .. numItems .. " items")
+  end
   
   -- Update monster icons in the monster display panel
   local monster1Panel = monstersDisplayPanel:getChildById('monster1Panel')
