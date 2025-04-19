@@ -34,6 +34,7 @@ StaticText::StaticText()
     m_color = Color::white;
     m_cachedText.setFont(g_fonts.getFont("Sono-ExtraBold-11px_cp1252"));
     m_cachedText.setAlign(Fw::AlignCenter);
+    m_cachedText.setOutlineWidth(1);
 }
 
 void StaticText::drawText(const Point& dest, const Rect& parentRect)

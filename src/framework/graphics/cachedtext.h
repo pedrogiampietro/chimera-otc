@@ -40,12 +40,14 @@ public:
     void setColoredText(const std::vector<std::string>& texts);
     void setAlign(Fw::AlignmentFlag align) { m_align = align; update(); }
     void setOutline(bool outline) { m_outline = outline; }
+    void setOutlineWidth(int width) { m_outlineWidth = width; }
 
     Size getTextSize() { return m_textSize; }
     std::string getText() const { return m_text; }
     BitmapFontPtr getFont() const { return m_font; }
     Fw::AlignmentFlag getAlign() { return m_align; }
     bool hasOutline() const { return m_outline; }
+    int getOutlineWidth() const { return m_outlineWidth; }
 
     bool hasText() { return !m_text.empty(); }
 
@@ -60,6 +62,7 @@ private:
     BitmapFontPtr m_font;
     Fw::AlignmentFlag m_align;
     stdext::boolean<false> m_outline;
+    int m_outlineWidth = 1;
 };
 
 #endif

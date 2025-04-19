@@ -66,6 +66,7 @@ Creature::Creature() : Thing()
     m_footLastStep = 0;
     m_nameCache.setFont(g_fonts.getFont("Sono-ExtraBold-11px_cp1252"));
     m_nameCache.setAlign(Fw::AlignTopCenter);
+    m_nameCache.setOutlineWidth(1);
     m_nameCache.setOutline(true);
     m_footStep = 0;
     //m_speedFormula.fill(-1);

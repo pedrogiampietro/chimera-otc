@@ -30,6 +30,7 @@ CachedText::CachedText()
     m_font = g_fonts.getDefaultFont();
     m_align = Fw::AlignCenter;
     m_outline = false;
+    m_outlineWidth = 1;
 }
 
 void CachedText::draw(const Rect& rect, const Color& color)
@@ -42,39 +43,57 @@ void CachedText::draw(const Rect& rect, const Color& color)
         m_textCachedScreenCoords = rect;
     }
 
-    // Draw text outline/border by using 8 shadows in different positions
+    // Draw text outline/border using only 4 directions instead of 8 for thinner outline
     if(m_outline) {
         if (!m_textColors.empty()) {
-            // For colored text
-            for(int x = -1; x <= 1; ++x) {
-                for(int y = -1; y <= 1; ++y) {
-                    if(x == 0 && y == 0)
-                        continue;
-                    
-                    Rect shadowRect = m_textCachedScreenCoords;
-                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
-                    m_font->drawColoredText(m_text, shadowRect, Fw::AlignCenter, m_textColors);
-                }
-            }
+            // Draw only in 4 directions for a thinner outline effect
+            // Up
+            Rect upRect = m_textCachedScreenCoords;
+            upRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(0, -m_outlineWidth));
+            m_font->drawColoredText(m_text, upRect, m_align, m_textColors);
+            
+            // Down
+            Rect downRect = m_textCachedScreenCoords;
+            downRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(0, m_outlineWidth));
+            m_font->drawColoredText(m_text, downRect, m_align, m_textColors);
+            
+            // Left
+            Rect leftRect = m_textCachedScreenCoords;
+            leftRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(-m_outlineWidth, 0));
+            m_font->drawColoredText(m_text, leftRect, m_align, m_textColors);
+            
+            // Right
+            Rect rightRect = m_textCachedScreenCoords;
+            rightRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(m_outlineWidth, 0));
+            m_font->drawColoredText(m_text, rightRect, m_align, m_textColors);
         } else {
-            // For regular text
-            for(int x = -1; x <= 1; ++x) {
-                for(int y = -1; y <= 1; ++y) {
-                    if(x == 0 && y == 0)
-                        continue;
-                    
-                    Rect shadowRect = m_textCachedScreenCoords;
-                    shadowRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(x, y));
-                    m_font->drawText(m_text, shadowRect, Fw::AlignCenter, Color::black);
-                }
-            }
+            // Draw only in 4 directions for a thinner outline effect
+            // Up
+            Rect upRect = m_textCachedScreenCoords;
+            upRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(0, -m_outlineWidth));
+            m_font->drawText(m_text, upRect, m_align, Color::black);
+            
+            // Down
+            Rect downRect = m_textCachedScreenCoords;
+            downRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(0, m_outlineWidth));
+            m_font->drawText(m_text, downRect, m_align, Color::black);
+            
+            // Left
+            Rect leftRect = m_textCachedScreenCoords;
+            leftRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(-m_outlineWidth, 0));
+            m_font->drawText(m_text, leftRect, m_align, Color::black);
+            
+            // Right
+            Rect rightRect = m_textCachedScreenCoords;
+            rightRect.moveTopLeft(m_textCachedScreenCoords.topLeft() + Point(m_outlineWidth, 0));
+            m_font->drawText(m_text, rightRect, m_align, Color::black);
         }
     }
 
     if (m_textColors.empty()) {
-        m_font->drawText(m_text, m_textCachedScreenCoords, Fw::AlignCenter, color);
+        m_font->drawText(m_text, m_textCachedScreenCoords, m_align, color);
     } else {
-        m_font->drawColoredText(m_text, m_textCachedScreenCoords, Fw::AlignCenter, m_textColors);
+        m_font->drawColoredText(m_text, m_textCachedScreenCoords, m_align, m_textColors);
     }
 }
 
