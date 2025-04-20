@@ -159,7 +159,9 @@ CreaturePtr CreatureType::cast()
     std::string cName = getName();
     stdext::tolower(cName);
     stdext::trim(cName);
-    stdext::ucwords(cName);
+    if (!cName.empty()) {
+        cName[0] = std::toupper(cName[0]);
+    }
     ret->setName(cName);
 
     ret->setDirection(getDirection());

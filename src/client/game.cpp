@@ -1632,17 +1632,17 @@ void Game::setFollowingCreature(const CreaturePtr& creature)
 std::string Game::formatCreatureName(const std::string& name)
 {
     std::string formatedName = name;
-    if(getFeature(Otc::GameFormatCreatureName) && name.length() > 0) {
-        bool upnext = true;
-        for(uint i=0;i<formatedName.length();++i) {
-            char ch = formatedName[i];
-            if(upnext) {
-                formatedName[i] = stdext::upchar(ch);
-                upnext = false;
-            }
-            if(ch == ' ')
-                upnext = true;
-        }
+    stdext::trim(formatedName);
+    
+    // Check if this is a player name by checking if it's within the player ID range
+    if (m_localPlayer && formatedName == m_localPlayer->getName()) {
+        return formatedName;
+    }
+    
+    // For creatures (monsters and NPCs), format the name
+    stdext::tolower(formatedName);
+    if(formatedName.length() > 0) {
+        formatedName[0] = std::toupper(formatedName[0]);
     }
     return formatedName;
 }
