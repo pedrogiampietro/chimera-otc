@@ -1639,12 +1639,18 @@ std::string Game::formatCreatureName(const std::string& name)
         return formatedName;
     }
     
-    // For creatures (monsters and NPCs), format the name
-    stdext::tolower(formatedName);
-    if(formatedName.length() > 0) {
-        formatedName[0] = std::toupper(formatedName[0]);
-    }
+    // We need to differentiate between players (which should keep their exact names)
+    // and creatures (monsters/NPCs) that should be formatted
+    
+    // For now, just return the original name - this preserves player names exactly as they are in the database
     return formatedName;
+    
+    // The code below was reformatting all creature names to lowercase with first letter capitalized
+    // stdext::tolower(formatedName);
+    // if(formatedName.length() > 0) {
+    //     formatedName[0] = std::toupper(formatedName[0]);
+    // }
+    // return formatedName;
 }
 
 int Game::findEmptyContainerId()
