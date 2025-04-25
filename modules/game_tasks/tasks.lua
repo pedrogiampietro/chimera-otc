@@ -1,6 +1,3 @@
-g_logger.info("Carregando módulo game_tasks...")
-g_logger.info("Inicializando módulo game_tasks...")
-
 -- ATUALIZAÇÃO: Este arquivo foi modificado para remover recompensas fixas locais
 -- As recompensas agora vêm diretamente do servidor, eliminando redundâncias e garantindo
 -- que a UI sempre exiba valores corretos vindos diretamente do servidor.
@@ -200,9 +197,7 @@ function hide()
 end
 
 function setupTopMenuButton()
-  g_logger.info("Configurando botão de tarefas...")
   if not g_app.isMobile() then
-    g_logger.info("Não é dispositivo móvel, criando botão...")
     tasksButton = modules.client_topmenu.addRightGameToggleButton('tasksButton', tr('Tasks'), '/images/topbuttons/new/battle', 
     function()
       if tasksWindow and tasksWindow:isVisible() then
@@ -213,7 +208,6 @@ function setupTopMenuButton()
       end
     end
     , nil, nil, true)
-    g_logger.info("Botão de tarefas criado: " .. tostring(tasksButton ~= nil))
   else
     g_logger.info("É dispositivo móvel, não criando botão")
   end
@@ -1746,47 +1740,36 @@ function updateTaskDetails(task)
     
     -- If task is in progress, change button text to "Cancel Task" instead of hiding it
     if isInProgress then
-      g_logger.debug("Task is in progress, changing button to 'Cancel Task'")
       startTaskButton:setText(tr("Cancel Task"))
       startTaskButton:setEnabled(true)
       startTaskButton:setVisible(true) -- Mantém o botão visível para permitir cancelar a tarefa
     else
-      g_logger.debug("Task is not in progress, setting button to 'Start Task'")
       startTaskButton:setText(tr("Start Task"))
       startTaskButton:setEnabled(true)
       startTaskButton:setVisible(true)
     end
-    
-    g_logger.debug("Task " .. (task.name or "unknown") .. " isInProgress: " .. tostring(isInProgress))
   end
 
   -- Determine monsters to display
   local monstersList = task.monsters or {}
-  g_logger.debug("Monsters for task " .. task.id .. ":")
   if #monstersList == 0 then
-    g_logger.debug("  No monsters defined for this task")
   else
     for i, monster in ipairs(monstersList) do
-      g_logger.debug("  Monster " .. i .. ": " .. monster)
     end
   end
 end
 
 function startTask()
   if not selectedTask then 
-    g_logger.debug("startTask called but no selectedTask")
     return 
   end
-  
-  g_logger.debug("Starting/canceling task: " .. (selectedTask.name or "unknown") .. " with ID: " .. tostring(selectedTask.id))
-  
+    
   -- Check if task is already in progress (to determine if we should start or cancel)
   local isInProgress = false
   
   -- Check if task status is STARTED
   if selectedTask.status == TASK_STATUS_STARTED then
     isInProgress = true
-    g_logger.debug("Task is already in progress based on its status")
   end
   
   -- Check in currentTasks.normal if not already determined
@@ -1795,7 +1778,6 @@ function startTask()
       if currentTask.id == selectedTask.id then
         if currentTask.status == TASK_STATUS_STARTED then
           isInProgress = true
-          g_logger.debug("Task found in progress in currentTasks.normal")
         end
         break
       end
@@ -1808,7 +1790,6 @@ function startTask()
       if currentTask.id == selectedTask.id then
         if currentTask.status == TASK_STATUS_STARTED then
           isInProgress = true
-          g_logger.debug("Task found in progress in currentTasks.daily")
         end
         break
       end
@@ -1820,7 +1801,6 @@ function startTask()
     local protocol = g_game.getProtocolGame()
     if protocol then
       local action = isInProgress and "cancel" or "start"
-      g_logger.debug("Action to perform: " .. action .. " for task ID: " .. tostring(selectedTask.id))
       
       local data = {
         action = action,
@@ -1831,7 +1811,6 @@ function startTask()
       if action == "start" then
         -- Marca a tarefa como em progresso na estrutura de dados local
         selectedTask.status = TASK_STATUS_STARTED
-        g_logger.debug("Setting task status to STARTED: " .. tostring(TASK_STATUS_STARTED))
         
         -- Adiciona a tarefa selecionada à lista de tarefas atuais
         if selectedTask.type == TASK_TYPE_DAILY then
@@ -1845,7 +1824,6 @@ function startTask()
             if task.id == selectedTask.id then
               task.status = TASK_STATUS_STARTED
               exists = true
-              g_logger.debug("Updated existing daily task to STARTED")
               break
             end
           end
@@ -1862,7 +1840,6 @@ function startTask()
             end
             
             table.insert(currentTasks.daily, taskCopy)
-            g_logger.debug("Added new daily task with STARTED status: " .. json.encode(taskCopy))
           end
         else
           if not currentTasks.normal then
@@ -1875,7 +1852,6 @@ function startTask()
             if task.id == selectedTask.id then
               task.status = TASK_STATUS_STARTED
               exists = true
-              g_logger.debug("Updated existing normal task to STARTED")
               break
             end
           end
@@ -1892,7 +1868,6 @@ function startTask()
             end
             
             table.insert(currentTasks.normal, taskCopy)
-            g_logger.debug("Added new normal task with STARTED status: " .. json.encode(taskCopy))
           end
         end
       else -- action == "cancel"
@@ -1901,7 +1876,6 @@ function startTask()
           for i, task in ipairs(currentTasks.daily) do
             if task.id == selectedTask.id then
               table.remove(currentTasks.daily, i)
-              g_logger.debug("Removed daily task from currentTasks")
               break
             end
           end
@@ -1909,7 +1883,6 @@ function startTask()
           for i, task in ipairs(currentTasks.normal) do
             if task.id == selectedTask.id then
               table.remove(currentTasks.normal, i)
-              g_logger.debug("Removed normal task from currentTasks")
               break
             end
           end
@@ -1918,7 +1891,6 @@ function startTask()
         -- Restaura o status da tarefa
         selectedTask.status = TASK_STATUS_AVAILABLE
         selectedTask.count = 0
-        g_logger.debug("Reset task status to AVAILABLE: " .. tostring(TASK_STATUS_AVAILABLE))
       end
       
       -- Use helper function to update the button text
@@ -1932,7 +1904,6 @@ function startTask()
       -- que as recompensas sejam exibidas corretamente
       scheduleEvent(function()
         if selectedTask and tasksWindow and tasksWindow:isVisible() then
-          g_logger.debug("Atualizando detalhes da tarefa novamente após atraso")
           updateTaskDetails(selectedTask)
           updateTaskButton(selectedTask)
         end
