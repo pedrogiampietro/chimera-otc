@@ -58,21 +58,21 @@ function refreshContainerItems(container)
     for slot = 0, container:getCapacity() - 1 do
         local itemWidget = container.itemsPanel:getChildById("item" .. slot)
         local item = container:getItem(slot)
-        local rarity = item and item:getTooltip() or nil  -- Não define valor padrão se rarity for nil
-
-        if rarity then
-            if string.find(rarity, "legendary") then
-                itemWidget:setImageSource("/images/ui/rarity_gold.png")
-            elseif string.find(rarity, "epic") then
-                itemWidget:setImageSource("/images/ui/rarity_purple.png")
-            elseif string.find(rarity, "rare") then
-                itemWidget:setImageSource("/images/ui/rarity_blue.png")
-            end
-        else
-            itemWidget:setImageSource("")  -- Remove a imagem de raridade se não houver raridade específica
+        local tip = item and item:getTooltip() and item:getTooltip():lower() or ""
+        
+        local src = ""
+        if tip:find("%[legendary%]") or tip:find(" legendary") then
+            src = "/images/ui/rarity_gold"
+        elseif tip:find("%[epic%]") or tip:find(" epic") then
+            src = "/images/ui/rarity_purple"
+        elseif tip:find("%[common%]") or tip:find(" common") then
+            src = "/images/ui/rarity_white"
+        elseif tip:find("%[rare%]") or tip:find(" rare") then
+            src = "/images/ui/rarity_blue"
         end
-
-        itemWidget:setTooltip(rarity or "")  -- Define o tooltip como a raridade ou vazio se não houver raridade
+        
+        itemWidget:setImageSource(src)
+        itemWidget:setTooltip(item and item:getTooltip() or "")
         itemWidget:setItem(item)
     end
 
@@ -80,10 +80,6 @@ function refreshContainerItems(container)
         refreshContainerPages(container)
     end
 end
-
-
-
-
 
 function toggleContainerPages(containerWindow, hasPages)
 	if hasPages == containerWindow.pagePanel:isOn() then
@@ -158,6 +154,8 @@ local function setFrames()
 		  src = "/images/ui/rarity_gold"
 		elseif tip:find("%[epic%]") or tip:find(" epic") then
 		  src = "/images/ui/rarity_purple"
+		elseif tip:find("%[common%]") or tip:find(" common") then
+		  src = "/images/ui/rarity_white"
 		elseif tip:find("%[rare%]") or tip:find(" rare") then
 		  src = "/images/ui/rarity_blue"
 		end

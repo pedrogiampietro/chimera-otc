@@ -258,14 +258,11 @@ function onInventoryChange(player, slot, item, oldItem)
 		return
 	end
 
-	local rarity = false
-
 	if slot == InventorySlotPurse then
 		if g_game.getFeature(GamePurseSlot) then
 			-- Nothing
 		end
-
-  return
+		return
 	end
 
 	local itemWidget = inventoryPanel:getChildById("slot" .. slot)
@@ -275,17 +272,20 @@ function onInventoryChange(player, slot, item, oldItem)
         itemWidget:setItem(item)
 
         local itemInfo = player:getInventoryItem(slot)
-        local rarity = itemInfo:getTooltip()
-
-        if rarity then
-            if string.find(rarity, "legendary") then
-                itemWidget:setImageSource("/images/ui/rarity_gold.png")
-            elseif string.find(rarity, "epic") then
-                itemWidget:setImageSource("/images/ui/rarity_purple.png")
-            elseif string.find(rarity, "rare") then
-                itemWidget:setImageSource("/images/ui/rarity_blue.png")
-            end
-        end
+        local tip = (itemInfo:getTooltip() or ""):lower()
+        local src = "/images/ui/item"
+        
+        if tip:find("%[legendary%]") or tip:find(" legendary") then
+            src = "/images/ui/rarity_gold"
+        elseif tip:find("%[epic%]") or tip:find(" epic") then
+            src = "/images/ui/rarity_purple"
+        elseif tip:find("%[rare%]") or tip:find(" rare") then
+            src = "/images/ui/rarity_blue"
+          elseif tip:find("%[common%]") or tip:find(" common") then
+            src = "/images/ui/rarity_white"
+          end
+        
+        itemWidget:setImageSource(src)
     else
         itemWidget:setStyle(InventorySlotStyles[slot])
         itemWidget:setItem(nil)
