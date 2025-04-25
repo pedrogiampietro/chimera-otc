@@ -150,25 +150,19 @@ end
 
 local function setFrames()
 	for _, container in pairs(g_game.getContainers()) do
-		local window = container.itemsPanel
-
-		for i, child in pairs(window:getChildren()) do
-			local id = child:getItemId()
-			local price = 0
-			local name = child:getTooltip()
-
-			child:setImageSource("/images/ui/item")
-
-			if name then
-				if string.find(name, "legendary") then
-					child:setImageSource("/images/ui/rarity_gold")
-				elseif string.find(name, "epic") then
-					child:setImageSource("/images/ui/rarity_purple")
-				elseif string.find(name, "rare") then
-					child:setImageSource("/images/ui/rarity_blue")
-				end
-			end
+	  local panel = container.itemsPanel
+	  for _, child in pairs(panel:getChildren()) do
+		local tip = (child:getTooltip() or ""):lower()
+		local src = "/images/ui/item"
+		if tip:find("%[legendary%]") or tip:find(" legendary") then
+		  src = "/images/ui/rarity_gold"
+		elseif tip:find("%[epic%]") or tip:find(" epic") then
+		  src = "/images/ui/rarity_purple"
+		elseif tip:find("%[rare%]") or tip:find(" rare") then
+		  src = "/images/ui/rarity_blue"
 		end
+		child:setImageSource(src)
+	  end
 	end
 end
 
@@ -258,7 +252,6 @@ function onContainerOpen(container, previousContainer)
 		itemWidget:setId("item" .. slot)
 		itemWidget:setItem(container:getItem(slot))
 		itemWidget:setMargin(0)
-
 		itemWidget.position = container:getSlotPosition(slot)
 
 		if not container:isUnlocked() then
