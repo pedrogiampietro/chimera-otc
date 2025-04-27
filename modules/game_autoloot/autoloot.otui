@@ -1,0 +1,25 @@
+AutoLootWindow < MainWindow
+  id: autolootWindow
+  !text: tr('Auto Loot')
+  size: 500 400
+  @onEscape: self:hide()
+  @onClose: modules.game_autoloot.onCloseWindow()
+  &save: true
+
+  Label
+    id: descriptionLabel
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+    text: Configure auto loot settings
+    margin-top: 10
+
+  Button
+    id: closeButton
+    !text: tr('Close')
+    width: 90
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    margin-bottom: 10
+    margin-right: 10 
