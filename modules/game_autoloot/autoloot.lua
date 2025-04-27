@@ -30,16 +30,48 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
       if lootListPanel then
         lootListPanel:destroyChildren()
         for i, loot in ipairs(data) do
-          local label = g_ui.createWidget('UILabel', lootListPanel)
-          label:setText(string.format('%d. %s (ID: %d)', i, loot.name, loot.id))
-          label:setFont('verdana-11px-rounded')
-          label:setColor('#FFD700')
-          label:setTextAlign(AlignLeft)
-          label:setHeight(24)
-          label:setMarginTop(2)
-          label:setMarginBottom(2)
-          -- Removido setWidth e setPosition para layout automático
+          local row = g_ui.createWidget('AutoLootListRow', lootListPanel)
+          if not row then
+            print('[AutoLoot] ERROR: Failed to create AutoLootListRow widget')
+            return
+          end
+          
+          local itemImage = row:getChildById('itemImage')
+          local itemLabel = row:getChildById('itemLabel')
+          local removeButton = row:getChildById('removeButton')
+          
+          if not itemImage or not itemLabel or not removeButton then
+            print('[AutoLoot] ERROR: Missing required child widgets in AutoLootListRow')
+            row:destroy()
+            return
+          end
+          
+          -- Set item image
+          local imagePath = string.format('/images/items/%d.png', loot.id)
+          if g_resources.fileExists(imagePath) then
+            itemImage:setImageSource(imagePath)
+          else
+            print(string.format('[AutoLoot] Warning: Image not found for item %d: %s', loot.id, imagePath))
+            itemImage:setImageSource('')
+          end
+          
+          -- Set item label
+          itemLabel:setText(string.format('%d. %s (ID: %d)', i, loot.name, loot.id))
+          itemLabel:setFont('verdana-11px-rounded')
+          itemLabel:setColor('#FFD700')
+          
+          -- Set remove button action
+          removeButton.onClick = function()
+            local protocol = g_game.getProtocolGame()
+            if protocol then
+              local data = { action = "remove", itemId = loot.id }
+              protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+            end
+          end
         end
+        
+        -- Update layout once after all items are added
+        lootListPanel:updateLayout()
       end
     end
     -- (opcional) print no console
@@ -81,8 +113,9 @@ end
 
 function init()
   print('[AutoLoot] Módulo carregado!')
-  -- Load the UI style
+  -- Load the UI styles
   g_ui.importStyle('autoloot')
+  g_ui.importStyle('autolootitem')
   
   print('[AutoLoot] modules.game_interface:', modules.game_interface)
   if modules.game_interface then

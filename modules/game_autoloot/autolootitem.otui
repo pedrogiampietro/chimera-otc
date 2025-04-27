@@ -1,0 +1,40 @@
+AutoLootListRow < Panel
+  id: autoLootRow
+  height: 36
+  background-color: #222222cc
+  border-width: 1
+  border-color: #444444
+  margin: 2
+  layout: horizontalBox
+
+  UIWidget
+    id: itemImage
+    width: 32
+    height: 32
+    margin: 2
+    border-width: 1
+    border-color: #666666
+    background: #333333
+    image-source: ""
+
+  UILabel
+    id: itemLabel
+    margin-left: 8
+    text: ""
+    font: verdana-11px-rounded
+    color: #FFD700
+    text-align: left
+    vertical-align: center
+    width: 200
+
+  UIButton
+    id: removeButton
+    text: "Remove"
+    margin-left: 8
+    width: 80
+    height: 24
+    background-color: #333333
+    border-width: 1
+    border-color: #666666
+    color: #ffffff
+    font: verdana-11px-rounded
