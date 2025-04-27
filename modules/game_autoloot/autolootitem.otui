@@ -7,6 +7,8 @@ AutoLootListRow < Panel
   border-color: #444444
   margin: 2
   layout: horizontalBox
+  padding-top: 0
+  padding-bottom: 0
 
   UIWidget
     id: itemImage
@@ -30,20 +32,13 @@ AutoLootListRow < Panel
 
   UIButton
     id: removeButton
-    text: "×"
-    width: 28
-    height: 28
-    margin-left: 20
-    margin-right: 4
-    margin-top: 4
-    background-color: #ff3333
-    border-width: 1
-    border-color: #ff6666
-    color: #ffffff
+    width: 60
+    height: 22
+    margin-left: 12
+    margin-right: 8
+    text: "X"
     font: verdana-11px-rounded
-    font-size: 16
+    font-size: 12
     tooltip: "Remover item"
     visible: true
     enabled: true
-    hover-background-color: #ff5555
-    pressed-background-color: #ff1111
