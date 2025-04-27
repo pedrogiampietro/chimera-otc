@@ -42,6 +42,9 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
           
           if not itemImage or not itemLabel or not removeButton then
             print('[AutoLoot] ERROR: Missing required child widgets in AutoLootListRow')
+            print('[AutoLoot] Debug - itemImage:', itemImage and 'exists' or 'nil')
+            print('[AutoLoot] Debug - itemLabel:', itemLabel and 'exists' or 'nil')
+            print('[AutoLoot] Debug - removeButton:', removeButton and 'exists' or 'nil')
             row:destroy()
             return
           end
@@ -66,8 +69,27 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
             if protocol then
               local data = { action = "remove", itemId = loot.id }
               protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+              
+              -- Remove the row imediatamente
+              row:destroy()
+              
+              -- Atualiza o contador de itens
+              local itemsCountLabel = autolootWindow:recursiveGetChildById('itemsCountLabel')
+              if itemsCountLabel then
+                local currentCount = tonumber(itemsCountLabel:getText():match("(%d+)/")) or 0
+                itemsCountLabel:setText(string.format("Items %d/10", currentCount - 1))
+              end
+              
+              -- Request updated list after a short delay
+              scheduleEvent(function()
+                requestAutoLoot()
+              end, 100)
             end
           end
+          
+          -- Make sure the button is visible
+          removeButton:setVisible(true)
+          removeButton:setEnabled(true)
         end
         
         -- Update layout once after all items are added

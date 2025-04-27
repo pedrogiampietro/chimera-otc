@@ -1,6 +1,7 @@
 AutoLootListRow < Panel
   id: autoLootRow
   height: 36
+  width: 250
   background-color: #222222cc
   border-width: 1
   border-color: #444444
@@ -25,16 +26,24 @@ AutoLootListRow < Panel
     color: #FFD700
     text-align: left
     vertical-align: center
-    width: 200
+    width: 150
 
   UIButton
     id: removeButton
-    text: "Remove"
-    margin-left: 8
-    width: 80
-    height: 24
-    background-color: #333333
+    text: "×"
+    width: 28
+    height: 28
+    margin-left: 20
+    margin-right: 4
+    margin-top: 4
+    background-color: #ff3333
     border-width: 1
-    border-color: #666666
+    border-color: #ff6666
     color: #ffffff
     font: verdana-11px-rounded
+    font-size: 16
+    tooltip: "Remover item"
+    visible: true
+    enabled: true
+    hover-background-color: #ff5555
+    pressed-background-color: #ff1111
