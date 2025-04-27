@@ -33,6 +33,12 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
           local label = g_ui.createWidget('UILabel', lootListPanel)
           label:setText(string.format('%d. %s (ID: %d)', i, loot.name, loot.id))
           label:setFont('verdana-11px-rounded')
+          label:setColor('#FFD700')
+          label:setTextAlign(AlignLeft)
+          label:setHeight(24)
+          label:setMarginTop(2)
+          label:setMarginBottom(2)
+          -- Removido setWidth e setPosition para layout automático
         end
       end
     end

@@ -1,50 +1,101 @@
 AutoLootWindow < MainWindow
   id: autolootWindow
-  !text: tr('Auto Loot')
-  size: 500 400
+  !text: tr('AutoLoot')
+  size: 600 370
   @onEscape: self:hide()
   @onClose: modules.game_autoloot.onCloseWindow()
   &save: true
 
-  Label
-    id: descriptionLabel
-    anchors.top: parent.top
-    anchors.left: parent.left
-    anchors.right: parent.right
-    text-align: center
-    text: Configure auto loot settings
-    margin-top: 10
-
-  UIScrollArea
+  ScrollablePanel
     id: lootListPanel
-    anchors.top: descriptionLabel.bottom
     anchors.left: parent.left
-    anchors.right: parent.right
-    margin-top: 10
-    height: 250
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    width: 250
+    background-color: #222222cc
+    border-width: 1
+    border-color: #444444
+    layout: verticalBox
+    layout-spacing: 2
 
-  UITextEdit
-    id: addItemEdit
-    anchors.top: lootListPanel.bottom
-    anchors.left: parent.left
+  UIWidget
+    id: controlsPanel
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    anchors.left: lootListPanel.right
     anchors.right: parent.right
-    margin-top: 10
-    height: 30
-    text: ""
+    margin-left: 16
 
-  Button
-    id: addItemButton
-    !text: tr('Adicionar')
-    anchors.top: addItemEdit.bottom
-    anchors.left: parent.left
-    width: 120
-    margin-top: 5
+    Label
+      id: writeItemLabel
+      text: Write an item name:
+      anchors.top: parent.top
+      anchors.left: parent.left
+      color: #FFD700
+      font: verdana-11px-rounded
+
+    UITextEdit
+      id: addItemEdit
+      anchors.top: writeItemLabel.bottom
+      anchors.left: parent.left
+      width: 180
+      height: 24
+      margin-top: 4
+      background-color: #333333
+      border-width: 1
+      border-color: #666666
+      color: #ffffff
+
+    Button
+      id: addItemButton
+      !text: tr('Add to list')
+      anchors.top: addItemEdit.bottom
+      anchors.left: parent.left
+      width: 120
+      height: 24
+      margin-top: 8
+
+    Label
+      id: extrasLabel
+      text: Extras:
+      anchors.top: addItemButton.bottom
+      anchors.left: parent.left
+      margin-top: 16
+      color: #FFD700
+      font: verdana-11px-rounded
+
+    Button
+      id: moneyButton
+      !text: tr('Money ON')
+      anchors.top: extrasLabel.bottom
+      anchors.left: parent.left
+      width: 100
+      height: 22
+      margin-top: 4
+
+    Button
+      id: clearButton
+      !text: tr('Clear')
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      width: 100
+      height: 24
+      margin-bottom: 8
+
+    Label
+      id: itemsCountLabel
+      text: Items 0/10
+      anchors.bottom: parent.bottom
+      anchors.right: parent.right
+      color: #ff0000
+      font: verdana-11px-rounded
+      margin-bottom: 8
 
   Button
     id: closeButton
     !text: tr('Close')
-    width: 90
     anchors.bottom: parent.bottom
     anchors.right: parent.right
     margin-bottom: 10
-    margin-right: 10 
+    margin-right: 10
+    width: 90 
