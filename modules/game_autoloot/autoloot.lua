@@ -228,6 +228,10 @@ function init()
       if clearButton then
         clearButton.onClick = onClearButtonClick
       end
+      local closeButton = autolootWindow:recursiveGetChildById('closeButton')
+      if closeButton then
+        closeButton.onClick = modules.game_autoloot.onCloseWindow
+      end
     end
   end)
 end
@@ -254,24 +258,26 @@ function terminate()
 end
 
 function setupTopMenuButton()
-  if not g_app.isMobile() then
-    autolootButton = modules.client_topmenu.addRightGameToggleButton('autolootButton', tr('Auto Loot'), '/images/topbuttons/autoloot',
-      function()
-        if autolootWindow and autolootWindow:isVisible() then
-          autolootWindow:hide()
-          autolootButton:setOn(false)
-        else
-          requestAutoLoot()
-          autolootWindow:show()
-          autolootWindow:raise()
-          autolootWindow:focus()
-          autolootButton:setOn(true)
-        end
-      end,
-      nil, nil, true)
-  else
-    g_logger.info("É dispositivo móvel, não criando botão")
-  end
+  autolootButton = modules.client_topmenu.addLeftGameToggleButton(
+    'autolootButton',
+    tr('AutoLoot'),
+    '/images/topbuttons/autoloot',
+    function()
+      if autolootWindow and autolootWindow:isVisible() then
+        autolootWindow:hide()
+        autolootButton:setOn(false)
+      else
+        requestAutoLoot()
+        autolootWindow:show()
+        autolootWindow:raise()
+        autolootWindow:focus()
+        autolootButton:setOn(true)
+      end
+    end,
+    false, 99998
+  )
+  autolootButton:setOn(false)
+  autolootButton:show()
 end
 
 function toggle()
@@ -287,7 +293,13 @@ function toggle()
 end
 
 function onCloseWindow()
-  autolootButton:setOn(false)
+  if autolootWindow then
+    autolootWindow:hide()
+  end
+  if autolootButton then
+    autolootButton:setOn(false)
+    autolootButton:show()
+  end
 end
 
 function refresh()
