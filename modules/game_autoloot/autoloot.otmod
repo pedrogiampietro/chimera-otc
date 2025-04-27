@@ -1,0 +1,10 @@
+Module
+  name: game_autoloot
+  description: Automatic looting configuration for OTClient
+  author: User
+  website: https://github.com/
+  sandboxed: true
+  dependencies: [ game_interface ]
+  scripts: [ autoloot ]
+  @onLoad: init()
+  @onUnload: terminate() 

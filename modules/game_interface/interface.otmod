@@ -34,6 +34,7 @@ Module
     - game_shop
     - game_itemselector
     - game_tasks
+    - game_autoloot
     - client_textedit
     - game_actionbar
     - game_prey

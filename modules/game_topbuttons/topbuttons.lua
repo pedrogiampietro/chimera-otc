@@ -8,6 +8,7 @@ function init()
   modules.game_inventory.setupTopMenuButton()
   modules.game_battle.setupTopMenuButton()
   modules.game_healthinfo.setupTopMenuButton()
+  modules.game_autoloot.setupTopMenuButton()
 end
 
 function terminate()
