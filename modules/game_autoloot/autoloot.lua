@@ -9,12 +9,31 @@ ExtendedIds.AutoLootRequest = 211
 local autolootButton = nil
 autolootWindow = nil
 
+local function setMoneyButtonText(isOn)
+  if autolootWindow then
+    local moneyButton = autolootWindow:recursiveGetChildById('moneyButton')
+    if moneyButton then
+      if isOn then
+        moneyButton:setText('Money ON')
+      else
+        moneyButton:setText('Money OFF')
+      end
+    end
+  end
+end
+
 local function onExtendedAutoLootData(protocol, opcode, buffer)
   local data = json.decode(buffer)
   -- Feedback visual se for resposta de ação
   if data and data.feedback and data.message then
-    if data.feedback == "success" then
+    if data.feedback == "success" or data.feedback == "info" then
       displayInfoBox("AutoLoot", data.message)
+      -- Atualiza o texto do botão de gold se a mensagem for sobre gold
+      if data.message:find("gold foi ativado") then
+        setMoneyButtonText(true)
+      elseif data.message:find("gold foi desativado") then
+        setMoneyButtonText(false)
+      end
     elseif data.feedback == "error" then
       displayErrorBox("AutoLoot", data.message)
     else
@@ -133,6 +152,14 @@ local function onAddItemButtonClick()
   end
 end
 
+local function onMoneyButtonClick()
+  local protocol = g_game.getProtocolGame()
+  if protocol then
+    local data = { action = "gold" }
+    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+  end
+end
+
 function init()
   print('[AutoLoot] Módulo carregado!')
   -- Load the UI styles
@@ -154,6 +181,8 @@ function init()
     if g_ui.getRootWidget then
       autolootWindow = g_ui.createWidget('AutoLootWindow', g_ui.getRootWidget())
       autolootWindow:hide()
+      -- Atualiza o texto do botão de gold ao abrir
+      setMoneyButtonText(false)
     else
       print('[AutoLoot] ERRO: g_ui.getRootWidget não está disponível!')
     end
@@ -178,6 +207,10 @@ function init()
       local addItemButton = autolootWindow:recursiveGetChildById('addItemButton')
       if addItemButton then
         addItemButton.onClick = onAddItemButtonClick
+      end
+      local moneyButton = autolootWindow:recursiveGetChildById('moneyButton')
+      if moneyButton then
+        moneyButton.onClick = onMoneyButtonClick
       end
     end
   end)
