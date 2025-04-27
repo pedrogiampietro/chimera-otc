@@ -85,11 +85,12 @@ AutoLootWindow < MainWindow
     Label
       id: itemsCountLabel
       text: Items 0/10
-      anchors.bottom: parent.bottom
+      anchors.top: parent.top
       anchors.right: parent.right
-      color: #ff0000
+      margin-top: 8
+      margin-right: 10
+      color: #FFD700
       font: verdana-11px-rounded
-      margin-bottom: 8
 
   Button
     id: closeButton

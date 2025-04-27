@@ -22,6 +22,23 @@ local function setMoneyButtonText(isOn)
   end
 end
 
+local function updateItemsCount(count)
+  if autolootWindow then
+    local itemsCountLabel = autolootWindow:recursiveGetChildById('itemsCountLabel')
+    if itemsCountLabel then
+      itemsCountLabel:setText(string.format("Items %d/10", count))
+    end
+  end
+end
+
+local function onClearButtonClick()
+  local protocol = g_game.getProtocolGame()
+  if protocol then
+    local data = { action = "clear" }
+    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+  end
+end
+
 local function onExtendedAutoLootData(protocol, opcode, buffer)
   local data = json.decode(buffer)
   -- Feedback visual se for resposta de ação
@@ -92,13 +109,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
               -- Remove the row imediatamente
               row:destroy()
               
-              -- Atualiza o contador de itens
-              local itemsCountLabel = autolootWindow:recursiveGetChildById('itemsCountLabel')
-              if itemsCountLabel then
-                local currentCount = tonumber(itemsCountLabel:getText():match("(%d+)/")) or 0
-                itemsCountLabel:setText(string.format("Items %d/10", currentCount - 1))
-              end
-              
               -- Request updated list after a short delay
               scheduleEvent(function()
                 requestAutoLoot()
@@ -113,6 +123,8 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
         
         -- Update layout once after all items are added
         lootListPanel:updateLayout()
+        -- Atualiza o contador de itens corretamente
+        updateItemsCount(#data)
       end
     end
     -- (opcional) print no console
@@ -211,6 +223,10 @@ function init()
       local moneyButton = autolootWindow:recursiveGetChildById('moneyButton')
       if moneyButton then
         moneyButton.onClick = onMoneyButtonClick
+      end
+      local clearButton = autolootWindow:recursiveGetChildById('clearButton')
+      if clearButton then
+        clearButton.onClick = onClearButtonClick
       end
     end
   end)
