@@ -150,12 +150,15 @@ local function onAddItemButtonClick()
   if not autolootWindow then return end
   local addItemEdit = autolootWindow:recursiveGetChildById('addItemEdit')
   if not addItemEdit then return end
-  local itemName = addItemEdit:getText():trim()
+  local itemName = addItemEdit:getText()
+  itemName = itemName:gsub("^%s*(.-)%s*$", "%1") -- remove espaços início/fim
+  itemName = itemName:gsub("%s+", " ") -- reduz múltiplos espaços internos para um só
   if itemName == "" then
     displayInfoBox("AutoLoot", "Digite o nome do item para adicionar.")
     return
   end
 
+  print('[AutoLoot Debug] Enviando para o servidor:', itemName)
   -- Envie o pedido para o servidor (action = "add")
   local protocol = g_game.getProtocolGame()
   if protocol then
