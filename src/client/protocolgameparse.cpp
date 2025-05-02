@@ -3407,7 +3407,7 @@ ThingPtr ProtocolGame::getThing(const InputMessagePtr& msg)
     else if (id == Proto::StaticText) // otclient only
         thing = getStaticText(msg, id);
     else // item
-        thing = getItem(msg, id, g_game.getFeature(Otc::GameItemTooltip));
+        thing = getItem(msg, id, false);
 
     return thing;
 }
@@ -3652,7 +3652,6 @@ ItemPtr ProtocolGame::getItem(const InputMessagePtr& msg, int id, bool hasDescri
         item->setCountOrSubType(msg->getU8());
     }
     else if (item->rawGetThingType()->isContainer() && (g_game.getFeature(Otc::GameTibia12Protocol) || g_game.getFeature(Otc::GameQuickLootFlags))) {
-        // not sure about this part
         uint8_t hasQuickLootFlags = msg->getU8();
         if (hasQuickLootFlags > 0) {
             item->setQuickLootFlags(msg->getU32()); // quick loot flags
@@ -3681,7 +3680,6 @@ ItemPtr ProtocolGame::getItem(const InputMessagePtr& msg, int id, bool hasDescri
             item->setCustomAttribute(key, value);
         }
     }
-
     return item;
 }
 
