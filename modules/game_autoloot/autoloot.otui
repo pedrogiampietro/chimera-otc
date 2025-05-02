@@ -73,6 +73,49 @@ AutoLootWindow < MainWindow
       height: 22
       margin-top: 4
 
+    Label
+      id: backpackLabel
+      text: Backpack name for autoloot:
+      anchors.top: moneyButton.bottom
+      anchors.left: parent.left
+      margin-top: 16
+      color: #FFD700
+      font: verdana-11px-rounded
+
+    UITextEdit
+      id: backpackEdit
+      anchors.top: backpackLabel.bottom
+      anchors.left: parent.left
+      width: 180
+      height: 22
+      background-color: #333333
+      border-width: 1
+      border-color: #666666
+      color: #ffffff
+      placeholder: "Ex: purple backpack"
+      margin-top: 2
+
+    Button
+      id: setBackpackButton
+      text: Set Backpack
+      anchors.top: backpackEdit.bottom
+      anchors.left: parent.left
+      width: 120
+      height: 22
+      margin-top: 2
+
+    Label
+      id: backpackAtualLabel
+      text: Current backpack: None
+      anchors.top: setBackpackButton.bottom
+      anchors.left: parent.left
+      margin-top: 4
+      color: #00FF00
+      font: verdana-11px-rounded
+      width: 250
+      max-width: 300
+      vertical-auto-size: true
+
     Button
       id: clearButton
       !text: tr('Clear')

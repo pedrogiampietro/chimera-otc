@@ -1,8 +1,8 @@
 SpeakTypesSettings = {
   none = {},
   say = { speakType = MessageModes.Say, color = '#eec900' },
-  whisper = { speakType = MessageModes.Whisper, color = '#eec900' },
-  yell = { speakType = MessageModes.Yell, color = '#eec900' },
+  whisper = { speakType = MessageModes.Whisper, color = '#ffa500' },
+  yell = { speakType = MessageModes.Yell, color = '#0000ff' },
   broadcast = { speakType = MessageModes.GamemasterBroadcast, color = '#b45626' },
   private = { speakType = MessageModes.PrivateTo, color = '#49DDC6', private = true },
   privateRed = { speakType = MessageModes.GamemasterTo, color = '#b45626', private = true },
@@ -1095,9 +1095,18 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
       else
         staticText:addMessage(name, mode, staticMessage)
       end
-      staticText:setColor(speaktype.color)
+      if mode == MessageModes.Say then
+        staticText:setColor('#ff0000') -- vermelho na tela
+      else
+        staticText:setColor(speaktype.color)
+      end
     else
       staticText:addMessage(name, mode, staticMessage)
+      if mode == MessageModes.Say then
+        staticText:setColor('#ff0000') -- vermelho na tela
+      else
+        staticText:setColor(speaktype.color)
+      end
     end
     g_map.addThing(staticText, creaturePos, -1)
   end
