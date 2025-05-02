@@ -1,0 +1,9 @@
+Module
+  name: shops
+  description: Player private shops
+  author: Bastian
+  autoload: true
+  sandboxed: true
+  scripts: [ shops ]
+  @onLoad: init()
+  @onUnload: terminate()

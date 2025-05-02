@@ -460,6 +460,12 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
     local localPlayer = g_game.getLocalPlayer()
     menu:addSeparator()
 
+    if creatureThing:isPlayer() then
+      menu:addOption(tr('Open Shop'), function() modules.shops.openShop(creatureThing:getId()) end)
+    end
+
+    menu:addSeparator()
+
     if creatureThing:isLocalPlayer() then
       menu:addOption(tr('Set Outfit'), function() g_game.requestOutfit() end)
 

@@ -1076,6 +1076,11 @@ void Creature::setType(uint8 type)
 void Creature::setIcon(uint8 icon)
 {
     m_icon = icon;
+    if(icon > 0) {
+        setIconTexture("/mods/game_shops/images/icon_trade.png");
+    } else {
+        m_iconTexture = nullptr;
+    }
     callLuaField("onIconChange", m_icon);
 }
 
