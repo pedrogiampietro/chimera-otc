@@ -39,6 +39,20 @@ local function onClearButtonClick()
   end
 end
 
+local function setBackpackAtualLabel(nome)
+  if not autolootWindow then return end
+  local label = autolootWindow:recursiveGetChildById('backpackAtualLabel')
+  if label then
+    if nome and nome ~= '' then
+      label:setText('Backpack atual: ' .. nome)
+      label:setColor('#00FF00')
+    else
+      label:setText('Backpack atual: Nenhuma')
+      label:setColor('#FF0000')
+    end
+  end
+end
+
 local function onExtendedAutoLootData(protocol, opcode, buffer)
   local data = json.decode(buffer)
   -- Feedback visual se for resposta de ação
@@ -51,8 +65,17 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
       elseif data.message:find("gold foi desativado") then
         setMoneyButtonText(false)
       end
+      -- Atualiza o label da backpack atual se for feedback de backpack
+      if data.message:find("Backpack de autoloot definida para:") then
+        local nome = data.message:match("Backpack de autoloot definida para:%s*(.+)")
+        setBackpackAtualLabel(nome)
+      end
     elseif data.feedback == "error" then
       displayErrorBox("AutoLoot", data.message)
+      -- Se for erro de backpack, limpa o label
+      if data.message:find("backpack") then
+        setBackpackAtualLabel(nil)
+      end
     else
       displayInfoBox("AutoLoot", data.message)
     end
@@ -175,6 +198,23 @@ local function onMoneyButtonClick()
   end
 end
 
+local function onSetBackpackButtonClick()
+  if not autolootWindow then return end
+  local backpackEdit = autolootWindow:recursiveGetChildById('backpackEdit')
+  if not backpackEdit then return end
+  local name = backpackEdit:getText()
+  name = name:gsub('^%s*(.-)%s*$', '%1')
+  if name == '' then
+    displayErrorBox("AutoLoot", "Digite o nome da backpack.")
+    return
+  end
+  local protocol = g_game.getProtocolGame()
+  if protocol then
+    local data = { action = "backpack", item = name }
+    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+  end
+end
+
 function init()
   print('[AutoLoot] Módulo carregado!')
   -- Load the UI styles
@@ -230,6 +270,10 @@ function init()
       local clearButton = autolootWindow:recursiveGetChildById('clearButton')
       if clearButton then
         clearButton.onClick = onClearButtonClick
+      end
+      local setBackpackButton = autolootWindow:recursiveGetChildById('setBackpackButton')
+      if setBackpackButton then
+        setBackpackButton.onClick = onSetBackpackButtonClick
       end
       local closeButton = autolootWindow:recursiveGetChildById('closeButton')
       if closeButton then

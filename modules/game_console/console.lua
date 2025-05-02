@@ -1095,7 +1095,6 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
       else
         staticText:addMessage(name, mode, staticMessage)
       end
-      print("DEBUG StaticText color:", speaktype.color)
       if mode == MessageModes.Say then
         staticText:setColor('#ff0000') -- vermelho na tela
       else
@@ -1103,7 +1102,6 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
       end
     else
       staticText:addMessage(name, mode, staticMessage)
-      print("DEBUG StaticText color:", speaktype.color)
       if mode == MessageModes.Say then
         staticText:setColor('#ff0000') -- vermelho na tela
       else
