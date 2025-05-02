@@ -39,6 +39,6 @@ AutoLootListRow < Panel
     text: "X"
     font: verdana-11px-rounded
     font-size: 12
-    tooltip: "Remover item"
+    tooltip: "Remove item"
     visible: true
     enabled: true

@@ -44,10 +44,10 @@ local function setBackpackAtualLabel(nome)
   local label = autolootWindow:recursiveGetChildById('backpackAtualLabel')
   if label then
     if nome and nome ~= '' then
-      label:setText('Backpack atual: ' .. nome)
+      label:setText('Current backpack: ' .. nome)
       label:setColor('#00FF00')
     else
-      label:setText('Backpack atual: Nenhuma')
+      label:setText('Current backpack: None')
       label:setColor('#FF0000')
     end
   end
@@ -60,14 +60,14 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
     if data.feedback == "success" or data.feedback == "info" then
       displayInfoBox("AutoLoot", data.message)
       -- Atualiza o texto do botão de gold se a mensagem for sobre gold
-      if data.message:find("gold foi ativado") then
+      if data.message:find("gold has been enabled") then
         setMoneyButtonText(true)
-      elseif data.message:find("gold foi desativado") then
+      elseif data.message:find("gold has been disabled") then
         setMoneyButtonText(false)
       end
       -- Atualiza o label da backpack atual se for feedback de backpack
-      if data.message:find("Backpack de autoloot definida para:") then
-        local nome = data.message:match("Backpack de autoloot definida para:%s*(.+)")
+      if data.message:find("Autoloot backpack set to:") then
+        local nome = data.message:match("Autoloot backpack set to:%s*(.+)")
         setBackpackAtualLabel(nome)
       end
     elseif data.feedback == "error" then
@@ -82,7 +82,7 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
     return
   end
   if data and type(data) == 'table' then
-    print('[AutoLoot] Lista de loots recebida:')
+    print('[AutoLoot] Loot list request sent to server.')
     -- Atualiza a interface somente se a janela existir e estiver visível
     if autolootWindow and autolootWindow:isVisible() then
       local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
@@ -163,9 +163,9 @@ function requestAutoLoot()
   local protocol = g_game.getProtocolGame()
   if protocol then
     protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, '{}')
-    print('[AutoLoot] Pedido de lista de loots enviado ao servidor.')
+    print('[AutoLoot] Loot list request sent to server.')
   else
-    print('[AutoLoot] ERRO: protocolo de jogo não disponível!')
+    print('[AutoLoot] ERROR: game protocol not available!')
   end
 end
 
@@ -177,7 +177,7 @@ local function onAddItemButtonClick()
   itemName = itemName:gsub("^%s*(.-)%s*$", "%1") -- remove espaços início/fim
   itemName = itemName:gsub("%s+", " ") -- reduz múltiplos espaços internos para um só
   if itemName == "" then
-    displayInfoBox("AutoLoot", "Digite o nome do item para adicionar.")
+    displayInfoBox("AutoLoot", "Enter the item name to add.")
     return
   end
 
@@ -205,7 +205,7 @@ local function onSetBackpackButtonClick()
   local name = backpackEdit:getText()
   name = name:gsub('^%s*(.-)%s*$', '%1')
   if name == '' then
-    displayErrorBox("AutoLoot", "Digite o nome da backpack.")
+    displayErrorBox("AutoLoot", "Enter the backpack name.")
     return
   end
   local protocol = g_game.getProtocolGame()
@@ -216,7 +216,7 @@ local function onSetBackpackButtonClick()
 end
 
 function init()
-  print('[AutoLoot] Módulo carregado!')
+  print('[AutoLoot] Module loaded!')
   -- Load the UI styles
   g_ui.importStyle('autoloot')
   g_ui.importStyle('autolootitem')
@@ -239,7 +239,7 @@ function init()
       -- Atualiza o texto do botão de gold ao abrir
       setMoneyButtonText(false)
     else
-      print('[AutoLoot] ERRO: g_ui.getRootWidget não está disponível!')
+      print('[AutoLoot] ERROR: g_ui.getRootWidget is not available!')
     end
   end)
   
@@ -248,9 +248,9 @@ function init()
   
   if ProtocolGame and ProtocolGame.registerExtendedOpcode then
     ProtocolGame.registerExtendedOpcode(ExtendedIds.AutoLootData, onExtendedAutoLootData)
-    print('[AutoLoot] Opcode de autoloot registrado!')
+    print('[AutoLoot] Autoloot opcode registered!')
   else
-    print('[AutoLoot] ERRO: ProtocolGame.registerExtendedOpcode não está disponível!')
+    print('[AutoLoot] ERROR: ProtocolGame.registerExtendedOpcode is not available!')
   end
   
   if g_game.isOnline() then
@@ -286,7 +286,7 @@ end
 function terminate()
   if ProtocolGame and ProtocolGame.unregisterExtendedOpcode then
     ProtocolGame.unregisterExtendedOpcode(ExtendedIds.AutoLootData)
-    print('[AutoLoot] Opcode de autoloot removido!')
+    print('[AutoLoot] Autoloot opcode removed!')
   end
   disconnect(g_game, { 
     onGameStart = refresh,

@@ -75,7 +75,7 @@ AutoLootWindow < MainWindow
 
     Label
       id: backpackLabel
-      text: Nome da backpack para autoloot:
+      text: Backpack name for autoloot:
       anchors.top: moneyButton.bottom
       anchors.left: parent.left
       margin-top: 16
@@ -97,7 +97,7 @@ AutoLootWindow < MainWindow
 
     Button
       id: setBackpackButton
-      text: Definir Backpack
+      text: Set Backpack
       anchors.top: backpackEdit.bottom
       anchors.left: parent.left
       width: 120
@@ -106,7 +106,7 @@ AutoLootWindow < MainWindow
 
     Label
       id: backpackAtualLabel
-      text: Backpack atual: Nenhuma
+      text: Current backpack: None
       anchors.top: setBackpackButton.bottom
       anchors.left: parent.left
       margin-top: 4
