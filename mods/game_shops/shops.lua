@@ -5,6 +5,8 @@ Config = Config or {}
 Config.opcode = 220
 Config.money = Config.money or {2148, 2152, 2160} -- gold, platinum, crystal coins
 
+print('[DEBUG][CLIENT] Registrando handler do opcode', Config and Config.opcode)
+
 local function onGameStart()
   if not MainWindow then return end
   hide()
@@ -16,6 +18,7 @@ local function onGameEnd()
 end
 
 function onShopClose() -- Player requested shop close
+  print('[DEBUG][CLIENT] onShopClose chamado (quem chamou?):', debug and debug.traceback and debug.traceback() or '')
   local shopClose = function(recoverItems)
     local payload = {
       e = 'SHOP_CLOSE',
@@ -61,12 +64,12 @@ function onShopClose() -- Player requested shop close
 end
 
 function openShop(sellerId)
-  print('[DEBUG] openShop chamado com sellerId:', sellerId, 'opcode:', Config and Config.opcode)
+  print('[DEBUG][CLIENT] openShop chamado com sellerId:', sellerId, 'opcode:', Config and Config.opcode)
   local payload = {
     e = 'SHOP_OPEN',
     d = sellerId
   }
-
+  print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
   g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
 end
 
@@ -83,6 +86,7 @@ local function requestRemoveOffer(offerId)
         d = offerId
       }
 
+      print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
       g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
       break
     end
@@ -175,7 +179,7 @@ local function requestModifyOffer(offerId, newitem)
         price = SelectItemWindow.price
       }
     }
-
+    print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
     g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
     SelectItemWindow:hide()
   end
@@ -345,7 +349,7 @@ local function onSelectItemToSell(widget, draggedItem, mousePos, forced)
         price = SelectItemWindow.price
       }
     }
-
+    print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
     g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
     SelectItemWindow:hide()
   end
@@ -366,6 +370,7 @@ local function formatNumber(n)
 end
 
 local function parseShopOpen(data)
+  print('[DEBUG][CLIENT] parseShopOpen chamado com:', json and json.encode and json.encode(data) or tostring(data))
   if MainWindow.currentShop ~= {} then
     if MainWindow.lockUpdate then
       MainWindow.lockUpdate = data
@@ -554,26 +559,23 @@ local function parseShopOpen(data)
     end
   end
 
+  -- Busca o vendedor pelo GUID (agora sempre é o GUID, não o sessionId)
   local seller = g_map.getCreatureById(data.seller)
-  if not seller or not seller:isPlayer() then displayInfoBox("Error", "Player not found.") end
-
-  --local shopMessage = currentShop.message
-  --if not shopMessage then
-  --  currentShop.message = StaticText.create()
-  --  shopMessage = currentShop.message
-  --  shopMessage:addMessage(nil, MessageModes.NpcFrom, Config.defaultShopMessage)
-  --else
-  --  shopMessage:hide()
-  --end
-
-  --g_map.addThing(shopMessage, seller:getPosition(), -1)
-
-  MainWindow.creature:setOutfit(seller:getOutfit())
-
-  if isOwnShop() then
-    MainWindow:setText("Your Shop")
+  if not seller or not seller:isPlayer() then
+    -- Vendedor offline: exibe outfit padrão e nome genérico
+    MainWindow.creature:setOutfit({lookType=128}) -- outfit padrão
+    if isOwnShop() then
+      MainWindow:setText("Your Shop")
+    else
+      MainWindow:setText("Shop de jogador offline")
+    end
   else
-    MainWindow:setText(seller:getName().."\'s shop")
+    MainWindow.creature:setOutfit(seller:getOutfit())
+    if isOwnShop() then
+      MainWindow:setText("Your Shop")
+    else
+      MainWindow:setText(seller:getName().."'s shop")
+    end
   end
 
   show()
@@ -625,7 +627,7 @@ function onPressBuy(button)
         cid = panel.offerData.cid
       }
     }
-
+    print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
     g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
 
     if MainWindow.lockUpdate ~= {} then
@@ -691,15 +693,13 @@ local function parseShopClose()
 end
 
 local function parseShop(protocol, opcode, buffer)
+  print('[DEBUG][CLIENT] parseShop chamado com opcode:', opcode, 'buffer:', buffer)
   if opcode ~= Config.opcode then return end
-
+  print('[DEBUG][CLIENT] Recebido do servidor (opcode '..opcode..'):', buffer)
   buffer = json.decode(buffer)
-
   local data = buffer.d
   local evt = buffer.e
-
   if not evt then return end
-
   if evt == 'SHOP_OPEN' then
     parseShopOpen(data)
   elseif evt == 'SHOP_CLOSE' then
@@ -725,16 +725,18 @@ function doShopClose()
     e = 'SHOP_CLOSE',
     d = MainWindow.currentShop.seller,
   }
-
+  print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
   g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
 end
 
 function show()
+  print('[DEBUG][CLIENT] show() chamado')
   MainWindow:show()
   MainWindow:focus()
 end
 
 function hide()
+  print('[DEBUG][CLIENT] hide() chamado', debug and debug.traceback and debug.traceback() or '')
   MainWindow.lockUpdate = nil
   MainWindow:hide()
   EditShopWindow:hide()
@@ -750,7 +752,7 @@ local function requestShopCreate(player)
   local payload = {
     e = 'SHOP_CREATE'
   }
-
+  print('[DEBUG][CLIENT] Enviando payload para o servidor:', json.encode(payload))
   g_game.getProtocolGame():sendExtendedOpcode(Config.opcode, json.encode(payload))
 end
 
