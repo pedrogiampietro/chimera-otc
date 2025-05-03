@@ -477,7 +477,6 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
         -- Extrai o GUID do nome do NPC (ex: 'Teste#2')
         local npcName = creatureThing:getName()
         local guid = npcName:match("#(%d+)$")
-        print("[DEBUG][CLIENT] GUID extraído do nome:", guid)
         if guid then
           openShop(tonumber(guid))
         else
@@ -620,7 +619,6 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
           -- Extrai o GUID do nome do NPC (ex: 'Teste#2')
           local npcName = creatureThing:getName()
           local guid = npcName:match("#(%d+)$")
-          print("[DEBUG][CLIENT] GUID extraído do nome:", guid)
           if guid then
             openShop(tonumber(guid))
           else
