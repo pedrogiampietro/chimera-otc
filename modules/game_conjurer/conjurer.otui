@@ -1,0 +1,60 @@
+ConjurerWindow < MainWindow
+  id: conjurerWindow
+  size: 320 220
+  @onEscape: modules.game_conjurer.hide()
+  text: "Conjurer"
+
+  Label
+    id: rankLabel
+    anchors.top: parent.top
+    anchors.left: parent.left
+    margin-top: 18
+    margin-left: 20
+    text: "Rank: -"
+    font: verdana-14px-bold
+
+  ProgressBar
+    id: xpBar
+    anchors.top: rankLabel.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 10
+    margin-left: 20
+    margin-right: 20
+    height: 18
+    value: 0
+    maximum: 100
+
+  Label
+    id: xpLabel
+    anchors.top: xpBar.bottom
+    anchors.left: parent.left
+    margin-top: 8
+    margin-left: 20
+    text: "XP: 0 / 100"
+
+  Label
+    id: multiplierLabel
+    anchors.top: xpLabel.bottom
+    anchors.left: parent.left
+    margin-top: 8
+    margin-left: 20
+    text: "Multiplicador: x1"
+
+  Label
+    id: nextRankLabel
+    anchors.top: multiplierLabel.bottom
+    anchors.left: parent.left
+    margin-top: 8
+    margin-left: 20
+    text: "Próximo rank: -"
+
+  Button
+    id: testButton
+    anchors.bottom: parent.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-bottom: 18
+    width: 120
+    height: 28
+    text: "Testar conjuração"
+    @onClick: modules.game_conjurer.onTestButtonClick() 

@@ -1,0 +1,10 @@
+Module
+  name: game_conjurer
+  description: Conjurer Progress Panel
+  author: Pedr0g
+  sandboxed: false
+  autoload: true
+  dependencies: game_topbuttons
+  scripts: [ conjurer ]
+  @onLoad: init()
+  @onUnload: terminate()
