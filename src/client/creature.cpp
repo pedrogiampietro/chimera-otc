@@ -527,8 +527,8 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
     }
 
     if (drawFlags & Otc::DrawNames) {
-        // For NPCs, always use blue color
-        if (isNpc()) {
+        // For NPCs, always use blue color, EXCETO se for shop (ícone de trade)
+        if (isNpc() && m_icon != Otc::NpcIconTrade) {
             fillColor = Color(0x66, 0xcc, 0xff); // Light blue color for NPC names
         }
       
