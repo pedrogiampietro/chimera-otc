@@ -14,6 +14,8 @@ ContainerPanel < UIWindow
 ConfirmActionWindow < MainWindow
   !text: tr('Confirm action')
   size: 380 95
+  modal: true
+  focusable: true
   @onEscape: self:destroy()
 
   Label
@@ -33,7 +35,7 @@ ConfirmActionWindow < MainWindow
     anchors.right: message.right
     anchors.top: message.bottom
     margin-top: 12
-    focusable: false
+    focusable: true
 
   Button
     id: buttonOk
@@ -43,7 +45,7 @@ ConfirmActionWindow < MainWindow
     anchors.top: message.bottom
     margin-top: 12
     margin-right: 6
-    focusable: false
+    focusable: true
     enabled: false
 
 
@@ -125,11 +127,12 @@ SelectItemWindow < MainWindow
     margin-top: 7
     margin-right: 6
     focusable: false
-    enabled: false
 
 ConfirmBuyWindow < MainWindow
   !text: tr('Purchase Item')
   size: 270 110
+  modal: true
+  focusable: true
   @onEscape: self:hide()
 
   Item
@@ -166,7 +169,7 @@ ConfirmBuyWindow < MainWindow
     anchors.right: amountScrollBar.right
     anchors.top: priceLabel.bottom
     margin-top: 7
-    focusable: false
+    focusable: true
     @onClick: self:hide()
 
   Button
@@ -178,7 +181,7 @@ ConfirmBuyWindow < MainWindow
     anchors.top: priceLabel.bottom
     margin-top: 7
     margin-right: 6
-    focusable: false
+    focusable: true
 
 Separator < HorizontalSeparator
   height: 2

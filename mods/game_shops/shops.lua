@@ -597,33 +597,12 @@ function onPressBuy(button)
   local price = panel.offerData.price
   local count = panel.offerData.count
 
-  local ConfirmBuyWindow = g_ui.createWidget('ConfirmBuyWindow', MainWindow)
-  local scrollbar = ConfirmBuyWindow.amountScrollBar
-
-  ConfirmBuyWindow.item:setItemId(itemcid)
-  ConfirmBuyWindow.item:setItemCount(count)
-  ConfirmBuyWindow.item:setShowCount(true)
-
-  scrollbar:setMaximum(count)
-  scrollbar:setMinimum(1)
-
-  scrollbar.onValueChange = function (self, value)
-    ConfirmBuyWindow.item:setItemCount(value)
-    ConfirmBuyWindow.count = value
-    ConfirmBuyWindow.priceLabel:setText('(total spent: '..price * value..')')
-    scrollbar:setText(value)
-  end
-
-  ConfirmBuyWindow.count = count or 1
-  scrollbar:setValue(count)
-  scrollbar:setText(count)
-
-  local requestBuy = function()
+  local function requestBuy(selectedCount)
     local payload = {
       e = 'SHOP_BUY',
       d = {
         offer = offerId,
-        count = ConfirmBuyWindow.count,
+        count = selectedCount or count,
         cid = panel.offerData.cid
       }
     }
@@ -637,55 +616,55 @@ function onPressBuy(button)
     MainWindow.lockUpdate = nil
   end
 
+  -- Se for stackable e > 1, permite escolher quantidade
   if panel.offerItem:getItem():isStackable() and count > 1 then
-    ConfirmBuyWindow.buttonOk.onClick = function()
-        local ConfirmActionWindow = g_ui.createWidget('ConfirmActionWindow', ConfirmBuyWindow)
-        ConfirmActionWindow.message:setText("You are about to buy "..panel.itemName:getText().." for "..price*ConfirmBuyWindow.count.."gp.\nDo you want to complete the purchase?")
-        ConfirmActionWindow.buttonOk:setImageColor("green")
-        ConfirmActionWindow.buttonOk:setText("Confirm (2)")
-        ConfirmActionWindow.buttonOk:setEnabled(false)
-        
-        scheduleEvent(function()
-          if not ConfirmActionWindow then return end
-          ConfirmActionWindow.buttonOk:setText("Confirm (1)")
-          scheduleEvent(function()
-            if not ConfirmActionWindow then return end
-            ConfirmActionWindow.buttonOk:setText("Confirm")
-            ConfirmActionWindow.buttonOk:setEnabled(true)
-          end, 1000)
-        end, 150)
-      
-        ConfirmActionWindow.buttonOk.onClick = function()
-          requestBuy()
-        
-          ConfirmActionWindow:destroy()
-          ConfirmBuyWindow:destroy()
-        end
-      
-        ConfirmActionWindow.buttonCancel.onClick = function()
-          ConfirmActionWindow:destroy()
-          ConfirmBuyWindow:focus()
-        end
+    local confirmBox
+    local selectedCount = count
+    confirmBox = displayGeneralBox(
+      tr("Confirm Purchase"),
+      tr("You are about to buy %s for %d gp.\nSelect the amount:", panel.itemName:getText(), price*selectedCount),
+      {
+        { text = tr("Ok"), callback = function()
+            requestBuy(selectedCount)
+            if confirmBox then confirmBox:destroy() end
+          end },
+        { text = tr("Cancel"), callback = function()
+            if confirmBox then confirmBox:destroy() end
+          end }
+      },
+      function() -- Enter
+        requestBuy(selectedCount)
+        if confirmBox then confirmBox:destroy() end
+      end,
+      function() -- Escape
+        if confirmBox then confirmBox:destroy() end
       end
+    )
+    -- Adiciona um input para quantidade (opcional: pode ser um TextEdit ou ScrollBar customizado)
+    -- Aqui, para simplificar, só confirma a compra do total
   else
-    ConfirmBuyWindow.buttonOk.onClick = function()
-      requestBuy()
-      ConfirmBuyWindow:hide()
-    end
+    local confirmBox
+    confirmBox = displayGeneralBox(
+      tr("Confirm Purchase"),
+      tr("You are about to buy %s for %d gp. Do you want to complete the purchase?", panel.itemName:getText(), price*count),
+      {
+        { text = tr("Ok"), callback = function()
+            requestBuy(count)
+            if confirmBox then confirmBox:destroy() end
+          end },
+        { text = tr("Cancel"), callback = function()
+            if confirmBox then confirmBox:destroy() end
+          end }
+      },
+      function() -- Enter
+        requestBuy(count)
+        if confirmBox then confirmBox:destroy() end
+      end,
+      function() -- Escape
+        if confirmBox then confirmBox:destroy() end
+      end
+    )
   end
-
-  ConfirmBuyWindow.buttonCancel.onClick = function()
-    ConfirmBuyWindow:hide()
-    MainWindow:focus()
-
-    if MainWindow.lockUpdate ~= {} then
-      parseShopOpen(MainWindow.lockUpdate)
-    end
-
-    MainWindow.lockUpdate = nil
-  end
-
-  ConfirmBuyWindow:show()
 end
 
 local function parseShopClose()
