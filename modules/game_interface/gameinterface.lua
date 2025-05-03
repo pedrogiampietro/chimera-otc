@@ -15,6 +15,18 @@ limitedZoom = false
 hookedMenuOptions = {}
 lastDirTime = g_clock.millis()
 
+local function findPlayerByName(name)
+  local player = g_game.getLocalPlayer()
+  if not player then return nil end
+  local spectators = g_map.getSpectators(player:getPosition(), false)
+  for _, creature in ipairs(spectators) do
+    if creature:isPlayer() and creature:getName() == name then
+      return creature
+    end
+  end
+  return nil
+end
+
 function setupTopMenuButton()
   logoutButton = modules.client_topmenu.addRightToggleButton('logoutButton', tr('Exit'),
     '/images/topbuttons/new/logout', tryLogout, nil, nil, true)
@@ -461,7 +473,22 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
     menu:addSeparator()
 
     if creatureThing:isPlayer() then
-      menu:addOption(tr('Open Shop'), function() modules.shops.openShop(creatureThing:getId()) end)
+      menu:addOption(tr('Open Shop'), function()
+        -- Extrai o GUID do nome do NPC (ex: 'Teste#2')
+        local npcName = creatureThing:getName()
+        local guid = npcName:match("#(%d+)$")
+        print("[DEBUG][CLIENT] GUID extraído do nome:", guid)
+        if guid then
+          openShop(tonumber(guid))
+        else
+          local player = findPlayerByName(creatureThing:getName())
+          if player then
+            openShop(player:getId())
+          else
+            openShop(creatureThing:getId())
+          end
+        end
+      end)
     end
 
     menu:addSeparator()
@@ -580,6 +607,32 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
       menu:addOption("ID: " .. useThing:getId() .. " SubType: " .. useThing:getSubType(), function() end)    
     else
       menu:addOption("ID: " .. useThing:getId(), function() end)
+    end
+  end
+
+  if creatureThing and creatureThing:isNpc() and creatureThing:getName() and creatureThing:getName() ~= '' then
+    -- Detecta se é um clone de shop (PlayerShop)
+    if creatureThing:getOutfit() and creatureThing:getName() ~= '' then
+      -- Aqui você pode usar um storage, outfit ou outro critério para identificar o NPC shop
+      -- Para simplificação, vamos mostrar para todos NPCs PlayerShop
+      if creatureThing:getName() == 'PlayerShop' or creatureThing:getOutfit().lookType == 137 or (creatureThing.getIcon and creatureThing:getIcon() == 2) then
+        menu:addOption(tr('Open Shop'), function()
+          -- Extrai o GUID do nome do NPC (ex: 'Teste#2')
+          local npcName = creatureThing:getName()
+          local guid = npcName:match("#(%d+)$")
+          print("[DEBUG][CLIENT] GUID extraído do nome:", guid)
+          if guid then
+            openShop(tonumber(guid))
+          else
+            local player = findPlayerByName(creatureThing:getName())
+            if player then
+              openShop(player:getId())
+            else
+              openShop(creatureThing:getId())
+            end
+          end
+        end)
+      end
     end
   end
 

@@ -3534,11 +3534,11 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, int type)
             msg->getU8();
         int skull = msg->getU8();
         int shield = msg->getU8();
+        int8 icon = msg->getU8(); // <-- Adicionado: sempre ler o byte do ícone
 
         // emblem is sent only when the creature is not known
         int8 emblem = -1;
         int8 creatureType = -1;
-        int8 icon = -1;
         bool unpass = true;
         uint8 mark;
 
@@ -3587,6 +3587,7 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, int type)
             creature->setSpeed(speed);
             creature->setSkull(skull);
             creature->setShield(shield);
+            creature->setIcon(icon); // <-- Adicionado: seta o ícone customizado
             creature->setPassable(!unpass);
             creature->setLight(light);
 
