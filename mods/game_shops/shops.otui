@@ -451,3 +451,64 @@ UIWindow
   SelectItemWindow
     id: selectItem
     hidden: true
+
+ConfirmBuyAmountWindow < MainWindow
+  !text: tr('Confirm Purchase')
+  size: 340 180
+  modal: true
+  focusable: true
+  @onEscape: self:hide()
+
+  Label
+    id: message
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 10
+    text-align: center
+
+  Label
+    id: amountLabel
+    anchors.top: message.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 8
+    text-align: center
+    !text: tr('Select the amount:')
+
+  HorizontalScrollBar
+    id: amountScrollBar
+    anchors.top: amountLabel.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 6
+    margin-left: 30
+    margin-right: 30
+
+  Label
+    id: selectedLabel
+    anchors.top: amountScrollBar.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 6
+    text-align: center
+
+  Button
+    id: buttonOk
+    !text: tr('Ok')
+    anchors.left: parent.left
+    anchors.bottom: parent.bottom
+    margin-left: 40
+    margin-bottom: 10
+    margin-top: 12
+    width: 90
+
+  Button
+    id: buttonCancel
+    !text: tr('Cancel')
+    anchors.left: buttonOk.right
+    anchors.bottom: parent.bottom
+    margin-left: 20
+    margin-bottom: 10
+    margin-top: 12
+    width: 90

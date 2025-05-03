@@ -618,53 +618,59 @@ function onPressBuy(button)
 
   -- Se for stackable e > 1, permite escolher quantidade
   if panel.offerItem:getItem():isStackable() and count > 1 then
-    local confirmBox
     local selectedCount = count
-    confirmBox = displayGeneralBox(
-      tr("Confirm Purchase"),
-      tr("You are about to buy %s for %d gp.\nSelect the amount:", panel.itemName:getText(), price*selectedCount),
-      {
-        { text = tr("Ok"), callback = function()
-            requestBuy(selectedCount)
-            if confirmBox then confirmBox:destroy() end
-          end },
-        { text = tr("Cancel"), callback = function()
-            if confirmBox then confirmBox:destroy() end
-          end }
-      },
-      function() -- Enter
-        requestBuy(selectedCount)
-        if confirmBox then confirmBox:destroy() end
-      end,
-      function() -- Escape
-        if confirmBox then confirmBox:destroy() end
-      end
-    )
-    -- Adiciona um input para quantidade (opcional: pode ser um TextEdit ou ScrollBar customizado)
-    -- Aqui, para simplificar, só confirma a compra do total
-  else
-    local confirmBox
-    confirmBox = displayGeneralBox(
-      tr("Confirm Purchase"),
-      tr("You are about to buy %s for %d gp. Do you want to complete the purchase?", panel.itemName:getText(), price*count),
-      {
-        { text = tr("Ok"), callback = function()
-            requestBuy(count)
-            if confirmBox then confirmBox:destroy() end
-          end },
-        { text = tr("Cancel"), callback = function()
-            if confirmBox then confirmBox:destroy() end
-          end }
-      },
-      function() -- Enter
-        requestBuy(count)
-        if confirmBox then confirmBox:destroy() end
-      end,
-      function() -- Escape
-        if confirmBox then confirmBox:destroy() end
-      end
-    )
+    local confirmWindow = g_ui.createWidget('ConfirmBuyAmountWindow', g_ui.getRootWidget())
+    confirmWindow:getChildById('message'):setText(tr("You are about to buy %s for %d gp.", panel.itemName:getText(), price*selectedCount))
+    confirmWindow:getChildById('amountLabel'):setText(tr("Select the amount:"))
+    local scrollbar = confirmWindow:getChildById('amountScrollBar')
+    local selectedLabel = confirmWindow:getChildById('selectedLabel')
+    scrollbar:setMinimum(1)
+    scrollbar:setMaximum(count)
+    scrollbar:setValue(count)
+    selectedLabel:setText(tr("Selected: %d", count))
+
+    scrollbar.onValueChange = function(self, value)
+      selectedCount = value
+      selectedLabel:setText(tr("Selected: %d", value))
+      confirmWindow:getChildById('message'):setText(tr("You are about to buy %s for %d gp.", panel.itemName:getText(), price*value))
+    end
+
+    confirmWindow:getChildById('buttonOk').onClick = function()
+      requestBuy(selectedCount)
+      confirmWindow:hide()
+    end
+
+    confirmWindow:getChildById('buttonCancel').onClick = function()
+      confirmWindow:hide()
+    end
+
+    confirmWindow:show()
+    confirmWindow:raise()
+    confirmWindow:getChildById('buttonOk'):focus()
+    return
   end
+
+  local confirmBox
+  confirmBox = displayGeneralBox(
+    tr("Confirm Purchase"),
+    tr("You are about to buy %s for %d gp. Do you want to complete the purchase?", panel.itemName:getText(), price*count),
+    {
+      { text = tr("Ok"), callback = function()
+          requestBuy(count)
+          if confirmBox then confirmBox:destroy() end
+        end },
+      { text = tr("Cancel"), callback = function()
+          if confirmBox then confirmBox:destroy() end
+        end }
+    },
+    function() -- Enter
+      requestBuy(count)
+      if confirmBox then confirmBox:destroy() end
+    end,
+    function() -- Escape
+      if confirmBox then confirmBox:destroy() end
+    end
+  )
 end
 
 local function parseShopClose()
