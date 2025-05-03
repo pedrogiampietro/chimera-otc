@@ -195,8 +195,7 @@ local function requestModifyOffer(offerId, newitem)
 end
 
 function isOwnShop()
-  if not MainWindow.currentShop then return false end
-  return g_game.getLocalPlayer():getId() == MainWindow.currentShop.seller
+  return MainWindow.currentShop and MainWindow.currentShop.own == true
 end
 
 function onSelectOffer(widget)
