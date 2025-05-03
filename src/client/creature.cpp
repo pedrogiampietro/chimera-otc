@@ -244,9 +244,13 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
     Color fillColor = Color(96, 96, 96);
 
     if (!useGray) {
-        // For NPCs, use blue color instead of health bar color
+        // Para NPCs, cor azul padrão
         if (isNpc()) {
-            fillColor = Color(0x66, 0xcc, 0xff); // Light blue color for NPCs
+            fillColor = Color(0x66, 0xcc, 0xff); // Azul padrão NPC
+            // Se for shop (ícone de trade), cor rosa
+            if (m_icon == Otc::NpcIconTrade) {
+                fillColor = Color(0xFF, 0x69, 0xB4); // Rosa
+            }
         } else {
             fillColor = m_informationColor;
         }
