@@ -1,0 +1,9 @@
+Module
+  name: game_conjurer
+  description: Sistema de Conjurador (níveis, experiência, bônus)
+  author: Pedr0g
+  website: https://github.com/edubart/otclient
+  sandboxed: true
+  scripts: [ game_conjurer ]
+  @onLoad: init()
+  @onUnload: terminate() 

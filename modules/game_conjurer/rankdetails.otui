@@ -1,0 +1,62 @@
+RankDetailsWindow < MainWindow
+  id: rankDetailsWindow
+  size: 320 260
+  !text: tr('Rank Details')
+  modal: true
+  draggable: true
+
+  Label
+    id: detailTitle
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 18
+    font: verdana-12px
+    color: #ffaa00
+    text: ''
+
+  Label
+    id: detailDesc
+    anchors.top: detailTitle.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 10
+    width: 280
+    text-wrap: true
+    font: verdana-10px
+    color: #cccccc
+    text: ''
+
+  Label
+    id: detailBonus
+    anchors.top: detailDesc.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 10
+    font: verdana-10px
+    color: #ffaa00
+    text: ''
+
+  Label
+    id: detailDate
+    anchors.top: detailBonus.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 10
+    font: verdana-9px
+    color: #888888
+    text: ''
+
+  Label
+    id: detailNext
+    anchors.top: detailDate.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 10
+    font: verdana-10px
+    color: #cccccc
+    text: ''
+
+  Button
+    id: closeButton
+    anchors.bottom: parent.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-bottom: 15
+    width: 80
+    !text: tr('Close')
+    @onClick: self:getParent():destroy() 

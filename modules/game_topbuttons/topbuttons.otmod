@@ -5,6 +5,7 @@ Module
   website: https://ko-fi.com/10lil01
   scripts: [ topbuttons ]
   sandboxed: true
+  dependencies: [ game_conjurer ]
   @onLoad: init()
   @onUnload: terminate()
 

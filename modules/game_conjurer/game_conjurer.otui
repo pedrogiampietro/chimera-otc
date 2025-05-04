@@ -1,0 +1,424 @@
+MainWindow
+  id: conjurerWindow
+  !text: tr('Conjurer System')
+  size: 520 380
+  draggable: true
+  modal: false
+  @onEscape: toggleConjurerWindow()
+
+  UIWidget
+    id: topBanner
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 60
+    background-color: #111111
+    border-width-bottom: 2
+    border-color: #ffaa00
+    
+    Label
+      id: labelTitle
+      anchors.centerIn: parent
+      font: verdana-11px-rounded
+      text-auto-resize: true
+      color: #ffaa00
+      !text: tr('Conjurer Leveling System')
+
+  Panel
+    id: rankPanel
+    height: 140
+    width: 500
+    anchors.top: topBanner.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 20
+
+    Label
+      id: rankTitle
+      anchors.top: parent.top
+      anchors.horizontalCenter: parent.horizontalCenter
+      text-auto-resize: true
+      font: verdana-11px-rounded
+      color: #ffaa00
+      !text: tr('Progression Ranks')
+      margin-bottom: 5
+
+    UIWidget
+      id: rankIconsPanel
+      layout:
+        type: verticalBox
+        spacing: 2
+      anchors.top: rankTitle.bottom
+      anchors.horizontalCenter: parent.horizontalCenter
+      width: 480
+      height: 110
+
+      UIWidget
+        id: iconsRow
+        layout:
+          type: horizontalBox
+          spacing: 16
+        width: 480
+        height: 64
+
+        UIWidget
+          id: rankNoviceIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/1.png
+          image-smooth: true
+          border-width: 2
+          border-color: #c0c0c0
+          opacity: 0.4
+          !tooltip: tr('Novice Conjurer: Beginning your journey in conjuration magic.')
+        UIWidget
+          id: rankApprenticeIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/2.png
+          image-smooth: true
+          border-width: 2
+          border-color: #a1e65b
+          opacity: 0.4
+          !tooltip: tr('Apprentice Conjurer: Learning the fundamentals of magical creation.')
+        UIWidget
+          id: rankAdeptIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/3.png
+          image-smooth: true
+          border-width: 2
+          border-color: #5bcbe6
+          opacity: 0.4
+          !tooltip: tr('Adept Conjurer: Mastering advanced conjuration techniques.')
+        UIWidget
+          id: rankMasterIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/4.png
+          image-smooth: true
+          border-width: 2
+          border-color: #e65bc5
+          opacity: 0.4
+          !tooltip: tr('Master Conjurer: Able to conjure complex objects and elements.')
+        UIWidget
+          id: rankElderIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/5.png
+          image-smooth: true
+          border-width: 2
+          border-color: #e6c75b
+          opacity: 0.4
+          !tooltip: tr('Elder Conjurer: Wisdom of ancient conjuration knowledge.')
+        UIWidget
+          id: rankLegendaryIcon
+          width: 64
+          height: 64
+          image-source: /data/images/conjurers/6.png
+          image-smooth: true
+          border-width: 2
+          border-color: #ff5500
+          opacity: 0.4
+          !tooltip: tr('Legendary Conjurer: Ultimate mastery of conjuration arts.')
+
+      UIWidget
+        id: namesRow
+        layout:
+          type: horizontalBox
+          spacing: 16
+        width: 480
+        height: 40
+
+        UIWidget
+          id: rankNoviceNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankNovice
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Novice')
+          Label
+            id: rankNoviceBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankNoviceDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+        UIWidget
+          id: rankApprenticeNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankApprentice
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Apprentice')
+          Label
+            id: rankApprenticeBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankApprenticeDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+        UIWidget
+          id: rankAdeptNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankAdept
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Adept')
+          Label
+            id: rankAdeptBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankAdeptDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+        UIWidget
+          id: rankMasterNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankMaster
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Master')
+          Label
+            id: rankMasterBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankMasterDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+        UIWidget
+          id: rankElderNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankElder
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Elder')
+          Label
+            id: rankElderBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankElderDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+        UIWidget
+          id: rankLegendaryNameBox
+          width: 64
+          layout:
+            type: verticalBox
+            spacing: 0
+          Label
+            id: rankLegendary
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #cccccc
+            !text: tr('Legendary')
+          Label
+            id: rankLegendaryBonus
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #ffaa00
+            text: ''
+          Label
+            id: rankLegendaryDate
+            width: 64
+            text-align: center
+            font: verdana-11px-rounded
+            color: #888888
+            text: ''
+
+  Label
+    id: currentLevelLabel
+    anchors.top: rankPanel.bottom
+    margin-top: 0
+    anchors.horizontalCenter: parent.horizontalCenter
+    font: verdana-11px-rounded
+    color: #ffffff
+    text-auto-resize: true
+    !text: tr('Current Progress')
+
+  Panel
+    id: progressBarBg
+    width: 360
+    height: 28
+    anchors.top: currentLevelLabel.bottom
+    margin-top: 0
+    anchors.horizontalCenter: parent.horizontalCenter
+    border-width: 1
+    border-color: #ffaa00
+    background-color: #222222
+    radius: 8
+
+    Panel
+      id: progressBarFill
+      height: 26
+      width: 0
+      anchors.left: parent.left
+      anchors.top: parent.top
+      margin: 1 1 1 1
+      background-color: #ffaa00
+      radius: 7
+
+    Label
+      id: progressLabel
+      anchors.centerIn: parent
+      font: verdana-11px-rounded
+      text-auto-resize: true
+      color: #ffffff
+      text: '0 / 0'
+
+  Panel
+    id: infoPanel
+    anchors.top: progressBarBg.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: buttonClose.top
+    margin-top: 20
+    margin-left: 30
+    margin-right: 30
+    margin-bottom: 10
+    layout:
+      type: grid
+      cell-size: 220 30
+      cell-spacing: 6
+      flow: true
+
+    UIWidget
+      id: multTitle
+      background-color: #111111
+      padding: 5
+      border-width: 1
+      border-color: #555555
+      grid-width: 2
+      text-align: center
+      font: verdana-11px-rounded
+      color: #ffaa00
+      !text: tr('Rune Charges by Level')
+
+    UIWidget
+      id: mult1
+      background-color: #222222
+      padding: 5
+      radius: 4
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: 'Level 1: 2x charges'
+
+    UIWidget
+      id: mult2
+      background-color: #222222
+      padding: 5
+      radius: 4
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: 'Level 2: 4x charges'
+
+    UIWidget
+      id: mult3
+      background-color: #222222
+      padding: 5
+      radius: 4
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: 'Level 3: 7x charges'
+    
+    UIWidget
+      id: mult4
+      background-color: #222222
+      padding: 5
+      radius: 4
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: 'Level 4: 10x charges'
+
+    UIWidget
+      id: mult5
+      background-color: #222222
+      padding: 5
+      radius: 4
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: 'Level 5: 15x charges'
+
+  Button
+    id: buttonClose
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-bottom: 20
+    margin-right: 15
+    width: 80
+    height: 30
+    !text: tr('Close')
+    font: verdana-11px-rounded
+    color: #ffffff
+    @onClick: toggleConjurerWindow() 
