@@ -28,6 +28,39 @@ local rankColors = {
   [5] = '#ff5500'  -- Orange
 }
 
+local rankData = {
+  [0] = {
+    name = tr('Novice Conjurer'),
+    desc = tr('Beginning your journey in conjuration magic.'),
+    bonus = '+5% XP',
+  },
+  [1] = {
+    name = tr('Apprentice Conjurer'),
+    desc = tr('Learning the fundamentals of magical creation.'),
+    bonus = '+7% XP',
+  },
+  [2] = {
+    name = tr('Adept Conjurer'),
+    desc = tr('Mastering advanced conjuration techniques.'),
+    bonus = '+10% XP',
+  },
+  [3] = {
+    name = tr('Master Conjurer'),
+    desc = tr('Able to conjure complex objects and elements.'),
+    bonus = '+12% XP',
+  },
+  [4] = {
+    name = tr('Elder Conjurer'),
+    desc = tr('Wisdom of ancient conjuration knowledge.'),
+    bonus = '+15% XP',
+  },
+  [5] = {
+    name = tr('Legendary Conjurer'),
+    desc = tr('Ultimate mastery of conjuration arts.'),
+    bonus = '+20% XP',
+  }
+}
+
 -- Store the current conjurer level
 local currentConjurerLevel = 0
 
@@ -325,147 +358,145 @@ function requestConjurerInfo()
   updateConjurerUI(2, 3200, 6000)
 end
 
+-- Função utilitária para conversão segura
+local function safeTonumber(val)
+  if type(val) == 'string' then
+    local cleaned = val:gsub(',', ''):match('^%s*(%d+)%s*$')
+    if cleaned then
+      return tonumber(cleaned)
+    end
+  elseif type(val) == 'number' then
+    return val
+  end
+  return 0
+end
+
 -- Function to open the rank details panel/modal
 function showRankDetails(rankId)
-  -- Close any existing rank details window
+  local data = rankData[rankId] or rankData[0]
+
+  local bonusWidget = conjurerWindow:getChildById(rankIds[rankId] .. 'Bonus')
+  local dateWidget = conjurerWindow:getChildById(rankIds[rankId] .. 'Date')
+  local bonus = bonusWidget and bonusWidget:getText() or data.bonus
+  local date = dateWidget and dateWidget:getText() or ''
+
+  local progressText = ''
+  local progressValue = 0
+  local progressMax = 1
+  if rankId < 5 then
+    local progressBarBg = conjurerWindow:getChildById('progressBarBg')
+    local progressLabel = progressBarBg and progressBarBg:getChildById('progressLabel')
+    progressText = progressLabel and progressLabel:getText() or ''
+    if progressText:find('/') then
+      local current, max = progressText:match('([%d,]+) / ([%d,]+)')
+      print('DEBUG: current =', current, 'max =', max)
+      if current and max then
+        local currentNum = safeTonumber(current)
+        local maxNum = safeTonumber(max)
+        progressValue = currentNum
+        progressMax = maxNum
+      end
+    end
+  else
+    progressText = tr('Maximum rank achieved!')
+    progressValue = 1
+    progressMax = 1
+  end
+
+  local requirementText = ''
+  if rankId < 5 then
+    local requirements = {
+      [1] = tr('Need 1,000 conjurer experience points'),
+      [2] = tr('Need 5,000 conjurer experience points'),
+      [3] = tr('Need 15,000 conjurer experience points'),
+      [4] = tr('Need 50,000 conjurer experience points'),
+      [5] = tr('Need 150,000 conjurer experience points')
+    }
+    requirementText = requirements[rankId + 1] or ''
+  end
+
+  local iconSources = {
+    [0] = '/data/images/conjurers/1.png',
+    [1] = '/data/images/conjurers/2.png',
+    [2] = '/data/images/conjurers/3.png',
+    [3] = '/data/images/conjurers/4.png',
+    [4] = '/data/images/conjurers/5.png',
+    [5] = '/data/images/conjurers/6.png'
+  }
+
   local existingWindow = g_ui.getRootWidget():recursiveGetChildById('rankDetailsWindow')
   if existingWindow then
     existingWindow:destroy()
   end
 
-  local rankData = {
-    [0] = {
-      title = tr('Novice Conjurer'),
-      desc = tr('Beginning your journey in conjuration magic.'),
-      bonus = tr('Bonus') .. ': +5% XP',
-      date = tr('Unlocked on:') .. ' 12/04/2024',
-      next = tr('Next rank:') .. ' 200/1000 XP'
-    },
-    [1] = {
-      title = tr('Apprentice Conjurer'),
-      desc = tr('Learning the fundamentals of magical creation.'),
-      bonus = tr('Bonus') .. ': +7% XP',
-      date = tr('Unlocked on:') .. ' 15/04/2024',
-      next = tr('Next rank:') .. ' 800/2000 XP'
-    },
-    [2] = {
-      title = tr('Adept Conjurer'),
-      desc = tr('Mastering advanced conjuration techniques.'),
-      bonus = tr('Bonus') .. ': +10% XP',
-      date = tr('Unlocked on:') .. ' 18/04/2024',
-      next = tr('Next rank:') .. ' 1200/3000 XP'
-    },
-    [3] = {
-      title = tr('Master Conjurer'),
-      desc = tr('Able to conjure complex objects and elements.'),
-      bonus = tr('Bonus') .. ': +12% XP',
-      date = tr('Unlocked on:') .. ' 20/04/2024',
-      next = tr('Next rank:') .. ' 2000/5000 XP'
-    },
-    [4] = {
-      title = tr('Elder Conjurer'),
-      desc = tr('Wisdom of ancient conjuration knowledge.'),
-      bonus = tr('Bonus') .. ': +15% XP',
-      date = tr('Unlocked on:') .. ' 22/04/2024',
-      next = tr('Next rank:') .. ' 3500/8000 XP'
-    },
-    [5] = {
-      title = tr('Legendary Conjurer'),
-      desc = tr('Ultimate mastery of conjuration arts.'),
-      bonus = tr('Bonus') .. ': +20% XP',
-      date = tr('Unlocked on:') .. ' 25/04/2024',
-      next = tr('Maximum rank achieved!')
-    }
-  }
-  
-  -- Get data for the selected rank or default to Novice if invalid
-  local data = rankData[rankId] or rankData[0]
-  
-  -- Criar a janela diretamente na raiz da interface para garantir que ela apareça por cima
-  local window = g_ui.createWidget('MainWindow', g_ui.getRootWidget())
-  if not window then
-    print("Error: Could not create window widget")
-    return
+  -- Carregar o modal a partir do novo arquivo OTUI
+  local windowRoot = g_ui.displayUI('game_conjurer_rankdetails')
+  local window = windowRoot:recursiveGetChildById('rankDetailsWindow') or windowRoot
+  if window.center then window:center() end
+  if window.raise then window:raise() end
+  if window.focus then window:focus() end
+  if window.show then window:show() end
+
+  local content = window:getChildById('rankDetailsContent')
+  if not content then return end
+
+  -- Header: ícone e nome
+  local iconWidget = content:recursiveGetChildById('rankDetailsIcon')
+  if iconWidget then
+    iconWidget:setImageSource(iconSources[rankId] or iconSources[0])
   end
-  
-  window:setId('rankDetailsWindow')
-  window:setText(tr('Rank Details'))
-  window:setSize({width = 320, height = 260})
-  window:setDraggable(true)
-  window:setFocusable(true)
-  
-  -- Create title label
-  local titleLabel = g_ui.createWidget('Label', window)
-  titleLabel:setId('detailTitle')
-  titleLabel:setFont('verdana-11px-rounded')
-  titleLabel:setColor('#ffaa00')
-  titleLabel:setText(data.title)
-  titleLabel:setMarginTop(18)
-  titleLabel:setAnchors({['top'] = 'parent.top', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  
-  -- Create description label
-  local descLabel = g_ui.createWidget('Label', window)
-  descLabel:setId('detailDesc')
-  descLabel:setFont('verdana-11px-rounded')
-  descLabel:setColor('#cccccc')
-  descLabel:setText(data.desc)
-  descLabel:setMarginTop(10)
-  descLabel:setWidth(280)
-  descLabel:enableTextWrap(true)
-  descLabel:setAnchors({['top'] = 'detailTitle.bottom', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  
-  -- Create bonus label
-  local bonusLabel = g_ui.createWidget('Label', window)
-  bonusLabel:setId('detailBonus')
-  bonusLabel:setFont('verdana-11px-rounded')
-  bonusLabel:setColor('#ffaa00')
-  bonusLabel:setText(data.bonus)
-  bonusLabel:setMarginTop(10)
-  bonusLabel:setAnchors({['top'] = 'detailDesc.bottom', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  
-  -- Create date label
-  local dateLabel = g_ui.createWidget('Label', window)
-  dateLabel:setId('detailDate')
-  dateLabel:setFont('verdana-11px-rounded')
-  dateLabel:setColor('#888888')
-  dateLabel:setText(data.date)
-  dateLabel:setMarginTop(10)
-  dateLabel:setAnchors({['top'] = 'detailBonus.bottom', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  
-  -- Create next rank label
-  local nextLabel = g_ui.createWidget('Label', window)
-  nextLabel:setId('detailNext')
-  nextLabel:setFont('verdana-11px-rounded')
-  nextLabel:setColor('#cccccc')
-  nextLabel:setText(data.next)
-  nextLabel:setMarginTop(10)
-  nextLabel:setAnchors({['top'] = 'detailDate.bottom', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  
-  -- Create close button
-  local closeButton = g_ui.createWidget('Button', window)
-  closeButton:setId('closeButton')
-  closeButton:setText(tr('Close'))
-  closeButton:setFont('verdana-11px-rounded')
-  closeButton:setWidth(80)
-  closeButton:setMarginBottom(15)
-  closeButton:setAnchors({['bottom'] = 'parent.bottom', ['horizontalCenter'] = 'parent.horizontalCenter'})
-  closeButton.onClick = function() window:destroy() end
-  
-  -- Center the window on the screen
-  window:center()
-  
-  -- Use métodos adicionais para garantir que a janela apareça no topo
-  window:raise()
-  window:focus()
-  window:show()
-  
-  -- Aplicar um atraso e elevar novamente para garantir que ela fique no topo
-  scheduleEvent(function()
-    if window and window:isVisible() then
-      window:raise()
-      window:focus()
+  local nameWidget = content:recursiveGetChildById('rankDetailsName')
+  if nameWidget then
+    nameWidget:setText(data.name)
+    nameWidget:setTextAlign(AlignCenter)
+  end
+
+  -- Descrição
+  local descWidget = content:recursiveGetChildById('rankDetailsDesc')
+  if descWidget then
+    descWidget:setText(data.desc)
+    descWidget:setTextAlign(AlignCenter)
+  end
+
+  -- Bônus
+  local bonusWidget2 = content:recursiveGetChildById('rankDetailsBonus')
+  if bonusWidget2 then
+    bonusWidget2:setText(bonus)
+  end
+
+  -- Barra de progresso
+  local progressLabel = content:recursiveGetChildById('rankDetailsProgressLabel')
+  if progressLabel then
+    progressLabel:setText(tr('Progress: ') .. progressText)
+  end
+  local progressBarBg = content:recursiveGetChildById('rankDetailsProgressBarBg')
+  local progressBarFill = progressBarBg and progressBarBg:getChildById('rankDetailsProgressBarFill')
+  if progressBarFill then
+    local percent = math.min(1, progressValue / progressMax)
+    progressBarFill:setWidth(math.floor((progressBarBg:getWidth() or 260) * percent))
+  end
+
+  -- Data de desbloqueio
+  local dateLabel = content:recursiveGetChildById('rankDetailsDate')
+  if dateLabel then
+    dateLabel:setText(tr('Unlocked on:') .. ' ' .. date)
+  end
+
+  -- Requisito para o próximo rank
+  local reqLabel = content:recursiveGetChildById('rankDetailsRequirement')
+  if reqLabel then
+    reqLabel:setText(requirementText)
+  end
+
+  -- Botão de ajuda
+  local helpButton = content:recursiveGetChildById('rankDetailsHelpButton')
+  if helpButton then
+    helpButton.onClick = function()
+      modules.game_textmessage.displayGameMessage(tr('Ranks grant you bonuses and unlock new conjuration powers. Progress by earning conjurer experience!'), 'Conjurer Help')
     end
-  end, 50)
+  end
+
+  -- Botão de fechar já está configurado no OTUI
 end
 
 -- Exemplo de animação de desbloqueio

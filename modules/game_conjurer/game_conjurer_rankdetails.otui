@@ -1,0 +1,128 @@
+MainWindow
+  id: rankDetailsWindow
+  !text: tr('Rank Details')
+  size: 370 340
+  draggable: true
+  modal: true
+  @onEscape: self:destroy()
+  
+  UIWidget
+    id: rankDetailsContent
+    layout:
+      type: verticalBox
+      spacing: 10
+    anchors.fill: parent
+    margin: 18
+    
+    UIWidget
+      id: rankDetailsHeader
+      layout:
+        type: horizontalBox
+        spacing: 12
+      height: 56
+      
+      UIWidget
+        id: rankDetailsIcon
+        width: 48
+        height: 48
+        image-smooth: true
+        border-width: 2
+        border-color: #ffaa00
+        margin-top: 4
+        margin-bottom: 4
+      Label
+        id: rankDetailsName
+        font: verdana-11px-rounded
+        color: #ffaa00
+        text: ''
+        margin-top: 14
+        margin-left: 8
+        text-auto-resize: true
+    
+    Label
+      id: rankDetailsDesc
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: ''
+      text-wrap: true
+      width: 320
+      margin-bottom: 2
+    
+    UIWidget
+      id: rankDetailsBonusBlock
+      layout:
+        type: horizontalBox
+        spacing: 4
+      height: 24
+      Label
+        id: rankDetailsBonusIcon
+        text: '+'
+        font: verdana-11px-rounded
+        color: #ffaa00
+      Label
+        id: rankDetailsBonus
+        font: verdana-11px-rounded
+        color: #ffaa00
+        text: ''
+    
+    UIWidget
+      id: rankDetailsProgressBlock
+      layout:
+        type: verticalBox
+        spacing: 2
+      height: 32
+      Label
+        id: rankDetailsProgressLabel
+        font: verdana-11px-rounded
+        color: #cccccc
+        text: ''
+      UIWidget
+        id: rankDetailsProgressBarBg
+        width: 260
+        height: 10
+        background-color: #222222
+        border-width: 1
+        border-color: #ffaa00
+        radius: 5
+        UIWidget
+          id: rankDetailsProgressBarFill
+          width: 0
+          height: 10
+          background-color: #ffaa00
+          radius: 5
+    
+    Label
+      id: rankDetailsDate
+      font: verdana-11px-rounded
+      color: #888888
+      text: ''
+      margin-top: 2
+    
+    Label
+      id: rankDetailsRequirement
+      font: verdana-11px-rounded
+      color: #e65b5b
+      text: ''
+      margin-top: 2
+    
+    UIWidget
+      id: rankDetailsButtonRow
+      layout:
+        type: horizontalBox
+        spacing: 8
+      margin-top: 10
+      Button
+        id: rankDetailsHelpButton
+        text: '?'
+        font: verdana-11px-rounded
+        width: 28
+        height: 28
+        tooltip: tr('Sobre ranks')
+        @onClick: rankDetailsHelp()
+      Button
+        id: rankDetailsCloseButton
+        text: tr('Fechar')
+        font: verdana-11px-rounded
+        width: 90
+        height: 28
+        @onClick: self:getParent():getParent():getParent():destroy() 
