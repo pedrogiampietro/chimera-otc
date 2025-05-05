@@ -1,7 +1,7 @@
 MainWindow
   id: rankDetailsWindow
   !text: tr('Rank Details')
-  size: 370 340
+  size: 500 500
   draggable: true
   modal: true
   @onEscape: self:destroy()
@@ -48,49 +48,6 @@ MainWindow
       width: 320
       margin-bottom: 2
     
-    UIWidget
-      id: rankDetailsBonusBlock
-      layout:
-        type: horizontalBox
-        spacing: 4
-      height: 24
-      Label
-        id: rankDetailsBonusIcon
-        text: '+'
-        font: verdana-11px-rounded
-        color: #ffaa00
-      Label
-        id: rankDetailsBonus
-        font: verdana-11px-rounded
-        color: #ffaa00
-        text: ''
-    
-    UIWidget
-      id: rankDetailsProgressBlock
-      layout:
-        type: verticalBox
-        spacing: 2
-      height: 32
-      Label
-        id: rankDetailsProgressLabel
-        font: verdana-11px-rounded
-        color: #cccccc
-        text: ''
-      UIWidget
-        id: rankDetailsProgressBarBg
-        width: 260
-        height: 10
-        background-color: #222222
-        border-width: 1
-        border-color: #ffaa00
-        radius: 5
-        UIWidget
-          id: rankDetailsProgressBarFill
-          width: 0
-          height: 10
-          background-color: #ffaa00
-          radius: 5
-    
     Label
       id: rankDetailsDate
       font: verdana-11px-rounded
@@ -104,6 +61,131 @@ MainWindow
       color: #e65b5b
       text: ''
       margin-top: 2
+
+    Label
+      !text: tr('Slots de Alquimia:')
+      font: verdana-11px-rounded
+      color: #a1e65b
+      margin-top: 10
+
+    Label
+      !text: tr('Ingredientes Necessários:')
+      font: verdana-11px-rounded
+      color: #a1e65b
+      margin-top: 5
+      
+    Label
+      id: req_item1
+      !text: tr('- Plate Armor')
+      font: verdana-11px-rounded
+      color: #e65b5b
+      margin-top: 2
+      margin-left: 10
+      
+    Label
+      id: req_item2
+      !text: tr('- Plate Armor')
+      font: verdana-11px-rounded
+      color: #e65b5b
+      margin-top: 2
+      margin-left: 10
+      
+    Label
+      id: req_item3
+      !text: tr('- Plate Armor')
+      font: verdana-11px-rounded
+      color: #e65b5b
+      margin-top: 2
+      margin-left: 10
+      margin-bottom: 5
+
+    UIWidget
+      id: slot_container
+      height: 50
+      margin-top: 5
+    
+      UIWidget
+        id: slot_box1
+        size: 50 50
+        anchors.left: parent.left
+        anchors.top: parent.top
+        margin-left: 50
+        background-color: #222222
+        border-width: 1
+        border-color: #666666
+        
+        UIItem
+          id: slot1
+          size: 36 36
+          anchors.left: parent.left
+          anchors.top: parent.top
+          margin-left: 7
+          margin-top: 7
+          virtual: true
+          image-source: /images/ui/item-blessed
+          opacity: 0.5
+          image-color: #aaaaaa
+          
+      UIWidget
+        id: slot_box2
+        size: 50 50
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        background-color: #222222
+        border-width: 1
+        border-color: #666666
+        
+        UIItem
+          id: slot2
+          size: 36 36
+          anchors.left: parent.left
+          anchors.top: parent.top
+          margin-left: 7
+          margin-top: 7
+          virtual: true
+          image-source: /images/ui/item-blessed
+          opacity: 0.5
+          image-color: #aaaaaa
+          
+      UIWidget
+        id: slot_box3
+        size: 50 50
+        anchors.right: parent.right
+        anchors.top: parent.top
+        margin-right: 50
+        background-color: #222222
+        border-width: 1
+        border-color: #666666
+        
+        UIItem
+          id: slot3
+          size: 36 36
+          anchors.left: parent.left
+          anchors.top: parent.top
+          margin-left: 7
+          margin-top: 7
+          virtual: true
+          image-source: /images/ui/item-blessed
+          opacity: 0.5
+          image-color: #aaaaaa
+          
+    Button
+      id: alchemyCraftButton
+      !text: tr('Craftar')
+      font: verdana-11px-rounded
+      width: 120
+      height: 32
+      margin-top: 6
+      margin-left: 62
+    
+    Label
+      id: rankDetailsAlchemy
+      font: verdana-11px-rounded
+      color: #a1e65b
+      text: ''
+      margin-top: 6
+      text-wrap: true
+      width: 320
     
     UIWidget
       id: rankDetailsButtonRow

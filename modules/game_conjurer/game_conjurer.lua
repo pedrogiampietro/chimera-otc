@@ -33,31 +33,37 @@ local rankData = {
     name = tr('Novice Conjurer'),
     desc = tr('Beginning your journey in conjuration magic.'),
     bonus = '+5% XP',
+    chargeMultiplier = '1x',
   },
   [1] = {
     name = tr('Apprentice Conjurer'),
     desc = tr('Learning the fundamentals of magical creation.'),
     bonus = '+7% XP',
+    chargeMultiplier = '2x',
   },
   [2] = {
     name = tr('Adept Conjurer'),
     desc = tr('Mastering advanced conjuration techniques.'),
     bonus = '+10% XP',
+    chargeMultiplier = '4x',
   },
   [3] = {
     name = tr('Master Conjurer'),
     desc = tr('Able to conjure complex objects and elements.'),
     bonus = '+12% XP',
+    chargeMultiplier = '7x',
   },
   [4] = {
     name = tr('Elder Conjurer'),
     desc = tr('Wisdom of ancient conjuration knowledge.'),
     bonus = '+15% XP',
+    chargeMultiplier = '10x',
   },
   [5] = {
     name = tr('Legendary Conjurer'),
     desc = tr('Ultimate mastery of conjuration arts.'),
     bonus = '+20% XP',
+    chargeMultiplier = '15x',
   }
 }
 
@@ -493,6 +499,123 @@ function showRankDetails(rankId)
   if helpButton then
     helpButton.onClick = function()
       modules.game_textmessage.displayGameMessage(tr('Ranks grant you bonuses and unlock new conjuration powers. Progress by earning conjurer experience!'), 'Conjurer Help')
+    end
+  end
+
+  -- Multiplicador de cargas
+  local chargeWidget = content:recursiveGetChildById('rankDetailsCharge')
+  if chargeWidget then
+    local chargeText = data.chargeMultiplier or ''
+    if chargeText == '' then
+      chargeText = tr('N/A')
+    end
+    chargeWidget:setText(tr('Multiplicador de Cargas: ') .. chargeText)
+  end
+
+  -- Sistema de Alquimia
+  local alchemyWidget = content:recursiveGetChildById('rankDetailsAlchemy')
+  if alchemyWidget then
+    alchemyWidget:setText(tr('Sistema de Alquimia: Adicione ingredientes raros na conjuração para modificar as runas (ex: +dano, +área, +efeito visual).'))
+  end
+
+  -- Configurar slots de alquimia para drag & drop
+  for i = 1, 3 do
+    local slot = content:recursiveGetChildById('slot'..i)
+    local label = content:recursiveGetChildById('slot'..i..'_label')
+    
+    if slot then
+      -- Limpar o slot ao abrir a janela
+      slot:setItemId(0)
+      
+      -- Configurar tooltip
+      slot:setTooltip(tr('Arraste um ingrediente raro aqui!'))
+      
+      -- Lista de itens recomendados para cada slot
+      local recommendedItems = {
+        [1] = {"flor do sol", "flor solar", "sun flower", "sunflower"},
+        [2] = {"cristal arcano", "cristal mágico", "arcane crystal", "magic crystal"},
+        [3] = {"essência etérea", "essência", "pó mágico", "ethereal essence", "essence"}
+      }
+      
+      -- Função para verificar se um item é recomendado para este slot
+      local function isRecommendedItem(itemName, slotIndex)
+        if not itemName or not recommendedItems[slotIndex] then return false end
+        
+        local lowerName = itemName:lower()
+        for _, recommendedName in ipairs(recommendedItems[slotIndex]) do
+          if lowerName:find(recommendedName) then
+            return true
+          end
+        end
+        return false
+      end
+      
+      -- Configurar evento de drag & drop
+      slot.onDrop = function(self, dragged)
+        if dragged and dragged.getItem then
+          local item = dragged:getItem()
+          if item then
+            -- Coloca o item no slot
+            self:setItem(item)
+            
+            -- Pega o nome do item e verifica se é recomendado
+            local itemName = item:getName() or tr('Unknown Item')
+            local isRecommended = isRecommendedItem(itemName, i)
+            
+            -- Atualiza o requisito correspondente na lista
+            local reqLabel = content:recursiveGetChildById('req_item'..i)
+            if reqLabel then
+              if isRecommended then
+                -- Item correto no slot correto
+                reqLabel:setColor('#00ff00')  -- Verde para requisito cumprido
+                self:setOpacity(1.0)
+                self:setImageColor('#ffffff')
+              else
+                -- Item incorreto no slot
+                reqLabel:setColor('#ffaa00')  -- Dourado para item errado
+                self:setOpacity(0.85)
+                self:setImageColor('#ffaa00')
+              end
+            end
+            
+            return true
+          end
+        end
+        return false
+      end
+      
+      -- Configurar evento de clique direito para limpar o slot
+      slot.onMouseRightRelease = function(self)
+        self:clearItem()
+        -- Restaura a cor do requisito para vermelho (não cumprido)
+        local reqLabel = content:recursiveGetChildById('req_item'..i)
+        if reqLabel then
+          reqLabel:setColor('#e65b5b')  -- Vermelho para requisito não cumprido
+        end
+        self:setOpacity(0.5)
+        self:setImageColor('#aaaaaa')
+      end
+    end
+  end
+  
+  -- Configurar botão de craftar para coletar itens dos slots
+  local craftButton = content:recursiveGetChildById('alchemyCraftButton')
+  if craftButton then
+    craftButton.onClick = function()
+      local items = {}
+      for i = 1, 3 do
+        local slot = content:recursiveGetChildById('slot'..i)
+        if slot and slot.getItem and slot:getItem() then
+          table.insert(items, slot:getItem():getName() or tr('Unknown Item'))
+        end
+      end
+      
+      if #items == 0 then
+        modules.game_textmessage.displayGameMessage(tr('Adicione pelo menos um ingrediente para craftar!'), 'Alchemy')
+      else
+        modules.game_textmessage.displayGameMessage(tr('Craft realizado com: ') .. table.concat(items, ', '), 'Alchemy')
+        -- Aqui você pode adicionar a lógica real de craft, enviar para o servidor, etc.
+      end
     end
   end
 
