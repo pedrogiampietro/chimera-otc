@@ -273,10 +273,21 @@ function updateConjurerUI(level, exp, nextExp)
         -- Set bonus text and date text
         if rankBonusWidget then
           rankBonusWidget:setText(bonusValues[i])
+          rankBonusWidget:setColor('#ffaa00')  -- Dourado
+          rankBonusWidget:setOpacity(1.0)      -- Garantir visibilidade total
         end
         
         if rankDateWidget then
-          rankDateWidget:setText(unlockDates[i])
+          -- Exibe informação adicional: a data ou quantidade de conjurers
+          if i == 0 then
+            rankDateWidget:setText(tr('Base rank'))
+          elseif i == level then
+            rankDateWidget:setText(tr('Current'))
+          else
+            rankDateWidget:setText(unlockDates[i])
+          end
+          rankDateWidget:setColor('#888888')  -- Cinza claro
+          rankDateWidget:setOpacity(1.0)      -- Garantir visibilidade total
         end
         
         -- Add a glow effect to the current level
@@ -296,11 +307,27 @@ function updateConjurerUI(level, exp, nextExp)
         
         -- Clear bonus and date for locked ranks
         if rankBonusWidget then
-          rankBonusWidget:setText('???')
+          rankBonusWidget:setText(tr('Locked'))
+          rankBonusWidget:setColor('#666666')  -- Cinza
         end
         
         if rankDateWidget then
-          rankDateWidget:setText('')
+          local nextExp = {
+            [0] = 1000,
+            [1] = 5000,
+            [2] = 15000,
+            [3] = 50000,
+            [4] = 150000,
+            [5] = "MAX"
+          }
+          
+          if i == level + 1 then
+            -- Próximo rank - mostre a experiência necessária
+            rankDateWidget:setText(nextExp[i] .. " exp")
+            rankDateWidget:setColor('#666666')  -- Cinza
+          else
+            rankDateWidget:setText('')
+          end
         end
       end
     end

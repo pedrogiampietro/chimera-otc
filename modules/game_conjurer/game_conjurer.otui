@@ -1,7 +1,7 @@
 MainWindow
   id: conjurerWindow
   !text: tr('Conjurer System')
-  size: 520 380
+  size: 520 440
   draggable: true
   modal: false
   @onEscape: toggleConjurerWindow()
@@ -26,7 +26,7 @@ MainWindow
 
   Panel
     id: rankPanel
-    height: 140
+    height: 190
     width: 500
     anchors.top: topBanner.bottom
     anchors.horizontalCenter: parent.horizontalCenter
@@ -40,17 +40,17 @@ MainWindow
       font: verdana-11px-rounded
       color: #ffaa00
       !text: tr('Progression Ranks')
-      margin-bottom: 5
+      margin-bottom: 10
 
     UIWidget
       id: rankIconsPanel
       layout:
         type: verticalBox
-        spacing: 2
+        spacing: 10
       anchors.top: rankTitle.bottom
       anchors.horizontalCenter: parent.horizontalCenter
       width: 480
-      height: 110
+      height: 160
 
       UIWidget
         id: iconsRow
@@ -59,6 +59,7 @@ MainWindow
           spacing: 16
         width: 480
         height: 64
+        margin-bottom: 8
 
         UIWidget
           id: rankNoviceIcon
@@ -127,14 +128,14 @@ MainWindow
           type: horizontalBox
           spacing: 16
         width: 480
-        height: 40
+        height: 76
 
         UIWidget
           id: rankNoviceNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankNovice
             width: 64
@@ -142,27 +143,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Novice')
+            margin-bottom: 3
           Label
             id: rankNoviceBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: '+10%'
+            margin-bottom: 3
           Label
             id: rankNoviceDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: ''
+            text: 'Base rank'
 
         UIWidget
           id: rankApprenticeNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankApprentice
             width: 64
@@ -170,27 +173,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Apprentice')
+            margin-bottom: 3
           Label
             id: rankApprenticeBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: '+15%'
+            margin-bottom: 3
           Label
             id: rankApprenticeDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: ''
+            text: '15/04/2024'
 
         UIWidget
           id: rankAdeptNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankAdept
             width: 64
@@ -198,27 +203,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Adept')
+            margin-bottom: 3
           Label
             id: rankAdeptBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: 'Current'
+            margin-bottom: 3
           Label
             id: rankAdeptDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: ''
+            text: '18/04/2024'
 
         UIWidget
           id: rankMasterNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankMaster
             width: 64
@@ -226,27 +233,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Master')
+            margin-bottom: 3
           Label
             id: rankMasterBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: 'Locked'
+            margin-bottom: 3
           Label
             id: rankMasterDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: ''
+            text: '15000 exp'
 
         UIWidget
           id: rankElderNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankElder
             width: 64
@@ -254,13 +263,15 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Elder')
+            margin-bottom: 3
           Label
             id: rankElderBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: 'Locked'
+            margin-bottom: 3
           Label
             id: rankElderDate
             width: 64
@@ -274,7 +285,7 @@ MainWindow
           width: 64
           layout:
             type: verticalBox
-            spacing: 0
+            spacing: 4
           Label
             id: rankLegendary
             width: 64
@@ -282,13 +293,15 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Legendary')
+            margin-bottom: 3
           Label
             id: rankLegendaryBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: ''
+            text: 'Locked'
+            margin-bottom: 3
           Label
             id: rankLegendaryDate
             width: 64
@@ -300,7 +313,7 @@ MainWindow
   Label
     id: currentLevelLabel
     anchors.top: rankPanel.bottom
-    margin-top: 0
+    margin-top: 10
     anchors.horizontalCenter: parent.horizontalCenter
     font: verdana-11px-rounded
     color: #ffffff
@@ -312,7 +325,7 @@ MainWindow
     width: 360
     height: 28
     anchors.top: currentLevelLabel.bottom
-    margin-top: 0
+    margin-top: 5
     anchors.horizontalCenter: parent.horizontalCenter
     border-width: 1
     border-color: #ffaa00

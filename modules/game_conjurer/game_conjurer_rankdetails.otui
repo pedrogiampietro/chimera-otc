@@ -63,16 +63,26 @@ MainWindow
       margin-top: 2
 
     Label
-      !text: tr('Slots de Alquimia:')
+      !text: tr('Benefits of Rank:')
       font: verdana-11px-rounded
       color: #a1e65b
       margin-top: 10
 
     Label
-      !text: tr('Ingredientes Necessários:')
+      id: rankBenefits
+      font: verdana-11px-rounded
+      color: #cccccc
+      text: '7x Charges Runes Conjure, Successful alquimia rewards %critical'
+      text-wrap: true
+      width: 400
+      margin-left: 10
+      margin-bottom: 8
+
+    Label
+      !text: tr('Necessary ingredients:')
       font: verdana-11px-rounded
       color: #a1e65b
-      margin-top: 5
+      margin-top: 10
       
     Label
       id: req_item1
@@ -98,6 +108,12 @@ MainWindow
       margin-top: 2
       margin-left: 10
       margin-bottom: 5
+
+    Label
+      !text: tr('Slots Alquimia:')
+      font: verdana-11px-rounded
+      color: #a1e65b
+      margin-top: 5
 
     UIWidget
       id: slot_container
