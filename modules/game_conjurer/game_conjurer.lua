@@ -73,10 +73,10 @@ local currentConjurerLevel = 0
 
 -- Constants for Extended Opcodes
 local ExtendedIds = {
-  ConjurerDataRequest = 300,
-  ConjurerData = 301,
-  ConjurerRankingRequest = 302,
-  ConjurerRanking = 303
+  ConjurerDataRequest = 240,
+  ConjurerData = 241,
+  ConjurerRankingRequest = 242,
+  ConjurerRanking = 243
 }
 
 -- Verificar e garantir que o módulo json esteja disponível
@@ -211,9 +211,18 @@ function init()
   -- Register protocol handling for ranking
   if type(registerExtendedOpcode) == 'function' then
     registerExtendedOpcode(ExtendedIds.ConjurerRanking, onConjurerRanking)
+    registerExtendedOpcode(ExtendedIds.ConjurerData, onConjurerData)
   else
     -- Fallback para quando registerExtendedOpcode não estiver disponível
     g_logger.warning("Função registerExtendedOpcode não disponível. Ranking do Conjurer não funcionará!")
+    -- Try using ProtocolGame instead
+    if ProtocolGame and ProtocolGame.registerExtendedOpcode then
+      g_logger.info("Using ProtocolGame.registerExtendedOpcode instead")
+      ProtocolGame.registerExtendedOpcode(ExtendedIds.ConjurerRanking, onConjurerRanking)
+      ProtocolGame.registerExtendedOpcode(ExtendedIds.ConjurerData, onConjurerData)
+    else
+      g_logger.error("No opcode registration method available!")
+    end
     -- Não vamos simular dados de ranking aqui, faremos isso quando
     -- a janela de ranking for realmente aberta pelo usuário
   end
@@ -296,6 +305,13 @@ function terminate()
   -- Unregister protocol handlers
   if type(unregisterExtendedOpcode) == 'function' then
     unregisterExtendedOpcode(ExtendedIds.ConjurerRanking)
+    unregisterExtendedOpcode(ExtendedIds.ConjurerData)
+  else
+    -- Try using ProtocolGame instead
+    if ProtocolGame and ProtocolGame.unregisterExtendedOpcode then
+      ProtocolGame.unregisterExtendedOpcode(ExtendedIds.ConjurerRanking)
+      ProtocolGame.unregisterExtendedOpcode(ExtendedIds.ConjurerData)
+    end
   end
   
   if conjurerWindow then
@@ -448,7 +464,12 @@ function refreshConjurerRanking()
   end
 
   -- Send opcode to server requesting ranking data
-  if g_game and g_game.sendExtendedOpcode then
+  local protocolGame = g_game.getProtocolGame()
+  if protocolGame then
+    g_logger.info("Sending ConjurerRankingRequest opcode via protocol")
+    protocolGame:sendExtendedOpcode(ExtendedIds.ConjurerRankingRequest, '')
+  elseif g_game and g_game.sendExtendedOpcode then
+    g_logger.info("Sending ConjurerRankingRequest opcode via g_game")
     g_game.sendExtendedOpcode(ExtendedIds.ConjurerRankingRequest, '')
   else
     -- Fallback quando sendExtendedOpcode não está disponível
@@ -472,11 +493,13 @@ end
 
 function requestConjurerInfo()
   -- Send opcode to server requesting conjurer data
-  if g_game and g_game.sendExtendedOpcode then
+  local protocolGame = g_game.getProtocolGame()
+  if protocolGame then
+    protocolGame:sendExtendedOpcode(ExtendedIds.ConjurerDataRequest, '')
+  elseif g_game and g_game.sendExtendedOpcode then
     g_game.sendExtendedOpcode(ExtendedIds.ConjurerDataRequest, '')
   else
     -- Fallback quando sendExtendedOpcode não está disponível
-    g_logger.warning("Função sendExtendedOpcode não disponível para atualizar dados do conjurer.")
     -- Usar dados simulados para testes
     updateConjurerUI(2, 3200, 6000)
   end
@@ -952,39 +975,31 @@ end
 
 -- Process ranking data received from server
 function onConjurerRanking(protocol, opcode, buffer)
-  g_logger.info("onConjurerRanking called")
   
   if buffer == '' then 
-    g_logger.warning("Empty buffer")
     return 
   end
   
-  g_logger.info("Decoding JSON: " .. buffer)
   local data = json.decode(buffer)
   if not data then 
-    g_logger.warning("Failed to decode JSON")
     return 
   end
   
   -- Check if ranking window exists
   if not conjurerRankingWindow then
-    g_logger.warning("Ranking window not initialized")
     return
   end
   
   -- Find ranking panel
   local panel = conjurerRankingWindow:recursiveGetChildById('rankingListPanel')
   if not panel then
-    g_logger.warning("Ranking panel not found")
     return
   end
   
-  g_logger.info("Clearing ranking panel...")
   panel:destroyChildren()
   
   -- Add a small delay to prevent UI update loops
   scheduleEvent(function()
-    g_logger.info("Adding " .. #data .. " items to ranking")
     
     -- Create ranking rows
     for i, entry in ipairs(data) do
@@ -999,7 +1014,6 @@ function onConjurerRanking(protocol, opcode, buffer)
           -- Create the widget
           local widget = g_ui.createWidget('UIWidget', row)
           if not widget then
-            g_logger.warning("Failed to create column widget")
             return nil
           end
           
@@ -1052,7 +1066,6 @@ function onConjurerRanking(protocol, opcode, buffer)
       end
     end
     
-    g_logger.info("Ranking updated successfully")
   end, 100) -- 100ms delay
 end
 
@@ -1216,4 +1229,32 @@ function createBasicRankingWindow()
   end
   
   return window
+end
+
+-- Handler for ConjurerData opcode (301)
+function onConjurerData(protocol, opcode, buffer)
+  g_logger.info("Received ConjurerData opcode with buffer length: " .. buffer:len())
+  
+  if buffer == '' then 
+    g_logger.error("Empty buffer received for ConjurerData")
+    return 
+  end
+  
+  local success, data = pcall(function() 
+    return json.decode(buffer)
+  end)
+  
+  if not success or not data then
+    g_logger.error("Failed to decode ConjurerData JSON: " .. tostring(data))
+    return
+  end
+  
+  g_logger.info("ConjurerData decoded successfully: " .. json.encode(data))
+  
+  -- Update the UI with the received data
+  if data.level and data.experience and data.nextLevelExp then
+    updateConjurerUI(data.level, data.experience, data.nextLevelExp)
+  else
+    g_logger.warning("ConjurerData missing required fields")
+  end
 end 
