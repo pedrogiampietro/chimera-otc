@@ -434,4 +434,17 @@ MainWindow
     !text: tr('Close')
     font: verdana-11px-rounded
     color: #ffffff
-    @onClick: toggleConjurerWindow() 
+    @onClick: toggleConjurerWindow()
+    
+  Button
+    id: buttonRanking
+    anchors.right: buttonClose.left
+    anchors.bottom: parent.bottom
+    margin-bottom: 20
+    margin-right: 10
+    width: 120
+    height: 30
+    !text: tr('View Ranking')
+    font: verdana-11px-rounded
+    color: #ffffff
+    @onClick: modules.game_conjurer.toggleConjurerRankingWindow() 

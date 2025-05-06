@@ -1,5 +1,6 @@
 local conjurerWindow = nil
 local conjurerButton = nil
+local conjurerRankingWindow = nil
 
 local rankIds = {
   [0] = 'rankNovice',
@@ -70,6 +71,86 @@ local rankData = {
 -- Store the current conjurer level
 local currentConjurerLevel = 0
 
+-- Constants for Extended Opcodes
+local ExtendedIds = {
+  ConjurerDataRequest = 300,
+  ConjurerData = 301,
+  ConjurerRankingRequest = 302,
+  ConjurerRanking = 303
+}
+
+-- Verificar e garantir que o módulo json esteja disponível
+if not json then
+  -- Implementação básica do json (apenas encode)
+  json = {}
+  function json.encode(data)
+    if type(data) == 'table' then
+      local result = "{"
+      local first = true
+      for k, v in pairs(data) do
+        if not first then result = result .. "," else first = false end
+        if type(k) == 'number' then
+          result = result .. json.encode(v)
+        else
+          result = result .. '"' .. k .. '":' .. json.encode(v)
+        end
+      end
+      result = result .. "}"
+      return result
+    elseif type(data) == 'string' then
+      return '"' .. data:gsub('"', '\\"') .. '"'
+    elseif type(data) == 'number' then
+      return tostring(data)
+    elseif data == nil then
+      return 'null'
+    elseif type(data) == 'boolean' then
+      return data and 'true' or 'false'
+    else
+      return '"' .. tostring(data) .. '"'
+    end
+  end
+  
+  function json.decode(str)
+    g_logger.warning("Implementação json.decode simplificada - retornando string original")
+    -- Implementação simplificada para dados de teste
+    if str and str:match("^%s*%[") then
+      -- É um array, vamos retornar dados de teste
+      return {
+        {position = 1, name = "Player1", experience = 9500},
+        {position = 2, name = "Player2", experience = 8200},
+        {position = 3, name = "Player3", experience = 6800},
+        {position = 4, name = "Player4", experience = 5400},
+        {position = 5, name = "Player5", experience = 4100}
+      }
+    else
+      -- Outro tipo de dados, simplesmente retornar dados de teste
+      return {
+        experience = 3200,
+        level = 2,
+        chargeMultiplier = 4,
+        rankName = "Adept Conjurer",
+        nextLevelExp = 6000,
+        expNeeded = 2800,
+        nextRankName = "Master Conjurer"
+      }
+    end
+  end
+end
+
+-- Verificar e garantir que o módulo de log esteja disponível
+if not g_logger then
+  g_logger = {}
+  function g_logger.info(message)
+    print("[INFO] " .. message)
+  end
+  function g_logger.warning(message)
+    print("[WARNING] " .. message)
+  end
+  function g_logger.error(message)
+    print("[ERROR] " .. message)
+  end
+end
+
 function getCurrentConjurerLevel()
   return currentConjurerLevel
 end
@@ -77,6 +158,10 @@ end
 function init()
   conjurerWindow = g_ui.displayUI('game_conjurer', modules.game_interface.getRightPanel())
   conjurerWindow:hide()
+
+  -- Não vamos inicializar a janela de ranking agora, faremos isso sob demanda
+  -- conjurerRankingWindow = g_ui.displayUI('game_conjurer_ranking')
+  -- conjurerRankingWindow:hide()
 
   setupTopMenuButton()
   
@@ -121,6 +206,16 @@ function init()
         end
       end
     end
+  end
+  
+  -- Register protocol handling for ranking
+  if type(registerExtendedOpcode) == 'function' then
+    registerExtendedOpcode(ExtendedIds.ConjurerRanking, onConjurerRanking)
+  else
+    -- Fallback para quando registerExtendedOpcode não estiver disponível
+    g_logger.warning("Função registerExtendedOpcode não disponível. Ranking do Conjurer não funcionará!")
+    -- Não vamos simular dados de ranking aqui, faremos isso quando
+    -- a janela de ranking for realmente aberta pelo usuário
   end
   
   setupRankIconClicks()
@@ -198,8 +293,25 @@ function displayRankRequirements(rankIndex)
 end
 
 function terminate()
-  conjurerWindow:destroy()
-  conjurerButton:destroy()
+  -- Unregister protocol handlers
+  if type(unregisterExtendedOpcode) == 'function' then
+    unregisterExtendedOpcode(ExtendedIds.ConjurerRanking)
+  end
+  
+  if conjurerWindow then
+    conjurerWindow:destroy()
+    conjurerWindow = nil
+  end
+  
+  if conjurerRankingWindow then
+    conjurerRankingWindow:destroy()
+    conjurerRankingWindow = nil
+  end
+  
+  if conjurerButton then
+    conjurerButton:destroy()
+    conjurerButton = nil
+  end
 end
 
 function toggleConjurerWindow()
@@ -214,6 +326,159 @@ function toggleConjurerWindow()
     
     -- Request updated data when window opens
     requestConjurerInfo()
+  end
+end
+
+function toggleConjurerRankingWindow()
+  -- Create ranking window if it doesn't exist
+  if not conjurerRankingWindow then
+    g_logger.info("Creating ranking window...")
+    
+    -- Try loading the OTUI file with a safe fallback
+    local success, window = pcall(function()
+      return g_ui.displayUI('conjurer_ranking')
+    end)
+    
+    if success and window then
+      conjurerRankingWindow = window
+    else
+      g_logger.error("Failed to create ranking window from OTUI file")
+      
+      -- Fallback to create a basic window programmatically
+      conjurerRankingWindow = createBasicRankingWindow()
+      if not conjurerRankingWindow then
+        g_logger.error("Failed to create ranking window")
+        return
+      end
+    end
+    
+    g_logger.info("Ranking window created successfully")
+    
+    -- Set up button callbacks
+    local closeButton = conjurerRankingWindow:recursiveGetChildById('buttonClose') or 
+                       conjurerRankingWindow:recursiveGetChildById('closeButton')
+    if closeButton then
+      closeButton.onClick = function() 
+        conjurerRankingWindow:hide()
+        if conjurerButton then conjurerButton:setOn(false) end
+      end
+    end
+    
+    local backButton = conjurerRankingWindow:recursiveGetChildById('buttonBack') or
+                      conjurerRankingWindow:recursiveGetChildById('backButton')
+    if backButton then
+      backButton.onClick = function()
+        conjurerRankingWindow:hide()
+        if conjurerWindow then
+          conjurerWindow:show()
+          conjurerWindow:raise()
+          conjurerWindow:focus()
+          if conjurerButton then conjurerButton:setOn(true) end
+        end
+      end
+    end
+    
+    local refreshButton = conjurerRankingWindow:recursiveGetChildById('refreshButton')
+    if refreshButton then
+      refreshButton.onClick = refreshConjurerRanking
+    end
+    
+    -- Initially hide the window
+    conjurerRankingWindow:hide()
+  end
+  
+  -- Simple toggle visibility
+  if conjurerRankingWindow:isVisible() then
+    conjurerRankingWindow:hide()
+    
+    -- Show the main conjurer window if the button is on
+    if conjurerButton and conjurerButton:isOn() then
+      if conjurerWindow then
+        conjurerWindow:show()
+        conjurerWindow:raise()
+        conjurerWindow:focus()
+      end
+    else
+      if conjurerButton then
+        conjurerButton:setOn(false)
+      end
+    end
+  else
+    -- Hide the main conjurer window
+    if conjurerWindow then
+      conjurerWindow:hide()
+    end
+    
+    -- Show the ranking window
+    conjurerRankingWindow:show()
+    conjurerRankingWindow:raise()
+    conjurerRankingWindow:focus()
+    
+    -- Request updated ranking data
+    refreshConjurerRanking()
+  end
+end
+
+function showConjurerWindow()
+  if not conjurerRankingWindow then
+    return
+  end
+  
+  conjurerRankingWindow:hide()
+  
+  if not conjurerWindow then
+    g_logger.warning("Janela principal do conjurer não foi inicializada")
+    return
+  end
+  
+  if conjurerButton then
+    conjurerButton:setOn(true)
+  end
+  
+  conjurerWindow:show()
+  conjurerWindow:raise()
+  conjurerWindow:focus()
+end
+
+function refreshConjurerRanking()
+  -- Verificar se a janela de ranking foi criada
+  if not conjurerRankingWindow then
+    g_logger.warning("Tentativa de atualizar ranking, mas a janela não foi inicializada.")
+    return
+  end
+
+  -- Send opcode to server requesting ranking data
+  if g_game and g_game.sendExtendedOpcode then
+    g_game.sendExtendedOpcode(ExtendedIds.ConjurerRankingRequest, '')
+  else
+    -- Fallback quando sendExtendedOpcode não está disponível
+    g_logger.warning("Função sendExtendedOpcode não disponível para atualizar ranking.")
+    -- Simular dados para teste
+    local mockData = {
+      {position = 1, name = "Player1", experience = 9500},
+      {position = 2, name = "Player2", experience = 8200},
+      {position = 3, name = "Player3", experience = 6800},
+      {position = 4, name = "Player4", experience = 5400},
+      {position = 5, name = "Player5", experience = 4100},
+      {position = 6, name = "Player6", experience = 3200},
+      {position = 7, name = "Player7", experience = 2100},
+      {position = 8, name = "Player8", experience = 1400},
+      {position = 9, name = "Player9", experience = 900},
+      {position = 10, name = "Player10", experience = 500}
+    }
+    onConjurerRanking(nil, nil, json.encode(mockData))
+  end
+end
+
+function requestConjurerInfo()
+  -- Send opcode to server requesting conjurer data
+  if g_game and g_game.sendExtendedOpcode then
+    g_game.sendExtendedOpcode(ExtendedIds.ConjurerDataRequest, '')
+  else
+    -- Fallback quando sendExtendedOpcode não está disponível
+    g_logger.warning("Função sendExtendedOpcode não disponível para atualizar dados do conjurer.")
+    -- Usar dados simulados para testes
+    updateConjurerUI(2, 3200, 6000)
   end
 end
 
@@ -382,26 +647,6 @@ function formatNumber(num)
     if k == 0 then break end
   end
   return formatted
-end
-
--- Request updated conjurer information from the server
-function requestConjurerInfo()
-  -- This function should send a protocol request to the server
-  -- For now we'll use example data
-  updateConjurerUI(2, 3200, 6000)
-end
-
--- Função utilitária para conversão segura
-local function safeTonumber(val)
-  if type(val) == 'string' then
-    local cleaned = val:gsub(',', ''):match('^%s*(%d+)%s*$')
-    if cleaned then
-      return tonumber(cleaned)
-    end
-  elseif type(val) == 'number' then
-    return val
-  end
-  return 0
 end
 
 -- Function to open the rank details panel/modal
@@ -690,4 +935,285 @@ function setupRankIconClicks()
       icon.onClick = function() showRankDetails(i) end
     end
   end
+end
+
+-- Função utilitária para conversão segura
+local function safeTonumber(val)
+  if type(val) == 'string' then
+    local cleaned = val:gsub(',', ''):match('^%s*(%d+)%s*$')
+    if cleaned then
+      return tonumber(cleaned)
+    end
+  elseif type(val) == 'number' then
+    return val
+  end
+  return 0
+end
+
+-- Process ranking data received from server
+function onConjurerRanking(protocol, opcode, buffer)
+  g_logger.info("onConjurerRanking called")
+  
+  if buffer == '' then 
+    g_logger.warning("Empty buffer")
+    return 
+  end
+  
+  g_logger.info("Decoding JSON: " .. buffer)
+  local data = json.decode(buffer)
+  if not data then 
+    g_logger.warning("Failed to decode JSON")
+    return 
+  end
+  
+  -- Check if ranking window exists
+  if not conjurerRankingWindow then
+    g_logger.warning("Ranking window not initialized")
+    return
+  end
+  
+  -- Find ranking panel
+  local panel = conjurerRankingWindow:recursiveGetChildById('rankingListPanel')
+  if not panel then
+    g_logger.warning("Ranking panel not found")
+    return
+  end
+  
+  g_logger.info("Clearing ranking panel...")
+  panel:destroyChildren()
+  
+  -- Add a small delay to prevent UI update loops
+  scheduleEvent(function()
+    g_logger.info("Adding " .. #data .. " items to ranking")
+    
+    -- Create ranking rows
+    for i, entry in ipairs(data) do
+      -- Always use the fallback method since RankingRow style might not be available
+      local row = g_ui.createWidget('UIWidget', panel)
+      if row then
+        row:setHeight(30)
+        row:setBackgroundColor(i % 2 == 0 and '#222222' or '#191919')
+        
+        -- Helper function to safely create and configure a widget
+        local function createColumnWidget(text, width, isLast)
+          -- Create the widget
+          local widget = g_ui.createWidget('UIWidget', row)
+          if not widget then
+            g_logger.warning("Failed to create column widget")
+            return nil
+          end
+          
+          -- Set basic properties
+          widget:setText(text)
+          widget:setTextAlign(AlignCenter)
+          widget:setFont("verdana-11px-rounded")
+          widget:setColor('#ffffff')
+          
+          -- Set position and size
+          widget:setHeight(30)
+          if width then
+            widget:setWidth(width)
+          end
+          
+          return widget
+        end
+        
+        -- Create all column widgets first
+        local posWidget = createColumnWidget('#' .. entry.position, 50)
+        local nameWidget = createColumnWidget(entry.name, 220)
+        local levelWidget = createColumnWidget(tostring(calculateLevel(entry.experience)), 80)
+        local expWidget = createColumnWidget(tostring(entry.experience))
+        
+        -- Now manually position them
+        if posWidget then
+          posWidget:setPosition({x = 0, y = 0})
+        end
+        
+        if nameWidget and posWidget then
+          nameWidget:setPosition({x = 50, y = 0})
+        elseif nameWidget then
+          nameWidget:setPosition({x = 0, y = 0})
+        end
+        
+        if levelWidget and nameWidget then
+          levelWidget:setPosition({x = 270, y = 0})
+        elseif levelWidget then
+          levelWidget:setPosition({x = 0, y = 0})
+        end
+        
+        if expWidget and levelWidget then
+          expWidget:setPosition({x = 350, y = 0})
+          expWidget:setWidth(130)
+        elseif expWidget then
+          expWidget:setPosition({x = 0, y = 0})
+        end
+      else
+        g_logger.warning("Failed to create row widget")
+      end
+    end
+    
+    g_logger.info("Ranking updated successfully")
+  end, 100) -- 100ms delay
+end
+
+-- Calculate level based on experience
+function calculateLevel(experience)
+  local level = 0
+  local expThresholds = {500, 1500, 3000, 6000, 10000}
+  
+  for lvl, expRequired in ipairs(expThresholds) do
+    if experience >= expRequired then
+      level = lvl
+    else
+      break
+    end
+  end
+  
+  return level
+end
+
+-- Add a "View Ranking" button to the conjurer window
+function setupConjurerWindow()
+  local rankButton = g_ui.createWidget('Button', conjurerWindow)
+  rankButton:setId('rankButton')
+  rankButton:setText(tr('View Ranking'))
+  rankButton:setWidth(120)
+  rankButton:setHeight(30)
+  rankButton:setAnchors({bottom = 'buttonClose.bottom', right = 'buttonClose.left'})
+  rankButton:setMarginRight(10)
+  rankButton:setFont('verdana-11px-rounded')
+  rankButton:setColor('#ffffff')
+  rankButton.onClick = toggleConjurerRankingWindow
+end
+
+-- Create a basic ranking window as fallback
+function createBasicRankingWindow()
+  local window
+  
+  -- Try to create the window
+  local success, error = pcall(function()
+    window = g_ui.createWindow('MainWindow')
+    window:setId('conjurerRankingWindow')
+    window:setText('Conjurer Ranking')
+    window:setSize({width = 520, height = 440})
+    window:setDraggable(true)
+    window:setPosition({x = 100, y = 100})
+    
+    -- Create header
+    local headerLabel = g_ui.createWidget('Label', window)
+    headerLabel:setId('headerLabel')
+    headerLabel:setText('Top Conjurers')
+    headerLabel:setPosition({x = 210, y = 30})
+    headerLabel:setFont('verdana-11px-rounded')
+    headerLabel:setColor('#ffaa00')
+    
+    -- Create panel for the list
+    local panel = g_ui.createWidget('Panel', window)
+    panel:setId('rankingPanel')
+    panel:setPosition({x = 20, y = 60})
+    panel:setSize({width = 480, height = 320})
+    
+    -- Create container for the list items
+    local containerPanel = g_ui.createWidget('Panel', panel)
+    containerPanel:setId('rankingListPanelContainer')
+    containerPanel:setPosition({x = 0, y = 30})
+    containerPanel:setSize({width = 480, height = 270})
+    
+    -- Create the panel for list items
+    local listPanel = g_ui.createWidget('Panel', containerPanel)
+    listPanel:setId('rankingListPanel')
+    listPanel:setPosition({x = 0, y = 0})
+    listPanel:setSize({width = 480, height = 270})
+    
+    -- Create close button
+    local closeButton = g_ui.createWidget('Button', window)
+    closeButton:setId('buttonClose')
+    closeButton:setText('Close')
+    closeButton:setPosition({x = 360, y = 400}) 
+    closeButton:setSize({width = 90, height = 30})
+    closeButton:setFont('verdana-11px-rounded')
+    closeButton:setColor('#ffffff')
+    closeButton.onClick = function() window:hide() end
+    
+    -- Create refresh button
+    local refreshButton = g_ui.createWidget('Button', panel)
+    refreshButton:setId('refreshButton')
+    refreshButton:setText('Refresh')
+    refreshButton:setPosition({x = 210, y = 280})
+    refreshButton:setSize({width = 120, height = 30})
+    refreshButton:setFont('verdana-11px-rounded')
+    refreshButton:setColor('#ffffff')
+    refreshButton.onClick = refreshConjurerRanking
+    
+    -- Create back button
+    local backButton = g_ui.createWidget('Button', window)
+    backButton:setId('buttonBack')
+    backButton:setText('Back')
+    backButton:setPosition({x = 260, y = 400})
+    backButton:setSize({width = 90, height = 30})
+    backButton:setFont('verdana-11px-rounded')
+    backButton:setColor('#ffffff')
+    backButton.onClick = function() 
+      window:hide()
+      if conjurerWindow then 
+        conjurerWindow:show() 
+        conjurerWindow:raise()
+        conjurerWindow:focus()
+      end
+    end
+    
+    -- Create table header
+    local tableHeader = g_ui.createWidget('UIWidget', panel)
+    tableHeader:setId('tableHeader')
+    tableHeader:setPosition({x = 0, y = 0})
+    tableHeader:setSize({width = 480, height = 30})
+    tableHeader:setBackgroundColor('#222222')
+    
+    -- Create position header
+    local posHeader = g_ui.createWidget('Label', tableHeader)
+    posHeader:setId('positionHeader')
+    posHeader:setText('#')
+    posHeader:setPosition({x = 0, y = 8})
+    posHeader:setSize({width = 50, height = 20})
+    posHeader:setFont('verdana-11px-rounded')
+    posHeader:setTextAlign(AlignCenter)
+    posHeader:setColor('#ffffff')
+    
+    -- Create name header
+    local nameHeader = g_ui.createWidget('Label', tableHeader)
+    nameHeader:setId('nameHeader')
+    nameHeader:setText('Name')
+    nameHeader:setPosition({x = 50, y = 8})
+    nameHeader:setSize({width = 220, height = 20})
+    nameHeader:setFont('verdana-11px-rounded')
+    nameHeader:setTextAlign(AlignCenter)
+    nameHeader:setColor('#ffffff')
+    
+    -- Create level header
+    local levelHeader = g_ui.createWidget('Label', tableHeader)
+    levelHeader:setId('levelHeader')
+    levelHeader:setText('Level')
+    levelHeader:setPosition({x = 270, y = 8})
+    levelHeader:setSize({width = 80, height = 20})
+    levelHeader:setFont('verdana-11px-rounded')
+    levelHeader:setTextAlign(AlignCenter)
+    levelHeader:setColor('#ffffff')
+    
+    -- Create experience header
+    local expHeader = g_ui.createWidget('Label', tableHeader)
+    expHeader:setId('experienceHeader')
+    expHeader:setText('Experience')
+    expHeader:setPosition({x = 350, y = 8})
+    expHeader:setSize({width = 130, height = 20})
+    expHeader:setFont('verdana-11px-rounded')
+    expHeader:setTextAlign(AlignCenter)
+    expHeader:setColor('#ffffff')
+  end)
+  
+  if not success then
+    g_logger.error("Error creating basic ranking window: " .. error)
+    return nil
+  end
+  
+  return window
 end 

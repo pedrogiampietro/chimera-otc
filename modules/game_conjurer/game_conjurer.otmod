@@ -5,5 +5,14 @@ Module
   website: https://github.com/edubart/otclient
   sandboxed: true
   scripts: [ game_conjurer ]
+  dependencies: [ game_protocol ]
   @onLoad: init()
-  @onUnload: terminate() 
+  @onUnload: terminate()
+  ui-loader:
+    - game_conjurer.otui
+    - game_conjurer_ranking.otui
+    - game_conjurer_ranking_row.otui
+    - game_conjurer_rankdetails.otui
+    - RankingRow.otui
+    - conjurer_ranking.otui
+    - conjurer_ranking_row.otui 

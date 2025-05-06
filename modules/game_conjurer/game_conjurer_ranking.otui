@@ -1,0 +1,134 @@
+MainWindow
+  id: conjurerRankingWindow
+  size: 520 440
+  text: "Conjurer Ranking"
+  
+  UIWidget
+    id: topBanner
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 30
+    margin-top: 25
+    background-color: #222222
+    
+  Panel
+    id: rankingPanel
+    anchors.top: topBanner.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: buttonClose.top
+    margin-top: 10
+    margin-left: 15
+    margin-right: 15
+    margin-bottom: 15
+    
+    Label
+      id: rankingHeaderText
+      anchors.top: parent.top
+      anchors.horizontalCenter: parent.horizontalCenter
+      text: "Top Conjurers"
+      font: verdana-14px-bold
+      text-color: #ffaa00
+    
+    UIWidget
+      id: tableHeader
+      anchors.top: rankingHeaderText.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      margin-top: 15
+      height: 30
+      background-color: #444444
+      
+      Label
+        id: positionHeader
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        width: 50
+        text: "#"
+        font: verdana-11px
+        text-align: center
+        
+      Label
+        id: nameHeader
+        anchors.top: parent.top
+        anchors.left: positionHeader.right
+        anchors.bottom: parent.bottom
+        width: 220
+        text: "Name"
+        font: verdana-11px
+        text-align: center
+        
+      Label
+        id: levelHeader
+        anchors.top: parent.top
+        anchors.left: nameHeader.right
+        anchors.bottom: parent.bottom
+        width: 80
+        text: "Level"
+        font: verdana-11px
+        text-align: center
+        
+      Label
+        id: experienceHeader
+        anchors.top: parent.top
+        anchors.left: levelHeader.right
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        text: "Experience"
+        font: verdana-11px
+        text-align: center
+    
+    Panel
+      id: rankingListPanel
+      anchors.top: tableHeader.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      margin-top: 5
+      layout:
+        type: verticalBox
+        fit-children: true
+    
+    VerticalScrollBar
+      id: rankingScrollBar
+      anchors.top: tableHeader.bottom
+      anchors.right: parent.right
+      anchors.bottom: refreshButton.top
+      step: 28
+      pixels-scroll: true
+      margin-top: 5
+      margin-bottom: 10
+    
+    Button
+      id: refreshButton
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      margin-bottom: 10
+      text: "Refresh"
+      width: 120
+      height: 30
+      @onClick: modules.game_conjurer.refreshConjurerRanking()
+  
+  Button
+    id: buttonClose
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-right: 15
+    margin-bottom: 15
+    text: "Close"
+    width: 100
+    height: 30
+    @onClick: self:getParent():hide()
+  
+  Button
+    id: buttonBack
+    anchors.right: buttonClose.left
+    anchors.bottom: parent.bottom
+    margin-right: 10
+    margin-bottom: 15
+    text: "Back"
+    width: 100
+    height: 30
+    @onClick: modules.game_conjurer.showConjurerWindow() 

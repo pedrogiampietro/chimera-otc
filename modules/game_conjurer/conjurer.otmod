@@ -5,6 +5,11 @@ Module
   sandboxed: false
   autoload: true
   dependencies: game_topbuttons
-  scripts: [ conjurer ]
+  scripts: [ conjurer, game_conjurer ]
   @onLoad: init()
   @onUnload: terminate()
+  ui-loader:
+    - conjurer.otui
+    - RankingRow.otui
+    - game_conjurer_ranking.otui
+    - conjurer_ranking.otui

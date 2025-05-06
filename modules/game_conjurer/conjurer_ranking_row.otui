@@ -1,0 +1,46 @@
+RankingRow < UIWidget
+  height: 30
+  background-color: #191919
+  &alternatedBackgroundColor: #222222
+  
+  $hover:
+    background-color: #333333
+
+  $alternate:
+    background-color: #222222
+
+  Label
+    id: position
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: parent.left
+    width: 50
+    text-align: center
+    font: verdana-11px-rounded
+    color: #cccccc
+    
+  Label
+    id: name
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: prev.right
+    width: 220
+    text-align: center
+    font: verdana-11px-rounded
+    color: #ffffff
+    
+  Label
+    id: level
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: prev.right
+    width: 80
+    text-align: center
+    font: verdana-11px-rounded
+    color: #a1e65b
+    
+  Label
+    id: experience
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: prev.right
+    anchors.right: parent.right
+    text-align: center
+    font: verdana-11px-rounded
+    color: #ffaa00 

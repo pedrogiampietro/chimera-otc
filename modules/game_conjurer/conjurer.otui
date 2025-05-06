@@ -1,60 +1,170 @@
 ConjurerWindow < MainWindow
   id: conjurerWindow
-  size: 320 220
+  size: 320 300
   @onEscape: modules.game_conjurer.hide()
-  text: "Conjurer"
+  text: "Conjurer System"
 
-  Label
-    id: rankLabel
+  TabBar
+    id: tabBar
     anchors.top: parent.top
     anchors.left: parent.left
-    margin-top: 18
-    margin-left: 20
-    text: "Rank: -"
-    font: verdana-14px-bold
+    anchors.right: parent.right
+    margin-top: 20
+    margin-left: 15
+    margin-right: 15
 
-  ProgressBar
-    id: xpBar
-    anchors.top: rankLabel.bottom
+  Panel
+    id: statusPanel
+    anchors.top: tabBar.bottom
     anchors.left: parent.left
     anchors.right: parent.right
-    margin-top: 10
-    margin-left: 20
-    margin-right: 20
-    height: 18
-    value: 0
-    maximum: 100
-
-  Label
-    id: xpLabel
-    anchors.top: xpBar.bottom
-    anchors.left: parent.left
-    margin-top: 8
-    margin-left: 20
-    text: "XP: 0 / 100"
-
-  Label
-    id: multiplierLabel
-    anchors.top: xpLabel.bottom
-    anchors.left: parent.left
-    margin-top: 8
-    margin-left: 20
-    text: "Multiplicador: x1"
-
-  Label
-    id: nextRankLabel
-    anchors.top: multiplierLabel.bottom
-    anchors.left: parent.left
-    margin-top: 8
-    margin-left: 20
-    text: "Próximo rank: -"
-
-  Button
-    id: testButton
     anchors.bottom: parent.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    margin-bottom: 18
-    width: 120
-    height: 28
-    text: "Testar conjuração"
-    @onClick: modules.game_conjurer.onTestButtonClick() 
+    margin-top: 5
+    visible: true
+
+    Label
+      id: rankLabel
+      anchors.top: parent.top
+      anchors.left: parent.left
+      margin-top: 18
+      margin-left: 20
+      text: "Rank: -"
+      font: verdana-14px-bold
+
+    ProgressBar
+      id: xpBar
+      anchors.top: rankLabel.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      margin-top: 10
+      margin-left: 20
+      margin-right: 20
+      height: 18
+      value: 0
+      maximum: 100
+
+    Label
+      id: xpLabel
+      anchors.top: xpBar.bottom
+      anchors.left: parent.left
+      margin-top: 8
+      margin-left: 20
+      text: "XP: 0 / 100"
+
+    Label
+      id: multiplierLabel
+      anchors.top: xpLabel.bottom
+      anchors.left: parent.left
+      margin-top: 8
+      margin-left: 20
+      text: "Multiplicador: x1"
+
+    Label
+      id: nextRankLabel
+      anchors.top: multiplierLabel.bottom
+      anchors.left: parent.left
+      margin-top: 8
+      margin-left: 20
+      text: "Próximo rank: -"
+
+    Button
+      id: testButton
+      anchors.bottom: parent.bottom
+      anchors.horizontalCenter: parent.horizontalCenter
+      margin-bottom: 18
+      width: 120
+      height: 28
+      text: "Testar conjuração"
+      @onClick: modules.game_conjurer.onTestButtonClick()
+      
+    Button
+      id: rankButton
+      anchors.bottom: parent.bottom
+      anchors.right: parent.right
+      margin-bottom: 18
+      margin-right: 18
+      width: 120
+      height: 28
+      text: "View Ranking"
+      @onClick: modules.game_conjurer.toggleConjurerRankingWindow()
+
+  Panel
+    id: rankingPanel
+    anchors.top: tabBar.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 5
+    visible: false
+
+    Label
+      id: rankingHeader
+      anchors.top: parent.top
+      anchors.horizontalCenter: parent.horizontalCenter
+      margin-top: 10
+      text: "Ranking dos Conjuradores"
+      font: verdana-14px-bold
+
+    UIWidget
+      id: tableHeader
+      anchors.top: rankingHeader.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      margin-top: 15
+      margin-left: 20
+      margin-right: 20
+      height: 20
+      background-color: #444444
+      
+      Label
+        id: positionHeader
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        width: 50
+        text: "#"
+        font: verdana-11px
+        text-align: center
+        
+      Label
+        id: nameHeader
+        anchors.top: parent.top
+        anchors.left: positionHeader.right
+        anchors.bottom: parent.bottom
+        width: 150
+        text: "Nome"
+        font: verdana-11px
+        text-align: center
+        
+      Label
+        id: experienceHeader
+        anchors.top: parent.top
+        anchors.left: nameHeader.right
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        text: "Experiência"
+        font: verdana-11px
+        text-align: center
+
+    Panel
+      id: rankingListPanel
+      anchors.top: tableHeader.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      margin-left: 20
+      margin-right: 20
+      margin-bottom: 10
+      layout:
+        type: verticalBox
+        fit-children: true
+
+    Button
+      id: refreshButton
+      anchors.bottom: parent.bottom
+      anchors.horizontalCenter: parent.horizontalCenter
+      margin-bottom: 18
+      width: 120
+      height: 28
+      text: "Atualizar Ranking"
+      @onClick: modules.game_conjurer.refreshRanking() 

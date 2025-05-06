@@ -1,0 +1,40 @@
+RankingRow < UIWidget
+  height: 30
+  background-color: #222222
+  margin-bottom: 2
+  
+  $alternate:
+    background-color: #191919
+  
+  UIWidget
+    id: position
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: parent.left
+    width: 50
+    font: verdana-11px
+    text-align: center
+    
+  UIWidget
+    id: name
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: position.right
+    width: 220
+    font: verdana-11px
+    text-align: center
+    
+  UIWidget
+    id: level
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: name.right
+    width: 80
+    font: verdana-11px
+    text-align: center
+    
+  UIWidget
+    id: experience
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: level.right
+    anchors.right: parent.right
+    font: verdana-11px
+    text-align: center
+</rewritten_file> 
