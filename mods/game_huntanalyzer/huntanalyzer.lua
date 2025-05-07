@@ -353,43 +353,7 @@ function setSkillValue(id, value)
 	widget:setColor(value)
   end
 
--- Helper function to get the best item name available
-function getBestItemName(id, currentName)
-  -- Return the current name if it's already good
-  if currentName and currentName ~= "" and currentName ~= "unknown item" and not currentName:find("item #") then
-    return currentName
-  end
-  
-  -- Try to create an item and get name from market data
-  local item = Item.create(id)
-  if item then
-    -- Try market data first (usually has the best names)
-    local marketData = item:getMarketData()
-    if marketData and marketData.name and marketData.name ~= "" then
-      return marketData.name
-    end
-    
-    -- Try direct name from item (fallback)
-    local itemName = item:getName()
-    if itemName and itemName ~= "" and itemName ~= "unknown item" then
-      return itemName
-    end
-  end
-  
-  -- If we have an items table in g_things, try that (some clients have this)
-  if g_things and g_things.getItemType then
-    local itemType = g_things.getItemType(id)
-    if itemType and itemType.getName then
-      local name = itemType:getName()
-      if name and name ~= "" then
-        return name
-      end
-    end
-  end
-  
-  -- No better name found, return the current name or a default
-  return currentName or ("Item #" .. id)
-end
+
 
 function onUpdateKillTracker(localPlayer, monsterName, lookType, lookHead, lookBody, lookLegs, lookFeet, addons, corpse, items)
   -- Debug para verificar se essa função está sendo chamada
@@ -403,18 +367,29 @@ function onUpdateKillTracker(localPlayer, monsterName, lookType, lookHead, lookB
     local itemName = data[1]
     local item = data[2]
     
-    -- Get the best item name available
-    itemName = getBestItemName(item:getId(), itemName)
-    
-    -- Check if the item ID exists in the lootedItems table
-    if not lootedItems[item:getId()] then
-      -- If the item ID doesn't exist, initialize its amount to 0
-      lootedItems[item:getId()] = { amount = 0, name = itemName }
+    -- Skip invalid items
+    if not item or not item:getId() then
+      g_logger.debug("Hunt Analyzer: Skipping invalid item in loot")
+      goto continue
     end
+    
+    local itemId = item:getId()
+    -- Check if the item ID exists in the lootedItems table
+    if not lootedItems[itemId] then
+      -- Se o nome do item estiver vazio, use o ID
+      if not itemName or itemName == "" or itemName:find("unknown item") then
+        itemName = "Item #" .. itemId
+      end
+      
+      -- If the item ID doesn't exist, initialize its amount to 0
+      lootedItems[itemId] = { amount = 0, name = itemName }
+    end
+    
     -- Increment the amount of the looted item
-    lootedItems[item:getId()].amount = lootedItems[item:getId()].amount + item:getCount()
-    -- Always update the name to the best available name
-    lootedItems[item:getId()].name = itemName
+    local count = item:getCount() or 1
+    lootedItems[itemId].amount = lootedItems[itemId].amount + count
+    
+    ::continue::
   end
 
   updateDropTracker(lootedItems)
@@ -543,11 +518,12 @@ function updateDropTracker(data)
                 itemLabel:addAnchor(AnchorTop, "image"..k, AnchorTop)
                 itemLabel:setMarginLeft(5)
             end
-            
-            -- Get the best item name
-            local displayName = getBestItemName(k, v.name)
-            
-            itemLabel:setText(displayName)
+            -- Adicionar ID quando o nome estiver vazio ou for "unknown item"
+            local itemName = v.name
+            if not itemName or itemName == "" or (itemName:find("unknown") and not itemName:find("ID:")) then
+                itemName = "Item #" .. k
+            end
+            itemLabel:setText(itemName)
 
             local lootLabel = lootedItemsLabel:getChildById("lootLabel"..k)
             if not lootLabel then

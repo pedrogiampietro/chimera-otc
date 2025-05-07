@@ -3079,26 +3079,9 @@ void ProtocolGame::parseKillTracker(const InputMessagePtr& msg)
         ItemPtr item = getItem(msg, 0, g_game.getFeature(Otc::GameItemTooltip));
         std::string itemName = "";
         if (item) {
-            // Try to get a better item name from the item database instead of just using item->getName()
-            if (g_things.isValidDatId(item->getId(), ThingCategoryItem)) {
-                const ItemTypePtr& itemType = g_things.getItemType(item->getId());
-                if (itemType) {
-                    itemName = itemType->getName();
-                }
-            }
-
-            // If still empty, try the original method
-            if (itemName.empty()) {
-                itemName = item->getName();
-            }
-
-            // If still empty, use a descriptive fallback with the ID
-            if (itemName.empty()) {
-                itemName = "item #" + std::to_string(item->getId());
-            }
-        }
-        else {
-            itemName = "unknown item";
+            itemName = item->getName();
+            if (itemName.empty())
+                itemName = "unknown item";
         }
         items.push_back(std::make_tuple(itemName, item));
     }
@@ -3669,8 +3652,11 @@ ItemPtr ProtocolGame::getItem(const InputMessagePtr& msg, int id, bool hasDescri
         id = msg->getU16();
 
     ItemPtr item = Item::create(id);
-    if (item->getId() == 0)
-        stdext::throw_exception(stdext::format("unable to create item with invalid id %d", id));
+    if (item->getId() == 0) {
+        g_logger.error(stdext::format("invalid thing type, server id: %d", id));
+        // Return a valid placeholder item instead of throwing exception
+        return Item::create(1); // Create empty placeholder item
+    }
 
     if (g_game.getFeature(Otc::GameThingMarks) && !g_game.getFeature(Otc::GameTibia12Protocol)) {
         msg->getU8(); // mark
