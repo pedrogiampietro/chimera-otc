@@ -213,9 +213,6 @@ function init()
     registerExtendedOpcode(ExtendedIds.ConjurerRanking, onConjurerRanking)
     registerExtendedOpcode(ExtendedIds.ConjurerData, onConjurerData)
   else
-    -- Fallback para quando registerExtendedOpcode não estiver disponível
-    g_logger.warning("Função registerExtendedOpcode não disponível. Ranking do Conjurer não funcionará!")
-    -- Try using ProtocolGame instead
     if ProtocolGame and ProtocolGame.registerExtendedOpcode then
       g_logger.info("Using ProtocolGame.registerExtendedOpcode instead")
       ProtocolGame.registerExtendedOpcode(ExtendedIds.ConjurerRanking, onConjurerRanking)
@@ -223,8 +220,6 @@ function init()
     else
       g_logger.error("No opcode registration method available!")
     end
-    -- Não vamos simular dados de ranking aqui, faremos isso quando
-    -- a janela de ranking for realmente aberta pelo usuário
   end
   
   setupRankIconClicks()
@@ -642,6 +637,30 @@ function updateConjurerUI(level, exp, nextExp)
   end, 100)
 end
 
+-- Helper function to format numbers with commas
+function formatNumber(num)
+  local formatted = tostring(num)
+  local k
+  while true do
+    formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+    if k == 0 then break end
+  end
+  return formatted
+end
+
+-- Função utilitária para conversão segura
+local function safeTonumber(val)
+  if type(val) == 'string' then
+    local cleaned = val:gsub(',', ''):match('^%s*(%d+)%s*$')
+    if cleaned then
+      return tonumber(cleaned)
+    end
+  elseif type(val) == 'number' then
+    return val
+  end
+  return 0
+end
+
 -- Create a pulsating effect for the current rank icon
 function pulsateRankIcon(widget)
   if not widget or not widget:isVisible() then return end
@@ -659,17 +678,6 @@ function pulsateRankIcon(widget)
   
   widget:setOpacity(opacity + pulseDelta)
   scheduleEvent(function() pulsateRankIcon(widget) end, 100)
-end
-
--- Helper function to format numbers with commas
-function formatNumber(num)
-  local formatted = tostring(num)
-  local k
-  while true do
-    formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-    if k == 0 then break end
-  end
-  return formatted
 end
 
 -- Function to open the rank details panel/modal
@@ -960,19 +968,6 @@ function setupRankIconClicks()
   end
 end
 
--- Função utilitária para conversão segura
-local function safeTonumber(val)
-  if type(val) == 'string' then
-    local cleaned = val:gsub(',', ''):match('^%s*(%d+)%s*$')
-    if cleaned then
-      return tonumber(cleaned)
-    end
-  elseif type(val) == 'number' then
-    return val
-  end
-  return 0
-end
-
 -- Process ranking data received from server
 function onConjurerRanking(protocol, opcode, buffer)
   
@@ -1249,7 +1244,6 @@ function onConjurerData(protocol, opcode, buffer)
     return
   end
   
-  g_logger.info("ConjurerData decoded successfully: " .. json.encode(data))
   
   -- Update the UI with the received data
   if data.level and data.experience and data.nextLevelExp then

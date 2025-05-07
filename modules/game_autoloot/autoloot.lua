@@ -82,7 +82,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
     return
   end
   if data and type(data) == 'table' then
-    print('[AutoLoot] Loot list request sent to server.')
     -- Atualiza a interface somente se a janela existir e estiver visível
     if autolootWindow and autolootWindow:isVisible() then
       local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
@@ -100,10 +99,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
           local removeButton = row:getChildById('removeButton')
           
           if not itemImage or not itemLabel or not removeButton then
-            print('[AutoLoot] ERROR: Missing required child widgets in AutoLootListRow')
-            print('[AutoLoot] Debug - itemImage:', itemImage and 'exists' or 'nil')
-            print('[AutoLoot] Debug - itemLabel:', itemLabel and 'exists' or 'nil')
-            print('[AutoLoot] Debug - removeButton:', removeButton and 'exists' or 'nil')
             row:destroy()
             return
           end
@@ -155,7 +150,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
       print(string.format('%d. %s (ID: %d)', i, loot.name, loot.id))
     end
   else
-    print('[AutoLoot] Dados de loot recebidos em formato inválido!')
   end
 end
 
@@ -163,7 +157,6 @@ function requestAutoLoot()
   local protocol = g_game.getProtocolGame()
   if protocol then
     protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, '{}')
-    print('[AutoLoot] Loot list request sent to server.')
   else
     print('[AutoLoot] ERROR: game protocol not available!')
   end
@@ -216,16 +209,10 @@ local function onSetBackpackButtonClick()
 end
 
 function init()
-  print('[AutoLoot] Module loaded!')
   -- Load the UI styles
   g_ui.importStyle('autoloot')
   g_ui.importStyle('autolootitem')
-  
-  print('[AutoLoot] modules.game_interface:', modules.game_interface)
-  if modules.game_interface then
-    print('[AutoLoot] getRootWidget:', modules.game_interface.getRootWidget)
-  end
-  
+    
   connect(g_game, { 
     onGameStart = refresh,
     onGameEnd = offline
@@ -248,7 +235,6 @@ function init()
   
   if ProtocolGame and ProtocolGame.registerExtendedOpcode then
     ProtocolGame.registerExtendedOpcode(ExtendedIds.AutoLootData, onExtendedAutoLootData)
-    print('[AutoLoot] Autoloot opcode registered!')
   else
     print('[AutoLoot] ERROR: ProtocolGame.registerExtendedOpcode is not available!')
   end
@@ -286,7 +272,6 @@ end
 function terminate()
   if ProtocolGame and ProtocolGame.unregisterExtendedOpcode then
     ProtocolGame.unregisterExtendedOpcode(ExtendedIds.AutoLootData)
-    print('[AutoLoot] Autoloot opcode removed!')
   end
   disconnect(g_game, { 
     onGameStart = refresh,

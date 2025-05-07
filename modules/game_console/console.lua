@@ -1136,7 +1136,149 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
     end
 
     if channel then
-      addText(composedMessage, speaktype, channel, name)
+      -- Special handling for unidentified items in loot channel (Channel ID 9)
+      if channelId == 9 and string.find(message, "%*[^%*]+%*") then
+        -- Process the message to color unidentified items
+        local coloredTextTable = {}
+        local currentIndex = 1
+        
+        for startAsterisk, endAsterisk in string.gmatch(composedMessage, "%*().-()%*") do
+          -- Add text before the asterisk
+          if currentIndex < startAsterisk - 1 then
+            table.insert(coloredTextTable, composedMessage:sub(currentIndex, startAsterisk - 2))
+            table.insert(coloredTextTable, speaktype.color)
+          end
+          
+          -- Add the unidentified item text with a purple color
+          table.insert(coloredTextTable, composedMessage:sub(startAsterisk - 1, endAsterisk))
+          table.insert(coloredTextTable, "#9F00FF") -- Purple color for unidentified items
+          
+          currentIndex = endAsterisk + 1
+        end
+        
+        -- Add any remaining text
+        if currentIndex <= #composedMessage then
+          table.insert(coloredTextTable, composedMessage:sub(currentIndex))
+          table.insert(coloredTextTable, speaktype.color)
+        end
+        
+        -- Add the colored text to the tab
+        local tab = getTab(channel)
+        if tab then
+          local panel = consoleTabBar:getTabPanel(tab)
+          local consoleBuffer = panel:getChildById('consoleBuffer')
+          
+          local label = nil
+          if consoleBuffer:getChildCount() > MAX_LINES then
+            label = consoleBuffer:getFirstChild()
+            consoleBuffer:moveChildToIndex(label, consoleBuffer:getChildCount())
+          end
+          
+          if not label then
+            label = g_ui.createWidget('ConsoleLabel', consoleBuffer)
+          end
+          
+          label:setId('consoleLabel' .. consoleBuffer:getChildCount())
+          label:setColoredText(coloredTextTable)
+          consoleTabBar:blinkTab(tab)
+          
+          label.name = name
+          consoleBuffer.onMouseRelease = function(self, mousePos, mouseButton)
+            processMessageMenu(mousePos, mouseButton, nil, nil, nil, tab)
+          end
+          label.onMouseRelease = function(self, mousePos, mouseButton)
+            processMessageMenu(mousePos, mouseButton, name, composedMessage, self, tab)
+          end
+          label.onMousePress = function(self, mousePos, button)
+            if button == MouseLeftButton then clearSelection(consoleBuffer) end
+          end
+          label.onDragEnter = function(self, mousePos)
+            clearSelection(consoleBuffer)
+            return true
+          end
+          label.onDragLeave = function(self, droppedWidget, mousePos)
+            local text = {}
+            for selectionChild = consoleBuffer.selection.first, consoleBuffer.selection.last do
+              local label = self:getParent():getChildByIndex(selectionChild)
+              table.insert(text, label:getSelection())
+            end
+            consoleBuffer.selectionText = table.concat(text, '\n')
+            return true
+          end
+          label.onDragMove = function(self, mousePos, mouseMoved)
+            local parent = self:getParent()
+            local parentRect = parent:getPaddingRect()
+            local selfIndex = parent:getChildIndex(self)
+            local child = parent:getChildByPos(mousePos)
+            
+            -- find bonding children
+            if not child then
+              if mousePos.y < self:getY() then
+                for index = selfIndex - 1, 1, -1 do
+                  local label = parent:getChildByIndex(index)
+                  if label:getY() + label:getHeight() > parentRect.y then
+                    if (mousePos.y >= label:getY() and mousePos.y <= label:getY() + label:getHeight()) or index == 1 then
+                      child = label
+                      break
+                    end
+                  else
+                    child = parent:getChildByIndex(index + 1)
+                    break
+                  end
+                end
+              elseif mousePos.y > self:getY() + self:getHeight() then
+                for index = selfIndex + 1, parent:getChildCount(), 1 do
+                  local label = parent:getChildByIndex(index)
+                  if label:getY() < parentRect.y + parentRect.height then
+                    if (mousePos.y >= label:getY() and mousePos.y <= label:getY() + label:getHeight()) or index == parent:getChildCount() then
+                      child = label
+                      break
+                    end
+                  else
+                    child = parent:getChildByIndex(index - 1)
+                    break
+                  end
+                end
+              else
+                child = self
+              end
+            end
+            
+            if not child then return false end
+            
+            local childIndex = parent:getChildIndex(child)
+            
+            -- remove old selection
+            clearSelection(consoleBuffer)
+            
+            -- update self selection
+            local textBegin = self:getTextPos(self:getLastClickPosition())
+            local textPos = self:getTextPos(mousePos)
+            self:setSelection(textBegin, textPos)
+            
+            consoleBuffer.selection = { first = math.min(selfIndex, childIndex), last = math.max(selfIndex, childIndex) }
+            
+            -- update siblings selection
+            if child ~= self then
+              for selectionChild = consoleBuffer.selection.first + 1, consoleBuffer.selection.last - 1 do
+                parent:getChildByIndex(selectionChild):selectAll()
+              end
+              
+              local textPos = child:getTextPos(mousePos)
+              if childIndex > selfIndex then
+                child:setSelection(0, textPos)
+              else
+                child:setSelection(string.len(child:getText()), textPos)
+              end
+            end
+            
+            return true
+          end
+        end
+      else
+        -- Normal message handling (unchanged)
+        addText(composedMessage, speaktype, channel, name)
+      end
     else
       -- server sent a message on a channel that is not open
       pwarning('message in channel id ' .. channelId .. ' which is unknown, this is a server bug, relogin if you want to see messages in this channel')

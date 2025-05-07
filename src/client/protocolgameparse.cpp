@@ -3065,17 +3065,47 @@ void ProtocolGame::parseTournamentLeaderboard(const InputMessagePtr& msg)
 
 void ProtocolGame::parseKillTracker(const InputMessagePtr& msg)
 {
-    msg->getString();
-    msg->getU16();
-    msg->getU8();
-    msg->getU8();
-    msg->getU8();
-    msg->getU8();
-    msg->getU8();
+    std::string name = msg->getString();
+    uint16_t lookType = msg->getU16();
+    uint8_t lookHead = msg->getU8();
+    uint8_t lookBody = msg->getU8();
+    uint8_t lookLegs = msg->getU8();
+    uint8_t lookFeet = msg->getU8();
+    uint8_t lookAddons = msg->getU8();
     int corpseSize = msg->getU8(); // corpse size
+
+    std::list<std::tuple<std::string, ItemPtr>> items;
     for (int i = 0; i < corpseSize; i++) {
-        getItem(msg, 0, g_game.getFeature(Otc::GameItemTooltip)); // corpse item    
+        ItemPtr item = getItem(msg, 0, g_game.getFeature(Otc::GameItemTooltip));
+        std::string itemName = "";
+        if (item) {
+            // Try to get a better item name from the item database instead of just using item->getName()
+            if (g_things.isValidDatId(item->getId(), ThingCategoryItem)) {
+                const ItemTypePtr& itemType = g_things.getItemType(item->getId());
+                if (itemType) {
+                    itemName = itemType->getName();
+                }
+            }
+
+            // If still empty, try the original method
+            if (itemName.empty()) {
+                itemName = item->getName();
+            }
+
+            // If still empty, use a descriptive fallback with the ID
+            if (itemName.empty()) {
+                itemName = "item #" + std::to_string(item->getId());
+            }
+        }
+        else {
+            itemName = "unknown item";
+        }
+        items.push_back(std::make_tuple(itemName, item));
     }
+
+    // Disparar o evento onUpdateKillTracker para o LocalPlayer
+    if (g_game.getLocalPlayer())
+        g_game.getLocalPlayer()->callLuaField("onUpdateKillTracker", name, lookType, lookHead, lookBody, lookLegs, lookFeet, lookAddons, nullptr, items);
 }
 
 void ProtocolGame::parseSupplyTracker(const InputMessagePtr& msg)
