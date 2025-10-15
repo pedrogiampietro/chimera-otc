@@ -35,7 +35,8 @@ function init()
   
   initCallbacks()  
   
-  botButton = modules.client_topmenu.addLeftGameToggleButton('botButton', tr('Bot'), '/images/topbuttons/bot', toggle, false, 99999)
+  -- Desabilitado: botão de bot removido do topbar
+  -- botButton = modules.client_topmenu.addLeftGameToggleButton('botButton', tr('Bot'), '/images/topbuttons/bot', toggle, false, 99999)
   botButton:setOn(false)
   botButton:hide()
 

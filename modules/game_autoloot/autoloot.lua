@@ -290,7 +290,7 @@ function terminate()
 end
 
 function setupTopMenuButton()
-  autolootButton = modules.client_topmenu.addLeftGameToggleButton(
+  autolootButton = modules.client_topmenu.addRightGameToggleButton(
     'autolootButton',
     tr('AutoLoot'),
     '/images/topbuttons/autoloot',

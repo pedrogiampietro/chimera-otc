@@ -72,7 +72,7 @@ function refreshContainerItems(container)
         end
         
         itemWidget:setImageSource(src)
-        itemWidget:setTooltip(item and item:getTooltip() or "")
+        itemWidget:setTooltip(nil) -- Desabilitado para usar apenas tooltips personalizados
         itemWidget:setItem(item)
     end
 

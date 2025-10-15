@@ -129,3 +129,14 @@ _ReSharper*/
 
 # Vcpkg installed libraries
 vcpkg_installed/
+
+# Visual Studio build artifacts (large files)
+*.iobj
+*.ipdb
+*.pdb
+*.lib
+*.exp
+*.obj
+
+# VC17 build directory
+vc17/

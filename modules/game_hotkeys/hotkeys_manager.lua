@@ -43,9 +43,10 @@ configValueChanged = false
 
 -- public functions
 function init()
-  if not g_app.isMobile() then
-    hotkeysButton = modules.client_topmenu.addLeftGameButton('hotkeysButton', tr('Hotkeys') .. ' (Ctrl+K)', '/images/topbuttons/hotkeys', toggle, false, 7)
-  end
+  -- Desabilitado: botão de hotkeys removido do topbar
+  -- if not g_app.isMobile() then
+  --   hotkeysButton = modules.client_topmenu.addLeftGameButton('hotkeysButton', tr('Hotkeys') .. ' (Ctrl+K)', '/images/topbuttons/hotkeys', toggle, false, 7)
+  -- end
   g_keyboard.bindKeyDown('Ctrl+K', toggle)
   hotkeysWindow = g_ui.displayUI('hotkeys_manager')
   hotkeysWindow:setVisible(false)

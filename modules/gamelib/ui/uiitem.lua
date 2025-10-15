@@ -129,9 +129,11 @@ function UIItem:onClick(mousePos)
 end
 
 function UIItem:onItemChange()
-  local tooltip = nil
-  if self:getItem() and self:getItem():getTooltip():len() > 0 then
-    tooltip = self:getItem():getTooltip()
-  end
-  self:setTooltip(tooltip)
+  -- Desabilitado para usar apenas tooltips personalizados
+  -- local tooltip = nil
+  -- if self:getItem() and self:getItem():getTooltip():len() > 0 then
+  --   tooltip = self:getItem():getTooltip()
+  -- end
+  -- self:setTooltip(tooltip)
+  self:setTooltip(nil)
 end

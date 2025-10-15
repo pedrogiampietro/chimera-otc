@@ -502,7 +502,7 @@ end
 
 function setupTopMenuButton()
   if not conjurerButton then
-    conjurerButton = modules.client_topmenu.addLeftGameToggleButton('conjurerButton', tr('Conjurer'), '/images/topbuttons/spelllist', toggleConjurerWindow, false, 4)
+    conjurerButton = modules.client_topmenu.addRightGameToggleButton('conjurerButton', tr('Conjurer'), '/images/topbuttons/spelllist', toggleConjurerWindow, false, 4)
     conjurerButton:setOn(false)
   end
 end

@@ -156,7 +156,7 @@ TopMenu < TopMenuPanel
     id: rightButtonsPanel
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    anchors.left: prev.right
+    anchors.left: rightGameButtonsPanel.right
     margin-left: 0
 
     $on:
@@ -176,15 +176,15 @@ TopMenu < TopMenuPanel
     id: leftButtonsPanel
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    anchors.right: parent.right
-    margin-right: 15
+    anchors.left: rightButtonsPanel.right
+    margin-right: 0
     visible: false
 
   TopMenuButtonsPanel
     id: leftGameButtonsPanel
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    anchors.right: prev.left
+    anchors.left: leftButtonsPanel.right
     visible: false
 
   Label
