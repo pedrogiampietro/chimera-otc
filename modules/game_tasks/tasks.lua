@@ -852,6 +852,14 @@ function displayTasksWindow(taskPoints)
     currentPointsLabel:setText(tr('Current Tasks Points: %s', taskPoints))
   end
   
+  -- Update total task points in the new panel
+  local totalTaskPointsLabel = tasksWindow:recursiveGetChildById('totalTaskPoints')
+  if totalTaskPointsLabel then
+    totalTaskPointsLabel:setText(tostring(taskPoints))
+  else
+    g_logger.debug("Total task points label not found")
+  end
+  
   -- Get task list
   taskList = tasksWindow:recursiveGetChildById('taskList')
   

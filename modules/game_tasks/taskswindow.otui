@@ -467,3 +467,33 @@ TasksWindow < MainWindow
           anchors.top: killsProgress.bottom
           margin-top: 1
           @onClick: modules.game_tasks.startTask()
+
+      // Task Points panel
+      Panel
+        id: taskPointsPanel
+        anchors.top: killsPanel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 45
+        margin-top: 10
+        background-color: #101010ee
+        border: 1 #444444
+        
+        Label
+          !text: tr('Total Task Points')
+          anchors.top: parent.top
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          color: #ffcc00
+          font: verdana-11px-rounded-bold
+        
+        Label
+          id: totalTaskPoints
+          !text: tr('0')
+          anchors.top: prev.bottom
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 3
+          text-align: center
+          font: verdana-11px-rounded-bold
+          color: #00ff00
+          text-auto-resize: true
