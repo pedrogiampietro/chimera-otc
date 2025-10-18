@@ -1665,6 +1665,7 @@ function updateTaskDetails(task)
   -- Update kill requirements - simplified version with one label and progress bar
   local killsRequired = killsPanel:getChildById('killsRequired')
   local killsProgress = killsPanel:getChildById('killsProgress')
+  local taskStatusLabel = killsPanel:getChildById('taskStatusLabel')
   
   -- Corrigindo: usar o total de kills requeridos, não o progresso atual
   local requiredKills = task.total or task.count
@@ -1672,6 +1673,53 @@ function updateTaskDetails(task)
   -- Set the required kills label
   if killsRequired then
     killsRequired:setText(tostring(requiredKills))
+  end
+  
+  -- Update task status information
+  if taskStatusLabel then
+    local statusText = ""
+    local shouldShow = false
+    
+    if task.type == TASK_TYPE_NORMAL then
+      -- Check if this normal task was already completed
+      local isCompleted = false
+      if currentTasks.normal then
+        for _, currentTask in ipairs(currentTasks.normal) do
+          if currentTask.id == task.id and currentTask.status == TASK_STATUS_COMPLETED then
+            isCompleted = true
+            break
+          end
+        end
+      end
+      
+      if isCompleted then
+        statusText = "Task completed - Cannot repeat"
+        shouldShow = true
+        taskStatusLabel:setColor('#ff6666')
+      else
+        statusText = "Normal task - Can only be done once"
+        shouldShow = true
+        taskStatusLabel:setColor('#ffaa00')
+      end
+    else
+      -- Daily task
+      if task.timesDone and task.maxRepeats then
+        statusText = "Daily task - " .. task.timesDone .. "/" .. task.maxRepeats .. " done today"
+        shouldShow = true
+        if task.timesDone >= task.maxRepeats then
+          taskStatusLabel:setColor('#ff6666')
+        else
+          taskStatusLabel:setColor('#00ff00')
+        end
+      else
+        statusText = "Daily task - Can be repeated 3x per day"
+        shouldShow = true
+        taskStatusLabel:setColor('#00ff00')
+      end
+    end
+    
+    taskStatusLabel:setText(statusText)
+    taskStatusLabel:setVisible(shouldShow)
   end
   
   -- Update progress bar
@@ -1705,20 +1753,45 @@ function updateTaskDetails(task)
   if startTaskButton then
     -- Check if task is in progress
     local isInProgress = false
+    local isCompleted = false
+    local cannotStart = false
+    local reasonText = ""
     
     -- Check if task status is STARTED
     if task.status == TASK_STATUS_STARTED then
       isInProgress = true
       g_logger.debug("Task is already in progress based on its status")
+    elseif task.status == TASK_STATUS_COMPLETED then
+      isCompleted = true
+      g_logger.debug("Task is completed based on its status")
+    end
+    
+    -- For normal tasks, check if already completed (cannot be done again)
+    if task.type == TASK_TYPE_NORMAL and isCompleted then
+      cannotStart = true
+      reasonText = "Already Completed"
+    end
+    
+    -- For daily tasks, check if reached max repeats
+    if task.type == TASK_TYPE_DAILY and task.timesDone and task.maxRepeats then
+      if task.timesDone >= task.maxRepeats then
+        cannotStart = true
+        reasonText = "Max Daily Limit (" .. task.timesDone .. "/" .. task.maxRepeats .. ")"
+      end
     end
     
     -- Check in currentTasks.normal if not already determined
-    if not isInProgress and currentTasks.normal then
+    if not isInProgress and not isCompleted and currentTasks.normal then
       for _, currentTask in ipairs(currentTasks.normal) do
         if currentTask.id == task.id then
           if currentTask.status == TASK_STATUS_STARTED then
             isInProgress = true
             g_logger.debug("Task found in progress in currentTasks.normal")
+          elseif currentTask.status == TASK_STATUS_COMPLETED and task.type == TASK_TYPE_NORMAL then
+            isCompleted = true
+            cannotStart = true
+            reasonText = "Already Completed"
+            g_logger.debug("Normal task found completed in currentTasks.normal")
           end
           break
         end
@@ -1726,7 +1799,7 @@ function updateTaskDetails(task)
     end
     
     -- Check in currentTasks.daily if not already determined
-    if not isInProgress and currentTasks.daily then
+    if not isInProgress and not isCompleted and currentTasks.daily then
       for _, currentTask in ipairs(currentTasks.daily) do
         if currentTask.id == task.id then
           if currentTask.status == TASK_STATUS_STARTED then
@@ -1738,11 +1811,15 @@ function updateTaskDetails(task)
       end
     end
     
-    -- If task is in progress, change button text to "Cancel Task" instead of hiding it
-    if isInProgress then
+    -- Configure button based on task state
+    if cannotStart then
+      startTaskButton:setText(reasonText)
+      startTaskButton:setEnabled(false)
+      startTaskButton:setVisible(true)
+    elseif isInProgress then
       startTaskButton:setText(tr("Cancel Task"))
       startTaskButton:setEnabled(true)
-      startTaskButton:setVisible(true) -- Mantém o botão visível para permitir cancelar a tarefa
+      startTaskButton:setVisible(true)
     else
       startTaskButton:setText(tr("Start Task"))
       startTaskButton:setEnabled(true)
@@ -1753,8 +1830,10 @@ function updateTaskDetails(task)
   -- Determine monsters to display
   local monstersList = task.monsters or {}
   if #monstersList == 0 then
+    -- No monsters to display
   else
     for i, monster in ipairs(monstersList) do
+      -- Process monster display logic here if needed
     end
   end
 end

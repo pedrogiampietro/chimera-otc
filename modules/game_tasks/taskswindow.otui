@@ -419,13 +419,26 @@ TasksWindow < MainWindow
           color: #ffcc00
           font: verdana-11px-rounded-bold
         
+        // Task status/limitation info
+        Label
+          id: taskStatusLabel
+          !text: tr('')
+          anchors.top: prev.bottom
+          anchors.horizontalCenter: parent.horizontalCenter
+          margin-top: 5
+          text-align: center
+          font: verdana-11px-rounded
+          color: #ff6666
+          visible: false
+          height: 15
+        
         // Single kill requirement value
         Label
           id: killsRequired
           !text: tr('25')
-          anchors.top: prev.bottom
+          anchors.top: taskStatusLabel.bottom
           anchors.horizontalCenter: parent.horizontalCenter
-          margin-top: 10
+          margin-top: 5
           text-align: center
           font: verdana-11px-rounded-bold
           color: #ffffff
@@ -442,7 +455,7 @@ TasksWindow < MainWindow
           height: 15
           margin-left: 20
           margin-right: 20
-          margin-top: 10
+          margin-top: 5
           background-color: #333333
         
         Button
@@ -451,6 +464,6 @@ TasksWindow < MainWindow
           width: 120
           height: 30
           anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: parent.bottom
-          margin-bottom: 10
+          anchors.top: killsProgress.bottom
+          margin-top: 1
           @onClick: modules.game_tasks.startTask()
