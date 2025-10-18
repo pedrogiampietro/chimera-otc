@@ -1,44 +1,122 @@
 AutoLootListRow < Panel
   id: autoLootRow
-  height: 36
-  width: 250
-  background-color: #222222cc
-  border-width: 1
-  border-color: #444444
-  margin: 2
+  height: 40
+  width: 260
+  background-color: #1e1e1e
+  margin: 1
   layout: horizontalBox
-  padding-top: 0
-  padding-bottom: 0
+  padding: 4
+  
+  &hovered:
+    background-color: #2a2a2a
 
   UIWidget
     id: itemImage
     width: 32
     height: 32
     margin: 2
-    border-width: 1
-    border-color: #666666
-    background: #333333
+    background: #0a0a0a
     image-source: ""
 
-  UILabel
-    id: itemLabel
+  Panel
+    id: itemInfo
     margin-left: 8
-    text: ""
-    font: verdana-11px-rounded
-    color: #FFD700
-    text-align: left
-    vertical-align: center
+    layout: verticalBox
     width: 150
+
+    UILabel
+      id: itemLabel
+      text: ""
+      font: verdana-11px-rounded
+      color: #FFD700
+      text-align: left
+      height: 16
+
+    UILabel
+      id: itemIdLabel
+      text: ""
+      font: verdana-11px-rounded
+      color: #888888
+      text-align: left
+      height: 14
 
   UIButton
     id: removeButton
-    width: 60
-    height: 22
-    margin-left: 12
-    margin-right: 8
-    text: "X"
+    width: 45
+    height: 32
+    margin-left: 8
+    margin-right: 4
+    text: ""
     font: verdana-11px-rounded
-    font-size: 12
+    font-size: 14
     tooltip: "Remove item"
-    visible: true
-    enabled: true
+    background-color: #4a2a2a
+    color: #FF6666
+    border-width: 1
+    border-color: #6a4a4a
+    
+    &hovered:
+      background-color: #6a2a2a
+      border-color: #8a4a4a
+
+BackpackListRow < Panel
+  id: backpackRow
+  height: 36
+  width: 280
+  background-color: #1a1a1a
+  margin: 1
+  layout: horizontalBox
+  padding: 4
+  phantom: false
+  
+  &hovered:
+    background-color: #2a2a2a
+
+  UIWidget
+    id: backpackImage
+    width: 28
+    height: 28
+    margin: 2
+    background: #0a0a0a
+    image-source: ""
+
+  Panel
+    id: backpackInfo
+    margin-left: 8
+    layout: verticalBox
+    width: 180
+
+    UILabel
+      id: backpackLabel
+      text: ""
+      font: verdana-11px-rounded
+      color: #87CEEB
+      text-align: left
+      height: 16
+
+    UILabel
+      id: backpackIdLabel
+      text: ""
+      font: verdana-11px-rounded
+      color: #666666
+      text-align: left
+      height: 12
+
+  UIButton
+    id: selectButton
+    width: 60
+    height: 28
+    margin-left: 8
+    margin-right: 4
+    text: "Select"
+    font: verdana-11px-rounded
+    font-size: 10
+    tooltip: "Select this backpack"
+    background-color: #2a2a4a
+    color: #87CEEB
+    border-width: 1
+    border-color: #4a4a6a
+    
+    &hovered:
+      background-color: #3a3a5a
+      border-color: #6a6a8a

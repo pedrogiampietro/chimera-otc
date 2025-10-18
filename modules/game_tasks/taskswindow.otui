@@ -58,35 +58,43 @@ TaskPanel < UIWidget
     text: Task Name
     anchors.left: taskIcon.right
     anchors.top: taskIcon.top
+    anchors.right: parent.right
     margin-left: 10
-    width: 180
-    text-wrap: false
+    margin-right: 10
+    text-wrap: true
     phantom: true
     color: #ffffff
     font: verdana-11px-monochrome
+    height: 16
     
   Label
     id: taskLevel
     text: Level 8
     anchors.left: taskIcon.right
     anchors.top: taskName.bottom
+    anchors.right: parent.right
     margin-left: 10
+    margin-right: 10
     margin-top: 2
     phantom: true
     color: #888888
     font: verdana-11px-monochrome
+    height: 14
     
   Label
     id: recommendedTag
     text: Recommended
     anchors.left: taskIcon.right
     anchors.top: taskLevel.bottom
+    anchors.right: parent.right
     margin-left: 10
+    margin-right: 10
     margin-top: 2
     phantom: true
     color: #00ff00
     font: verdana-11px-monochrome
     visible: false
+    height: 14
     
   $hover:
     background-color: #444444
@@ -143,7 +151,7 @@ TasksWindow < MainWindow
       anchors.bottom: parent.bottom
       margin-top: 10
       margin-left: 10
-      width: 350
+      width: 400
       background-color: #151515ee
       border: 1 #333333
       

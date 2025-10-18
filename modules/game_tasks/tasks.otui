@@ -231,7 +231,8 @@ UIWidget
     anchors.left: taskIcon.right
     anchors.top: taskIcon.top
     margin-left: 10
-    width: 180
+    anchors.right: parent.right
+    margin-right: 10
     text-wrap: true
     phantom: true
     color: #cccccc 

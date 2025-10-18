@@ -1,157 +1,343 @@
 AutoLootWindow < MainWindow
   id: autolootWindow
-  !text: tr('AutoLoot')
-  size: 600 370
+  !text: tr('AutoLoot System')
+  size: 650 450
   @onEscape: self:hide()
   @onClose: modules.game_autoloot.onCloseWindow()
   &save: true
 
-  ScrollablePanel
-    id: lootListPanel
+  // Painel esquerdo - Lista de itens
+  Panel
+    id: leftPanel
     anchors.left: parent.left
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    width: 250
-    background-color: #222222cc
-    border-width: 1
-    border-color: #444444
-    layout: verticalBox
-    layout-spacing: 2
-
-  UIWidget
-    id: controlsPanel
-    anchors.top: parent.top
-    anchors.bottom: parent.bottom
-    anchors.left: lootListPanel.right
-    anchors.right: parent.right
-    margin-left: 16
+    width: 280
+    margin: 8
+    background-color: #1a1a1a
+    border-width: 2
+    border-color: #3a3a3a
 
     Label
-      id: writeItemLabel
-      text: Write an item name:
+      id: itemsTitle
+      text: LOOT ITEMS
       anchors.top: parent.top
       anchors.left: parent.left
+      anchors.right: parent.right
+      height: 30
+      text-align: center
+      background-color: #2d2d2d
       color: #FFD700
       font: verdana-11px-rounded
-
-    UITextEdit
-      id: addItemEdit
-      anchors.top: writeItemLabel.bottom
-      anchors.left: parent.left
-      width: 180
-      height: 24
-      margin-top: 4
-      background-color: #333333
-      border-width: 1
-      border-color: #666666
-      color: #ffffff
-
-    Button
-      id: addItemButton
-      !text: tr('Add to list')
-      anchors.top: addItemEdit.bottom
-      anchors.left: parent.left
-      width: 120
-      height: 24
-      margin-top: 8
-
-    Label
-      id: extrasLabel
-      text: Extras:
-      anchors.top: addItemButton.bottom
-      anchors.left: parent.left
-      margin-top: 16
-      color: #FFD700
-      font: verdana-11px-rounded
-
-    Button
-      id: moneyButton
-      !text: tr('Money ON')
-      anchors.top: extrasLabel.bottom
-      anchors.left: parent.left
-      width: 100
-      height: 22
-      margin-top: 4
-
-    Label
-      id: goldBackpackStatus
-      text: Gold -> Bank (70%, fee: 30%)
-      anchors.top: moneyButton.bottom
-      anchors.left: parent.left
-      margin-top: 2
-      color: #FFA500
-      font: verdana-11px-rounded
-      width: 280
-      max-width: 280
-      vertical-auto-size: true
-
-    Label
-      id: backpackLabel
-      text: Backpack name for autoloot:
-      anchors.top: goldBackpackStatus.bottom
-      anchors.left: parent.left
-      margin-top: 16
-      color: #FFD700
-      font: verdana-11px-rounded
-
-    UITextEdit
-      id: backpackEdit
-      anchors.top: backpackLabel.bottom
-      anchors.left: parent.left
-      width: 180
-      height: 22
-      background-color: #333333
-      border-width: 1
-      border-color: #666666
-      color: #ffffff
-      placeholder: "Ex: purple backpack"
-      margin-top: 2
-
-    Button
-      id: setBackpackButton
-      text: Set Backpack
-      anchors.top: backpackEdit.bottom
-      anchors.left: parent.left
-      width: 120
-      height: 22
-      margin-top: 2
-
-    Label
-      id: backpackAtualLabel
-      text: Current backpack: None
-      anchors.top: setBackpackButton.bottom
-      anchors.left: parent.left
-      margin-top: 4
-      color: #00FF00
-      font: verdana-11px-rounded
-      width: 250
-      max-width: 300
-      vertical-auto-size: true
-
-    Button
-      id: clearButton
-      !text: tr('Clear')
-      anchors.bottom: parent.bottom
-      anchors.left: parent.left
-      width: 100
-      height: 24
-      margin-bottom: 8
+      margin: 4
 
     Label
       id: itemsCountLabel
       text: Items 0/10
-      anchors.top: parent.top
+      anchors.top: itemsTitle.bottom
       anchors.right: parent.right
-      margin-top: 8
-      margin-right: 10
+      margin: 4
+      color: #CCCCCC
+      font: verdana-11px-rounded
+
+    ScrollablePanel
+      id: lootListPanel
+      anchors.left: parent.left
+      anchors.top: itemsCountLabel.bottom
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      margin: 8
+      background-color: #0f0f0f
+      border-width: 1
+      border-color: #555555
+      layout: verticalBox
+      layout-spacing: 2
+      padding: 4
+      vertical-scrollbar: auto
+
+  // Painel direito - Controles
+  Panel
+    id: rightPanel
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    anchors.left: leftPanel.right
+    anchors.right: parent.right
+    margin: 8
+    background-color: #1a1a1a
+    border-width: 2
+    border-color: #3a3a3a
+
+    // Seção 1: Adicionar Itens
+    Panel
+      id: addItemSection
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 110
+      margin: 8
+      background-color: #252525
+      border-width: 1
+      border-color: #555555
+
+      Label
+        id: addItemTitle
+        text: ADD ITEMS
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 25
+        text-align: center
+        background-color: #2a4a2a
+        color: #90EE90
+        font: verdana-11px-rounded
+        margin: 4
+
+      Label
+        id: writeItemLabel
+        text: Item name or ID:
+        anchors.top: addItemTitle.bottom
+        anchors.left: parent.left
+        margin: 8
+        color: #CCCCCC
+        font: verdana-11px-rounded
+
+      UITextEdit
+        id: addItemEdit
+        anchors.top: writeItemLabel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 28
+        margin: 8
+        background-color: #1a1a1a
+        border-width: 2
+        border-color: #4a4a4a
+        color: #ffffff
+        font: verdana-11px-rounded
+        placeholder: "e.g. gold coin, rope, 3035..."
+
+      Button
+        id: addItemButton
+        text: Add Item
+        anchors.top: addItemEdit.bottom
+        anchors.right: parent.right
+        width: 100
+        height: 26
+        margin: 8
+        background-color: #2a4a2a
+        color: #90EE90
+
+    // Seção 2: Configurações Gold
+    Panel
+      id: goldSection
+      anchors.top: addItemSection.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 100
+      margin: 8
+      background-color: #252525
+      border-width: 1
+      border-color: #555555
+
+      Label
+        id: goldTitle
+        text: GOLD SETTINGS
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 25
+        text-align: center
+        background-color: #4a3a2a
+        color: #FFD700
+        font: verdana-11px-rounded
+        margin: 4
+
+      Button
+        id: moneyButton
+        text: Money OFF
+        anchors.top: goldTitle.bottom
+        anchors.left: parent.left
+        width: 120
+        height: 28
+        margin: 8
+        background-color: #4a2a2a
+        color: #FF6666
+
+      Label
+        id: goldBackpackStatus
+        text: Gold → Bank (70%, fee: 30%)
+        anchors.top: goldTitle.bottom
+        anchors.left: moneyButton.right
+        anchors.right: parent.right
+        margin: 12
+        color: #FFA500
+        font: verdana-11px-rounded
+        text-align: center
+        vertical-align: center
+
+    // Seção 3: Backpack Selection
+    Panel
+      id: backpackSection
+      anchors.top: goldSection.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: actionsSection.top
+      margin: 8
+      background-color: #252525
+      border-width: 1
+      border-color: #555555
+
+      Label
+        id: backpackTitle
+        text: BACKPACK SELECTION
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 25
+        text-align: center
+        background-color: #2a2a4a
+        color: #87CEEB
+        font: verdana-11px-rounded
+        margin: 4
+
+      Button
+        id: selectBackpackButton
+        text: Choose Backpack
+        anchors.top: backpackTitle.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 30
+        margin: 8
+        background-color: #2a2a4a
+        color: #87CEEB
+
+      Label
+        id: backpackAtualLabel
+        text: Current: None
+        anchors.top: selectBackpackButton.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 35
+        margin: 8
+        margin-top: 12
+        color: #FFD700
+        background-color: #2a2a2a
+        font: verdana-11px-rounded
+        text-align: center
+        border-width: 1
+        border-color: #555555
+
+      ScrollablePanel
+        id: backpackListPanel
+        anchors.top: backpackAtualLabel.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 200
+        margin: 8
+        background-color: #0f0f0f
+        border-width: 1
+        border-color: #555555
+        layout: verticalBox
+        layout-spacing: 2
+        padding: 4
+        vertical-scrollbar: auto
+        visible: false
+
+    // Seção 4: Ações
+    Panel
+      id: actionsSection
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 50
+      margin: 8
+      background-color: #252525
+      border-width: 1
+      border-color: #555555
+
+      Button
+        id: clearButton
+        text: Clear List
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        width: 100
+        height: 30
+        margin: 8
+        background-color: #4a2a2a
+        color: #FF6666
+
+      Button
+        id: closeButton
+        text: Close
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: 80
+        height: 30
+        margin: 8
+        background-color: #3a3a3a
+        color: #CCCCCC
+
+// Modal para seleção de backpacks
+BackpackSelectorModal < MainWindow
+  id: backpackSelectorModal
+  !text: tr('Select Backpack')
+  size: 400 350
+  @onEscape: self:hide()
+  
+  Panel
+    id: headerPanel
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 40
+    background-color: #2a2a2a
+    border-width-bottom: 1
+    border-color: #555555
+    
+    Label
+      anchors.centerIn: parent
+      text: Choose a backpack for gold storage
       color: #FFD700
       font: verdana-11px-rounded
 
-  Button
-    id: closeButton
-    !text: tr('Close')
-    anchors.bottom: parent.bottom
+  ScrollablePanel
+    id: modalBackpackListPanel
+    anchors.top: headerPanel.bottom
+    anchors.left: parent.left
     anchors.right: parent.right
-    margin-bottom: 10
-    margin-right: 10
-    width: 90 
+    anchors.bottom: buttonPanel.top
+    margin: 10
+    background-color: #0f0f0f
+    border-width: 1
+    border-color: #555555
+    layout: verticalBox
+    layout-spacing: 2
+    padding: 8
+    vertical-scrollbar: modalBackpackScrollBar
+    
+  VerticalScrollBar
+    id: modalBackpackScrollBar
+    anchors.top: modalBackpackListPanel.top
+    anchors.bottom: modalBackpackListPanel.bottom
+    anchors.right: modalBackpackListPanel.right
+    step: 36
+    pixels-scroll: true
+    
+  Panel
+    id: buttonPanel
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 50
+    background-color: #2a2a2a
+    border-width-top: 1
+    border-color: #555555
+    
+    Button
+      id: cancelButton
+      text: Cancel
+      anchors.centerIn: parent
+      width: 80
+      height: 30
+      margin: 10
+      background-color: #4a2a2a
+      color: #FF6666
