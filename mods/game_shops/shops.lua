@@ -540,14 +540,17 @@ local function parseShopOpen(data)
       panel.offerItem.onDrop = onSelectItemToSell
     
       panel.onMouseRelease = function (self, mousePosition, mouseButton)
-        if mouseButton == MouseRightButton and self:isOn() then
+        if mouseButton == MouseRightButton and self:isOn() and isOwnShop() then
           local menu = g_ui.createWidget('PopupMenu')
           menu:addOption('Remove', function() return requestRemoveOffer(panel.offerData.id) end)
           menu:addOption('Modify', function() return requestModifyOffer(panel.offerData.id) end)
           menu:setGameMenu(true)
-          menu:display(mousePos)
+          menu:display(mousePosition)
         end
       end
+    else
+      -- Remove o evento onMouseRelease se não for o dono
+      panel.onMouseRelease = nil
     end
   end
 

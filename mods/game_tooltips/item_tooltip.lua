@@ -30,13 +30,12 @@ local Colors = {
 }
 
 local rarityColor = {
-  {name = "", color = "#ffffff"},
-  {name = "Common", color = "#7b7b7b"},
-  --{name = "Rare", color = "#1258a2"},
-  {name = "Rare", color = "#25fc19"},
-  {name = "Epic", color = "#bd3ffa"},
-  {name = "Legendary", color = "#ff7605"},
-  {name = "Mythic", color = "#FF0000"}
+  [0] = {name = "", color = "#ffffff"},
+  [1] = {name = "Common", color = "#7b7b7b"},
+  [2] = {name = "Rare", color = "#25fc19"},
+  [3] = {name = "Epic", color = "#bd3ffa"},
+  [4] = {name = "Legendary", color = "#ff7605"},
+  [5] = {name = "Mythic", color = "#FF0000"}
 }
 
 local implicits = {
@@ -319,7 +318,7 @@ function buildItemTooltip(item)
   local reqLvl = item.reqLvl or 0
   local unidentified = item.unidentified
   local mirrored = item.mirrored
-  local rarity = item.rarity + 1
+  local rarity = item.rarity
   local maxAttributes = item.maxAttributes
   local attributes = item.attributes
   local count = item.count
@@ -336,10 +335,10 @@ function buildItemTooltip(item)
 
   local itemNameColor
   if unidentified then
-    itemNameColor = rarityColor[2].color
+    itemNameColor = rarityColor[1].color
   elseif item.uniqueName then
     itemNameColor = "#dca01e"
-  elseif rarity > 1 then
+  elseif rarity > 1 and rarityColor[rarity] then
     itemNameColor = rarityColor[rarity].color
   else
     itemNameColor = "#ffffff"
@@ -357,11 +356,11 @@ function buildItemTooltip(item)
   end
 
   if unidentified then
-    addString("Unidentified" .. " " .. name, rarityColor[2].color)
+    addString("Unidentified" .. " " .. name, rarityColor[1].color)
   else
     if item.uniqueName then
       addString(item.uniqueName .. " " .. name, "#dca01e")
-    elseif item.rarity ~= 0 then
+    elseif item.rarity ~= 0 and rarityColor[rarity] then
       addString(rarityColor[rarity].name .. " " .. name, rarityColor[rarity].color)
     else
       addString(name, itemNameColor)

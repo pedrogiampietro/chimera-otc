@@ -74,9 +74,21 @@ AutoLootWindow < MainWindow
       margin-top: 4
 
     Label
+      id: goldBackpackStatus
+      text: Gold -> Bank (70%, fee: 30%)
+      anchors.top: moneyButton.bottom
+      anchors.left: parent.left
+      margin-top: 2
+      color: #FFA500
+      font: verdana-11px-rounded
+      width: 280
+      max-width: 280
+      vertical-auto-size: true
+
+    Label
       id: backpackLabel
       text: Backpack name for autoloot:
-      anchors.top: moneyButton.bottom
+      anchors.top: goldBackpackStatus.bottom
       anchors.left: parent.left
       margin-top: 16
       color: #FFD700

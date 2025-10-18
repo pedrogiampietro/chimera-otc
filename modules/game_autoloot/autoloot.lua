@@ -22,6 +22,30 @@ local function setMoneyButtonText(isOn)
   end
 end
 
+local function updateGoldBackpackStatus(message, isEnabled)
+  if autolootWindow then
+    local statusLabel = autolootWindow:recursiveGetChildById('goldBackpackStatus')
+    if statusLabel then
+      if message and message:find("disabled") then
+        statusLabel:setText('Gold autoloot disabled')
+        statusLabel:setColor('#888888')
+      elseif isEnabled or (message and (message:find("enabled") or message:find("bag ID: 2004"))) then
+        -- Gold está habilitado, verificar se tem bag ID 2004
+        if message and message:find("will go to your bag") then
+          statusLabel:setText('Gold -> Bag (100%)')
+          statusLabel:setColor('#00FF00')
+        elseif message and message:find("will go to bank") then
+          statusLabel:setText('Gold -> Bank (70%, fee: 30%)')
+          statusLabel:setColor('#FFA500')
+        else
+          -- Verificar dinamicamente se o player tem uma bag ID 2004
+          checkGoldBackpackStatus()
+        end
+      end
+    end
+  end
+end
+
 local function updateItemsCount(count)
   if autolootWindow then
     local itemsCountLabel = autolootWindow:recursiveGetChildById('itemsCountLabel')
@@ -60,10 +84,12 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
     if data.feedback == "success" or data.feedback == "info" then
       displayInfoBox("AutoLoot", data.message)
       -- Atualiza o texto do botão de gold se a mensagem for sobre gold
-      if data.message:find("gold has been enabled") then
+      if data.message:find("gold has been enabled") or data.message:find("Gold autoloot has been enabled") then
         setMoneyButtonText(true)
-      elseif data.message:find("gold has been disabled") then
+        updateGoldBackpackStatus(data.message, true)
+      elseif data.message:find("gold has been disabled") or data.message:find("Gold autoloot has been disabled") then
         setMoneyButtonText(false)
+        updateGoldBackpackStatus(data.message, false)
       end
       -- Atualiza o label da backpack atual se for feedback de backpack
       if data.message:find("Autoloot backpack set to:") then
@@ -162,6 +188,56 @@ function requestAutoLoot()
   end
 end
 
+local function checkGoldBackpackStatus()
+  -- Verificar se o player tem uma bag (ID: 2004) no inventário
+  local player = g_game.getLocalPlayer()
+  if not player then return end
+  
+  local hasBag = false
+  -- Verificar slots do inventário (slots 1-10)
+  for slot = 1, 10 do
+    local item = player:getInventoryItem(slot)
+    if item then
+      -- Função recursiva para verificar containers
+      local function checkContainer(container)
+        if container:getId() == 2004 then
+          return true
+        end
+        if container:isContainer() then
+          for i = 0, container:getContainerSize() - 1 do
+            local childItem = container:getContainerItem(i)
+            if childItem and childItem:isContainer() then
+              if checkContainer(childItem) then
+                return true
+              end
+            end
+          end
+        end
+        return false
+      end
+      
+      if checkContainer(item) then
+        hasBag = true
+        break
+      end
+    end
+  end
+  
+  -- Atualizar o status baseado na presença da bag
+  if autolootWindow then
+    local statusLabel = autolootWindow:recursiveGetChildById('goldBackpackStatus')
+    if statusLabel then
+      if hasBag then
+        statusLabel:setText('Gold -> Bag (100%)')
+        statusLabel:setColor('#00FF00')
+      else
+        statusLabel:setText('Gold -> Bank (70%, fee: 30%)')
+        statusLabel:setColor('#FFA500')
+      end
+    end
+  end
+end
+
 local function onAddItemButtonClick()
   if not autolootWindow then return end
   local addItemEdit = autolootWindow:recursiveGetChildById('addItemEdit')
@@ -188,6 +264,11 @@ local function onMoneyButtonClick()
   if protocol then
     local data = { action = "gold" }
     protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+    
+    -- Agendar uma verificação do status da backpack após o click
+    scheduleEvent(function()
+      checkGoldBackpackStatus()
+    end, 200)
   end
 end
 
@@ -225,6 +306,14 @@ function init()
       autolootWindow:hide()
       -- Atualiza o texto do botão de gold ao abrir
       setMoneyButtonText(false)
+      -- Inicializar status da backpack de gold
+      if autolootWindow then
+        local statusLabel = autolootWindow:recursiveGetChildById('goldBackpackStatus')
+        if statusLabel then
+          statusLabel:setText('Gold -> Bank (70%, fee: 30%)')
+          statusLabel:setColor('#FFA500')
+        end
+      end
     else
       print('[AutoLoot] ERROR: g_ui.getRootWidget is not available!')
     end
@@ -304,6 +393,7 @@ function setupTopMenuButton()
         autolootWindow:raise()
         autolootWindow:focus()
         autolootButton:setOn(true)
+        checkGoldBackpackStatus() -- Verificar status da backpack de gold
       end
     end,
     false, 99998
@@ -321,6 +411,7 @@ function toggle()
     autolootWindow:raise()
     autolootWindow:focus()
     autolootButton:setOn(true)
+    checkGoldBackpackStatus() -- Verificar status da backpack de gold
   end
 end
 

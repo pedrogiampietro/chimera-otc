@@ -18,6 +18,9 @@ function init()
 		onDisappear = onCreatureDisappear
 	})
 
+	-- Registrar o opcode para receber dados do servidor
+	ProtocolGame.registerExtendedOpcode(OPCODE, onExtendedOpcode)
+
 	if g_game.isOnline() then
 		create()
 	end
@@ -37,6 +40,10 @@ function terminate()
 		onAppear = onCreatureAppear,
 		onDisappear = onCreatureDisappear
 	})
+	
+	-- Desregistrar o opcode
+	ProtocolGame.unregisterExtendedOpcode(OPCODE)
+	
 	destroy()
 end
 
@@ -75,7 +82,10 @@ function log(message)
 end
 
 function onExtendedOpcode(protocol, code, buffer)
+    log("Received opcode: " .. code .. " with buffer: " .. buffer)
+    
     if not g_game.isOnline() then
+        log("Game is not online")
         return
     end
 
@@ -84,22 +94,40 @@ function onExtendedOpcode(protocol, code, buffer)
     end)
 
     if not json_status then
+        log("Failed to decode JSON: " .. tostring(json_data))
         return false
     end
 
+    log("JSON decoded successfully: action=" .. (json_data.action or "nil"))
 
     if json_data.action == "show" then
+        log("Showing boss bar for: " .. (json_data.data.name or "unknown"))
         show(json_data.data)
     elseif json_data.action == "hide" then
+        log("Hiding boss bar")
         hide()
     end
 end
 
 function show(data)
-    focusedBoss = data.cid
-    creatureName:setText(data.name)
-    creatureHP:setText(data.health .. "%")
-    creatureSpecial:setPercent(data.health)
+    log("Show function called with data: name=" .. (data.name or "nil") .. ", health=" .. (data.health or "nil"))
+    
+    if not window then
+        log("Window not created yet, creating...")
+        create()
+    end
+    
+    if not window then
+        log("Failed to create window!")
+        return
+    end
+    
+    focusedBoss = data.cid or 0
+    creatureName:setText(data.name or "Unknown Boss")
+    creatureHP:setText((data.health or 0) .. "%")
+    creatureSpecial:setPercent(data.health or 0)
+    
+    log("Boss bar shown successfully")
     window:show()
 end
 

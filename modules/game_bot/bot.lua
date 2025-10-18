@@ -37,8 +37,8 @@ function init()
   
   -- Desabilitado: botão de bot removido do topbar
   -- botButton = modules.client_topmenu.addLeftGameToggleButton('botButton', tr('Bot'), '/images/topbuttons/bot', toggle, false, 99999)
-  botButton:setOn(false)
-  botButton:hide()
+  -- botButton:setOn(false)
+  -- botButton:hide()
 
   botWindow = g_ui.loadUI('bot', modules.game_interface.getLeftPanel())
   botWindow:setup()
@@ -73,7 +73,7 @@ function terminate()
   editWindow:destroy()
 
   botWindow:destroy()
-  botButton:destroy()   
+  -- botButton:destroy()   
 end
 
 function clear()
