@@ -68,7 +68,7 @@ function send()
       fps = g_app.getFps(),
       maxFps = g_app.getMaxFps(),
       atlas = g_atlas.getStats(),
-      classic = tostring(g_settings.getBoolean("classicView")),
+      classic = "false", -- classicView option removed
       fullscreen = tostring(g_window.isFullscreen()),
       vsync = tostring(g_settings.getBoolean("vsync")),
       window_width = g_window.getWidth(),

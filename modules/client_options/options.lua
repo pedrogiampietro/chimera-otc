@@ -1,10 +1,8 @@
 local defaultOptions = {
-  layout = DEFAULT_LAYOUT, -- set in init.lua
   vsync = true,
   showFps = true,
   showPing = true,
   fullscreen = false,
-  classicView = not g_app.isMobile(),
   cacheMap = g_app.isMobile(),
   classicControl = not g_app.isMobile(),
   smartWalk = false,
@@ -48,10 +46,7 @@ local defaultOptions = {
   walkTurnDelay = 100,
   walkStairsDelay = 50,
   walkTeleportDelay = 200,
-  walkCtrlTurnDelay = 150,
-  
-  actionBar1 = true,
-  actionBar2 = false
+  walkCtrlTurnDelay = 150
 }
 
 local optionsWindow
@@ -360,10 +355,8 @@ function setOption(key, value, force)
   g_settings.set(key, value)
   options[key] = value
   
-  if key == 'classicView' or key == 'rightPanels' or key == 'leftPanels' or key == 'cacheMap' then
+  if key == 'rightPanels' or key == 'leftPanels' or key == 'cacheMap' then
     modules.game_interface.refreshViewMode()    
-  elseif key == 'actionBar1' or key == 'actionBar2' then
-    modules.game_actionbar.show()
   end
 end
 

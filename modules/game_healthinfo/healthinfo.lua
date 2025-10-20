@@ -295,7 +295,7 @@ function onOverlayGeometryChange()
     return
   end
 
-  local classic = g_settings.getBoolean("classicView")
+  local classic = false -- classicView option removed
   local minMargin = 40
   if classic then
     topHealthBar:setMarginTop(15)

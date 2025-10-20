@@ -1,49 +1,10 @@
 OptionPanel
-  Label
-    width: 130
-    id: layoutLabel
-    !text: tr("Layout (change requries client restart)")
-    $mobile:
-      visible: false
-  
-  ComboBox
-    id: layout
-    margin-top: 3
-    margin-right: 2
-    margin-left: 2
-    $mobile:
-      visible: false
-    @onOptionChange: modules.client_options.setOption(self:getId(), self:getCurrentOption().text)
-    @onSetup: |
-      self:addOption("Default")
-      for _, file in ipairs(g_resources.listDirectoryFiles("/layouts", false, true)) do
-        if g_resources.directoryExists("/layouts/" .. file) then
-          self:addOption(file:gsub("^%l", string.upper))
-        end
-      end
-
-  OptionCheckBox
-    id: classicView
-    !text: tr('Classic view')
-    margin-top: 5
-    
-    $mobile:
-      visible: false
-
   OptionCheckBox
     id: cacheMap
     !text: tr('Cache map (for non-classic view)')
 
     $mobile:
       visible: false
-
-  OptionCheckBox
-    id: actionBar1
-    !text: tr("Show first action bar")
-
-  OptionCheckBox
-    id: actionBar2
-    !text: tr("Show second action bar")
     
   OptionCheckBox
     id: showPing

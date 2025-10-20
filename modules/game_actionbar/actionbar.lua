@@ -63,8 +63,9 @@ end
 
 function show()
   if not g_game.isOnline() then return end
-  actionPanel1:setOn(g_settings.getBoolean("actionBar1", false))
-  actionPanel2:setOn(g_settings.getBoolean("actionBar2", false))
+  -- Action bars disabled - always keep them hidden
+  actionPanel1:setOn(false)
+  actionPanel2:setOn(false)
 end
 
 function hide()
