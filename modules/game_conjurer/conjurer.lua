@@ -64,9 +64,8 @@ function init()
   
   button = modules.client_topmenu.addLeftGameToggleButton('conjurerButton',
     tr('Conjurer'),
-    '/images/topbuttons/conjurer',
-    toggle,
-    false, 99999)
+    '/images/topbuttons/new/conjurer',
+    toggle, nil, nil, true)
   button:setOn(false)
   
   -- Check extended opcodes availability and register handlers

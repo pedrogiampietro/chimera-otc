@@ -49,7 +49,7 @@ function init()
   healthInfoWindow:disableResize()
   
   if not healthInfoWindow.forceOpen then
-    healthInfoButton = modules.client_topmenu.addRightGameToggleButton('healthInfoButton', tr('Health Information'), '/images/topbuttons/healthinfo', toggle)
+    healthInfoButton = modules.client_topmenu.addRightGameToggleButton('healthInfoButton', tr('Health Information'), '/images/topbuttons/new/healthinfo', toggle, nil, nil, true)
     if g_app.isMobile() then
       healthInfoButton:hide()
     else
@@ -315,7 +315,7 @@ end
 
 function setupTopMenuButton()
   if not healthInfoButton then
-    healthInfoButton = modules.client_topmenu.addRightGameToggleButton('healthInfoButton', tr('Health Information'), '/images/topbuttons/healthinfo', toggle)
+    healthInfoButton = modules.client_topmenu.addRightGameToggleButton('healthInfoButton', tr('Health Information'), '/images/topbuttons/new/healthinfo', toggle)
     healthInfoButton:setOn(g_settings.getBoolean('healthInfoWindow', true))
   end
 end

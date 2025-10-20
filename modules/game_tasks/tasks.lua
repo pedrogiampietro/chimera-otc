@@ -198,7 +198,7 @@ end
 
 function setupTopMenuButton()
   if not g_app.isMobile() then
-    tasksButton = modules.client_topmenu.addRightGameToggleButton('tasksButton', tr('Tasks'), '/images/topbuttons/new/battle', 
+    tasksButton = modules.client_topmenu.addRightGameToggleButton('tasksButton', tr('Tasks'), '/images/topbuttons/new/tasks', 
     function()
       if tasksWindow and tasksWindow:isVisible() then
         tasksWindow:hide()
