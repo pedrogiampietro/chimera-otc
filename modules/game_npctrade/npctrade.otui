@@ -6,38 +6,67 @@ NPCOfferLabel < Label
 
 NPCItemBox < UICheckBox
   border-width: 1
-  border-color: #000000
-  color: #aaaaaa
+  border-color: #333333
+  background-color: #1a1a1a
+  color: #cccccc
   text-align: center
-  text-offset: 0 30
+  font: verdana-11px-antialised
   @onCheckChange: modules.game_npctrade.onItemBoxChecked(self)
 
-  Item
-    id: item
-    phantom: true
+  Panel
+    id: itemContainer
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    image-color: #ffffffff
-    margin-top: 3
+    anchors.bottom: parent.bottom
+    width: 110
+    margin-top: 4
+    margin-bottom: 25
+
+    Item
+      id: item
+      phantom: true
+      anchors.top: parent.top
+      anchors.horizontalCenter: parent.horizontalCenter
+      image-color: #ffffffff
+      margin-top: 8
+
+  Label
+    id: itemText
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+    color: #cccccc
+    font: verdana-11px-antialised
+    margin-bottom: 4
+    margin-left: 2
+    margin-right: 2
+    text-wrap: true
 
   $checked on:
-    border-color: #ffffff
+    border-color: #55aaff
+    background-color: #2a2a3a
 
   $!checked:
-    border-color: #000000
+    border-color: #333333
+    background-color: #1a1a1a
 
   $!on:
     image-color: #ffffff88
-    color: #aaaaaa88
+    color: #888888
+
+  $hover !checked:
+    border-color: #555555
+    background-color: #222222
 
 MainWindow
   id: npcWindow
   !text: tr('NPC Trade')
-  size: 550 460
+  size: 550 480
   @onEscape: modules.game_npctrade.closeNpcTrade()
 
   $mobile:
-    size: 550 360
+    size: 550 380
 
   TabButton
     id: buyTab
@@ -59,21 +88,23 @@ MainWindow
     anchors.top: parent.top
 
   FlatPanel
-    height: 250
+    height: 280
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: prev.bottom
     margin-top: 5
+    border: 1 #333333
+    background-color: #0f0f0f
 
     $mobile:
-      height: 150
+      height: 170
 
     VerticalScrollBar
       id: itemsPanelListScrollBar
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       anchors.right: parent.right
-      step: 24
+      step: 18
       pixels-scroll: true
 
     ScrollablePanel
@@ -84,13 +115,16 @@ MainWindow
       anchors.top: parent.top
       anchors.bottom: parent.bottom
       vertical-scrollbar: itemsPanelListScrollBar
-      margin-left: 5
+      margin-left: 8
       margin-right: 5
+      margin-top: 5
+      margin-bottom: 5
       layout:
         type: grid
-        cell-size: 160 90
+        cell-size: 115 75
         flow: true
         auto-spacing: true
+        cell-spacing: 3
 
   FlatPanel
     id: setupPanel

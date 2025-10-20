@@ -366,9 +366,12 @@ function refreshTradeItems()
     end
     local price = formatCurrency(item.price)
     text = text .. '\n' .. price
-    itemBox:setText(text)
+    
+    local itemTextLabel = itemBox:getChildById('itemText')
+    itemTextLabel:setText(text)
 
-    local itemWidget = itemBox:getChildById('item')
+    local itemContainer = itemBox:getChildById('itemContainer')
+    local itemWidget = itemContainer:getChildById('item')
     itemWidget:setItem(item.ptr)
     itemWidget.onMouseRelease = itemPopup
 
