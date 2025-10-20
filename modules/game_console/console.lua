@@ -637,7 +637,15 @@ function addTabText(text, speaktype, tab, creatureName)
   end
   label:setId('consoleLabel' .. consoleBuffer:getChildCount())
   label:setText(text)
-  label:setColor(speaktype.color)
+  
+  -- Special color for loot messages in channel 9 (loot channel)
+  if tab.channelId == 9 and text and text:lower():find("loot de") then
+    label:setColor('#FF6600') -- Strong orange color for loot messages
+    g_logger.info("DEBUG: Applied ORANGE color to loot message in channel 9: " .. text)
+  else
+    label:setColor(speaktype.color)
+  end
+  
   consoleTabBar:blinkTab(tab)
 
   if speaktype.npcChat and (g_game.getCharacterName() ~= creatureName or g_game.getCharacterName() == 'Account Manager') then
@@ -1135,32 +1143,12 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
       channel = channels[channelId]
     end
 
-    if channel then
-      -- Special handling for unidentified items in loot channel (Channel ID 9)
-      if channelId == 9 and string.find(message, "%*[^%*]+%*") then
-        -- Process the message to color unidentified items
-        local coloredTextTable = {}
-        local currentIndex = 1
+    -- Special handling for loot channel (Channel ID 9) - color ALL loot messages
+    if channelId == 9 then
+      if channel then
+        local coloredTextTable = processLootMessage(composedMessage, speaktype.color)
         
-        for startAsterisk, endAsterisk in string.gmatch(composedMessage, "%*().-()%*") do
-          -- Add text before the asterisk
-          if currentIndex < startAsterisk - 1 then
-            table.insert(coloredTextTable, composedMessage:sub(currentIndex, startAsterisk - 2))
-            table.insert(coloredTextTable, speaktype.color)
-          end
-          
-          -- Add the unidentified item text with a purple color
-          table.insert(coloredTextTable, composedMessage:sub(startAsterisk - 1, endAsterisk))
-          table.insert(coloredTextTable, "#9F00FF") -- Purple color for unidentified items
-          
-          currentIndex = endAsterisk + 1
-        end
-        
-        -- Add any remaining text
-        if currentIndex <= #composedMessage then
-          table.insert(coloredTextTable, composedMessage:sub(currentIndex))
-          table.insert(coloredTextTable, speaktype.color)
-        end
+        if #coloredTextTable > 0 then
         
         -- Add the colored text to the tab
         local tab = getTab(channel)
@@ -1275,6 +1263,7 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
             return true
           end
         end
+      end
       else
         -- Normal message handling (unchanged)
         addText(composedMessage, speaktype, channel, name)
@@ -1671,5 +1660,110 @@ function onChannelEvent(channelId, name, type)
     if tab then
       addTabText(fmt:format(name), SpeakTypesSettings.channelOrange, tab)
     end
+  end
+end
+
+-- Process loot messages to color items by rarity
+function processLootMessage(message, defaultColor)
+  local coloredTextTable = {}
+  local currentIndex = 1
+  
+  -- Rarity colors
+  local rarityColors = {
+    ["rare "] = "#4A90E2",     -- Blue for rare
+    ["epic "] = "#9B59B6",     -- Purple for epic  
+    ["legendary "] = "#F1C40F", -- Yellow for legendary
+    ["unidentified "] = "#27AE60" -- Green for unidentified
+  }
+  
+  -- First handle unidentified items with asterisks (*)
+  if string.find(message, "%*[^%*]+%*") then
+    for startAsterisk, endAsterisk in string.gmatch(message, "%*().-()%*") do
+      -- Add text before the asterisk
+      if currentIndex < startAsterisk - 1 then
+        table.insert(coloredTextTable, message:sub(currentIndex, startAsterisk - 2))
+        table.insert(coloredTextTable, "#FF6600") -- Orange for text around unidentified items
+      end
+      
+      -- Add the unidentified item text with green color
+      table.insert(coloredTextTable, message:sub(startAsterisk - 1, endAsterisk))
+      table.insert(coloredTextTable, "#27AE60") -- Green for unidentified with asterisks
+      
+      currentIndex = endAsterisk + 1
+    end
+    
+    -- Add any remaining text
+    if currentIndex <= #message then
+      table.insert(coloredTextTable, message:sub(currentIndex))
+      table.insert(coloredTextTable, "#FF6600") -- Orange for remaining text
+    end
+    
+    return coloredTextTable
+  end
+  
+  -- Handle rarity-based coloring for items without asterisks
+  local processedMessage = message
+  local segments = {}
+  
+  -- Split message by commas to process individual items
+  local items = {}
+  local lootStart = string.find(processedMessage, ": ")
+  if lootStart then
+    local lootPart = string.sub(processedMessage, lootStart + 2)
+    local beforeLoot = string.sub(processedMessage, 1, lootStart + 1)
+    
+    -- Split items by comma
+    for item in string.gmatch(lootPart, "([^,]+)") do
+      table.insert(items, string.match(item, "^%s*(.-)%s*$")) -- trim whitespace
+    end
+    
+    -- Add the "Loot de..." part
+    table.insert(coloredTextTable, beforeLoot .. " ")
+    table.insert(coloredTextTable, "#FF6600") -- Orange for loot prefix
+    
+    -- Process each item
+    for i, item in ipairs(items) do
+      local colored = false
+      
+      -- Check for rarity keywords
+      for rarity, color in pairs(rarityColors) do
+        if string.find(string.lower(item), string.lower(rarity)) then
+          table.insert(coloredTextTable, item)
+          table.insert(coloredTextTable, color)
+          colored = true
+          break
+        end
+      end
+      
+      if not colored then
+        table.insert(coloredTextTable, item)
+        table.insert(coloredTextTable, "#FF6600") -- Orange for regular loot items
+      end
+      
+      -- Add comma separator except for last item
+      if i < #items then
+        table.insert(coloredTextTable, ", ")
+        table.insert(coloredTextTable, "#FF6600") -- Orange for separators
+      end
+    end
+  else
+    -- Fallback if pattern doesn't match - use orange for all loot
+    table.insert(coloredTextTable, message)
+    table.insert(coloredTextTable, "#FF6600") -- Orange for fallback loot messages
+  end
+  
+  return coloredTextTable
+end
+
+-- Test function for loot channel color
+function testLootChannelColor()
+  local lootChannel = getTab("Loot")
+  if lootChannel then
+    -- Test different rarity types
+    addTabText("Loot de a dragon: rare sword, epic shield, legendary helmet, unidentified mace, 100 gold coins", SpeakTypesSettings.channelYellow, lootChannel, nil)
+    addTabText("Loot de a rotworm: *unidentified armor*, meat, 25 gold coins", SpeakTypesSettings.channelYellow, lootChannel, nil)
+    g_logger.info("DEBUG: Test loot messages with different rarities added to channel")
+  else
+    g_logger.info("DEBUG: Loot channel not found")
   end
 end
