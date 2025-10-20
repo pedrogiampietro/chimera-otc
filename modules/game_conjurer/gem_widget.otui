@@ -1,0 +1,14 @@
+UIItem < GemWidget
+  size: 36 36
+  virtual: true
+  draggable: true
+  image-smooth: true
+  border-width: 1
+  border-color: #444444
+  
+  $hover:
+    border-color: #ffaa00
+    opacity: 0.8
+    
+  $pressed:
+    opacity: 0.6

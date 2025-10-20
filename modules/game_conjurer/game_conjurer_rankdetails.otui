@@ -1,7 +1,7 @@
 MainWindow
   id: rankDetailsWindow
   !text: tr('Rank Details')
-  size: 500 500
+  size: 520 550
   draggable: true
   modal: true
   @onEscape: self:destroy()
@@ -63,75 +63,40 @@ MainWindow
       margin-top: 2
 
     Label
-      !text: tr('Benefits of Rank:')
+      !text: tr('Slots de Gemas do Rank:')
       font: verdana-11px-rounded
       color: #a1e65b
-      margin-top: 10
-
-    Label
-      id: rankBenefits
-      font: verdana-11px-rounded
-      color: #cccccc
-      text: '7x Charges Runes Conjure, Successful alquimia rewards %critical'
-      text-wrap: true
-      width: 400
-      margin-left: 10
-      margin-bottom: 8
-
-    Label
-      !text: tr('Necessary ingredients:')
-      font: verdana-11px-rounded
-      color: #a1e65b
-      margin-top: 10
-      
-    Label
-      id: req_item1
-      !text: tr('- Plate Armor')
-      font: verdana-11px-rounded
-      color: #e65b5b
-      margin-top: 2
-      margin-left: 10
-      
-    Label
-      id: req_item2
-      !text: tr('- Plate Armor')
-      font: verdana-11px-rounded
-      color: #e65b5b
-      margin-top: 2
-      margin-left: 10
-      
-    Label
-      id: req_item3
-      !text: tr('- Plate Armor')
-      font: verdana-11px-rounded
-      color: #e65b5b
-      margin-top: 2
-      margin-left: 10
-      margin-bottom: 5
-
-    Label
-      !text: tr('Slots Alquimia:')
-      font: verdana-11px-rounded
-      color: #a1e65b
-      margin-top: 5
+      margin-top: 20
 
     UIWidget
-      id: slot_container
-      height: 50
+      id: gem_slot_container
+      height: 80
       margin-top: 5
+      
+      Label
+        id: gemSlotsInfo
+        !text: tr('Aplique gemas para receber bônus nas runas/magias deste rank')
+        font: verdana-11px-rounded
+        color: #cccccc
+        anchors.left: parent.left
+        anchors.top: parent.top
+        margin-top: 2
+        text-wrap: true
+        width: 400
     
       UIWidget
-        id: slot_box1
+        id: gem_slot_box1
         size: 50 50
         anchors.left: parent.left
         anchors.top: parent.top
         margin-left: 50
-        background-color: #222222
-        border-width: 1
+        margin-top: 25
+        background-color: #333333
+        border-width: 2
         border-color: #666666
         
         UIItem
-          id: slot1
+          id: gemSlot1
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
@@ -142,17 +107,27 @@ MainWindow
           opacity: 0.5
           image-color: #aaaaaa
           
+        Label
+          id: gemSlot1_label
+          !text: tr('Slot 1')
+          font: verdana-11px-rounded
+          color: #888888
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          margin-bottom: -18
+          
       UIWidget
-        id: slot_box2
+        id: gem_slot_box2
         size: 50 50
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        background-color: #222222
-        border-width: 1
+        margin-top: 25
+        background-color: #333333
+        border-width: 2
         border-color: #666666
         
         UIItem
-          id: slot2
+          id: gemSlot2
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
@@ -163,18 +138,28 @@ MainWindow
           opacity: 0.5
           image-color: #aaaaaa
           
+        Label
+          id: gemSlot2_label
+          !text: tr('Slot 2')
+          font: verdana-11px-rounded
+          color: #888888
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          margin-bottom: -18
+          
       UIWidget
-        id: slot_box3
+        id: gem_slot_box3
         size: 50 50
         anchors.right: parent.right
         anchors.top: parent.top
         margin-right: 50
-        background-color: #222222
-        border-width: 1
+        margin-top: 25
+        background-color: #333333
+        border-width: 2
         border-color: #666666
         
         UIItem
-          id: slot3
+          id: gemSlot3
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
@@ -185,24 +170,59 @@ MainWindow
           opacity: 0.5
           image-color: #aaaaaa
           
-    Button
-      id: alchemyCraftButton
-      !text: tr('Craftar')
-      font: verdana-11px-rounded
-      width: 120
-      height: 32
-      margin-top: 6
-      margin-left: 62
-    
+        Label
+          id: gemSlot3_label
+          !text: tr('Slot 3')
+          font: verdana-11px-rounded
+          color: #888888
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          margin-bottom: -18
+
     Label
-      id: rankDetailsAlchemy
+      id: rankGemsEffects
+      !text: tr('Efeitos Ativos: Nenhuma gema equipada')
+      font: verdana-11px-rounded
+      color: #ffaa00
+      margin-top: 10
+      text-wrap: true
+      width: 400
+
+    Label
+      !text: tr('Gemas do Inventário:')
       font: verdana-11px-rounded
       color: #a1e65b
-      text: ''
-      margin-top: 6
+      margin-top: 15
+      
+    Label
+      id: gemsInventoryInfo
+      !text: tr('Arraste as gemas abaixo para os slots verdes para equipá-las')
+      font: verdana-11px-rounded
+      color: #ffaa00
+      margin-top: 2
       text-wrap: true
-      width: 320
-    
+      width: 400
+
+    UIWidget
+      id: available_gems_container
+      height: 110
+      margin-top: 5
+      background-color: #1a1a1a
+      border-width: 1
+      border-color: #666666
+      clipping: true
+      
+      ScrollablePanel
+        id: availableGemsPanel
+        anchors.fill: parent
+        margin: 6
+        clipping: true
+        layout:
+          type: grid
+          cell-size: 62 62
+          cell-spacing: 4
+          num-columns: 6
+
     UIWidget
       id: rankDetailsButtonRow
       layout:
