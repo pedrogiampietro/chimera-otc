@@ -10,6 +10,7 @@ function init()
   if modules.game_healthinfo and modules.game_healthinfo.setupTopMenuButton then modules.game_healthinfo.setupTopMenuButton() end
   if modules.game_autoloot and modules.game_autoloot.setupTopMenuButton then modules.game_autoloot.setupTopMenuButton() end
   if modules.game_conjurer and modules.game_conjurer.setupTopMenuButton then modules.game_conjurer.setupTopMenuButton() end
+  -- game_shop disabled - if modules.game_shop and modules.game_shop.setupTopMenuButton then modules.game_shop.setupTopMenuButton() end
 end
 
 function terminate()
