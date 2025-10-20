@@ -641,7 +641,7 @@ function addTabText(text, speaktype, tab, creatureName)
   -- Special color for loot messages in channel 9 (loot channel)
   if tab.channelId == 9 and text and text:lower():find("loot de") then
     label:setColor('#FF6600') -- Strong orange color for loot messages
-    g_logger.info("DEBUG: Applied ORANGE color to loot message in channel 9: " .. text)
+    -- g_logger.info("DEBUG: Applied ORANGE color to loot message in channel 9: " .. text)
   else
     label:setColor(speaktype.color)
   end
@@ -1762,8 +1762,8 @@ function testLootChannelColor()
     -- Test different rarity types
     addTabText("Loot de a dragon: rare sword, epic shield, legendary helmet, unidentified mace, 100 gold coins", SpeakTypesSettings.channelYellow, lootChannel, nil)
     addTabText("Loot de a rotworm: *unidentified armor*, meat, 25 gold coins", SpeakTypesSettings.channelYellow, lootChannel, nil)
-    g_logger.info("DEBUG: Test loot messages with different rarities added to channel")
+    -- g_logger.info("DEBUG: Test loot messages with different rarities added to channel")
   else
-    g_logger.info("DEBUG: Loot channel not found")
+    -- g_logger.info("DEBUG: Loot channel not found")
   end
 end

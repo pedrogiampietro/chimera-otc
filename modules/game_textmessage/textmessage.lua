@@ -54,13 +54,7 @@ MessageTypes = {
 
 messagesPanel = nil
 
-function init()
-  -- DEBUG: Log configuration
-  g_logger.info("DEBUG: Initializing textmessage module")
-  g_logger.info("DEBUG: MessageModes.Loot = " .. tostring(MessageModes.Loot))
-  g_logger.info("DEBUG: TextColors.green = " .. tostring(TextColors.green))
-  g_logger.info("DEBUG: Loot message type = " .. tostring(MessageTypes[MessageModes.Loot]))
-  
+function init()  
   for messageMode, _ in pairs(MessageTypes) do
     registerMessageMode(messageMode, displayMessage)
   end
@@ -86,8 +80,8 @@ end
 function displayMessage(mode, text)
   if not g_game.isOnline() then return end
 
-  -- DEBUG: Log all message calls
-  g_logger.info("DEBUG displayMessage - Mode: " .. tostring(mode) .. " | Text: " .. tostring(text))
+  -- -- DEBUG: Log all message calls
+  -- g_logger.info("DEBUG displayMessage - Mode: " .. tostring(mode) .. " | Text: " .. tostring(text))
   
   -- Check if this is a loot message
   if text and text:lower():find("loot") then
@@ -96,7 +90,7 @@ function displayMessage(mode, text)
 
   local msgtype = MessageTypes[mode]
   if not msgtype then
-    g_logger.info("DEBUG: No msgtype found for mode " .. tostring(mode))
+    -- g_logger.info("DEBUG: No msgtype found for mode " .. tostring(mode))
     return
   end
 
@@ -113,10 +107,10 @@ function displayMessage(mode, text)
     
     -- Force green color for loot messages (mode 29) and Look messages with loot text (mode 20)
     if mode == MessageModes.Loot or (mode == MessageModes.Look and text and text:lower():find("loot")) then
-      g_logger.info("DEBUG: Setting GREEN color for loot message! Mode: " .. tostring(mode))
+      -- g_logger.info("DEBUG: Setting GREEN color for loot message! Mode: " .. tostring(mode))
       label:setColor(TextColors.green)
     else
-      g_logger.info("DEBUG: Setting normal color: " .. tostring(msgtype.color) .. " for mode: " .. tostring(mode))
+      -- g_logger.info("DEBUG: Setting normal color: " .. tostring(msgtype.color) .. " for mode: " .. tostring(mode))
       label:setColor(msgtype.color)
     end
     

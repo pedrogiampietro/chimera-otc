@@ -281,7 +281,7 @@ function updateRankingTab(rankingData)
 end
 
 function onConjurerData(protocol, opcode, buffer)
-  g_logger.info("Received ConjurerData opcode with buffer length: " .. buffer:len())
+  -- g_logger.info("Received ConjurerData opcode with buffer length: " .. buffer:len())
   
   if buffer == '' then return end
   

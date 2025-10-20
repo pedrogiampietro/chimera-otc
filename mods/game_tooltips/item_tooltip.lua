@@ -127,7 +127,7 @@ function terminate()
 end
 
 function onExtendedOpcode(protocol, code, buffer)
-  g_logger.info("Tooltip: Opcode recebido: " .. code)
+  -- g_logger.info("Tooltip: Opcode recebido: " .. code)
   
   local json_status, json_data =
     pcall(
@@ -141,7 +141,7 @@ function onExtendedOpcode(protocol, code, buffer)
     return
   end
 
-  g_logger.info("Tooltip: Dados recebidos e decodificados com sucesso")
+  -- g_logger.info("Tooltip: Dados recebidos e decodificados com sucesso")
 
   local action = json_data.action
   local data = json_data.data
@@ -150,7 +150,7 @@ function onExtendedOpcode(protocol, code, buffer)
     return
   end
   
-  g_logger.info("Tooltip: Action recebida: " .. action)
+  -- g_logger.info("Tooltip: Action recebida: " .. action)
   
   if action == "new" then
     newTooltip(data)
@@ -240,7 +240,6 @@ function onHoverChange(widget, hovered)
   end
   
   if widget.getLinkedTooltip then
-    g_logger.info("Tooltip: Mouse sobre widget com tooltip vinculado")
     hoveredLinked = widget
     if not widget.cached then
       if protocolGame then
@@ -260,7 +259,6 @@ function onHoverChange(widget, hovered)
   
   local item = widget:getItem()
   if item and widget.getItemTooltip then
-    g_logger.info("Tooltip: Mouse sobre widget com tooltip de item customizado")
     if hovered then
       buildItemTooltip(widget:getItemTooltip())
     else
@@ -277,11 +275,10 @@ function onHoverChange(widget, hovered)
   end
 
   if hovered then
-    g_logger.info("Tooltip: Mouse sobre item: " .. item:getId())
     hoveredItem = item
     if protocolGame then
       local pos = item:getPosition()
-      g_logger.info("Tooltip: Enviando solicitação com posição: " .. pos.x .. "," .. pos.y .. "," .. pos.z .. "," .. item:getStackPos())
+      -- g_logger.info("Tooltip: Enviando solicitação com posição: " .. pos.x .. "," .. pos.y .. "," .. pos.z .. "," .. item:getStackPos())
       protocolGame:sendExtendedOpcode(CODE_TOOLTIPS, json.encode({pos.x, pos.y, pos.z, item:getStackPos()}))
     else
       g_logger.error("Tooltip: protocolGame é nil")

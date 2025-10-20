@@ -75,7 +75,7 @@ MainWindow
       
       Label
         id: gemSlotsInfo
-        !text: tr('Aplique gemas para receber bônus nas runas/magias deste rank')
+        !text: tr('Aplique gemas para receber bonus nas runas/magias deste rank')
         font: verdana-11px-rounded
         color: #cccccc
         anchors.left: parent.left
@@ -189,7 +189,7 @@ MainWindow
       width: 400
 
     Label
-      !text: tr('Gemas do Inventário:')
+      !text: tr('Gemas do Inventario:')
       font: verdana-11px-rounded
       color: #a1e65b
       margin-top: 15

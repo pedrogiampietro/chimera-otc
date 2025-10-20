@@ -70,6 +70,11 @@ local rankData = {
 
 -- Store the current conjurer level
 local currentConjurerLevel = 0
+local currentConjurerData = {
+  experience = 0,
+  nextLevelExp = 500,
+  level = 0
+}
 
 -- Store gem system data
 local availableGems = {}
@@ -671,6 +676,19 @@ function updateConjurerUI(level, exp, nextExp)
   scheduleEvent(function()
     progressBarFill:setWidth(math.floor(progressBarBg:getWidth() * percent))
   end, 100)
+  
+  -- Update rank gem slots after UI update (with delay for smooth animation)
+  -- Note: This only updates if rank details panel is currently open
+  scheduleEvent(function()
+    local rankDetailsContent = conjurerWindow:recursiveGetChildById('rankDetailsContent')
+    if rankDetailsContent and rankDetailsContent:isVisible() then
+      -- Get the current rank being viewed
+      local currentRankId = rankDetailsContent.rankId
+      if currentRankId then
+        setupRankGemSystem(rankDetailsContent, currentRankId)
+      end
+    end
+  end, 200)
 end
 
 -- Helper function to format numbers with commas
@@ -734,7 +752,7 @@ function showRankDetails(rankId)
     progressText = progressLabel and progressLabel:getText() or ''
     if progressText:find('/') then
       local current, max = progressText:match('([%d,]+) / ([%d,]+)')
-      print('DEBUG: current =', current, 'max =', max)
+      -- print('DEBUG: current =', current, 'max =', max)
       if current and max then
         local currentNum = safeTonumber(current)
         local maxNum = safeTonumber(max)
@@ -784,6 +802,9 @@ function showRankDetails(rankId)
 
   local content = window:getChildById('rankDetailsContent')
   if not content then return end
+  
+  -- Store rankId for later reference
+  content.rankId = rankId
 
   -- Header: ícone e nome
   local iconWidget = content:recursiveGetChildById('rankDetailsIcon')
@@ -1142,7 +1163,7 @@ function setupRankGemSystem(content, rankId)
   local gemSlotsInfo = content:recursiveGetChildById('gemSlotsInfo')
   if gemSlotsInfo then
     local rankSpells = {
-      [0] = "Light Healing, Create Food",
+      [0] = "Exori Vis, Exori Mort, Exori Flam",
       [1] = "Sudden Death Rune, Heavy Magic Missile",
       [2] = "Ultimate Healing Rune, Explosion Rune",
       [3] = "Avalanche Rune, Great Fireball Rune",
@@ -1154,14 +1175,32 @@ function setupRankGemSystem(content, rankId)
     gemSlotsInfo:setText(tr('Gemas aplicam bônus em: ') .. spells)
   end
   
-  -- Verificar quantos slots estão disponíveis para este rank
-  -- Rank 0 (Novice) = 1 slot, Rank 1+ = mais slots progressivamente
   local slotsUnlocked = 0
-  if rankId >= 0 then
-    slotsUnlocked = math.min(3, rankId + 1) -- Rank 0 = 1 slot, Rank 1 = 2 slots, Rank 2+ = 3 slots
-  end
+  local currentLevel = currentConjurerLevel or 0
   
-  g_logger.info("Slots unlocked for rank " .. rankId .. ": " .. slotsUnlocked)
+  if rankId > currentLevel then
+    slotsUnlocked = 0
+    g_logger.info("Rank " .. rankId .. " is locked (current level: " .. currentLevel .. ")")
+  elseif rankId < currentLevel then
+    slotsUnlocked = 3
+    g_logger.info("Rank " .. rankId .. " is completed - all 3 slots unlocked")
+  elseif rankId == currentLevel then
+    local currentExp = currentConjurerData.experience or 0
+    local nextLevelExp = currentConjurerData.nextLevelExp or 500
+    local expPercentage = nextLevelExp > 0 and (currentExp / nextLevelExp) * 100 or 0
+    
+    if expPercentage >= 100 then
+      slotsUnlocked = 3
+    elseif expPercentage >= 75 then
+      slotsUnlocked = 2
+    elseif expPercentage >= 50 then
+      slotsUnlocked = 1
+    else
+      slotsUnlocked = 0
+    end
+    
+    g_logger.info("Current rank " .. rankId .. " - EXP: " .. expPercentage .. "% - Slots unlocked: " .. slotsUnlocked)
+  end
   
   -- Configurar slots de gemas
   for i = 1, 3 do
@@ -1217,7 +1256,6 @@ function setupRankGemSystem(content, rankId)
         gemSlot:setTooltip(tr('Arraste uma gema aqui ou clique direito para remover'))
         
       else
-        -- Slot bloqueado
         g_logger.info("Locking slot " .. i)
         gemSlotBox:setBackgroundColor('#222222')
         gemSlotBox:setBorderColor('#444444')
@@ -1229,7 +1267,19 @@ function setupRankGemSystem(content, rankId)
           gemSlotLabel:setText(tr('Bloqueado'))
         end
         
-        gemSlot:setTooltip(tr('Desbloqueado no rank ') .. i)
+        local tooltipText = ''
+        if rankId > currentLevel then
+          tooltipText = tr('Desbloqueado ao alcançar o rank') .. ' ' .. tostring(rankId)
+        else
+          local expNeeded = {50, 75, 100}
+          local expPercent = expNeeded[i] or 100
+          tooltipText = tr('Desbloqueado com') .. ' ' .. tostring(expPercent) .. '% ' .. tr('de EXP no rank')
+        end
+        gemSlot:setTooltip(tooltipText)
+        
+        gemSlot.onDrop = nil
+        gemSlot.onMouseRightRelease = nil
+        gemSlot.onMousePress = nil
       end
     else
       g_logger.warning("Could not find slot " .. i .. " widgets!")
@@ -1258,7 +1308,7 @@ function setupAvailableGems(content)
   
   -- Mostrar mensagem de carregamento
   local loadingLabel = g_ui.createWidget('Label', gemsPanel)
-  loadingLabel:setText(tr('Carregando gemas do inventário...'))
+  loadingLabel:setText(tr('Carregando gemas do inventario...'))
   loadingLabel:setColor('#ffaa00')
   loadingLabel:setFont('verdana-11px-rounded')
   loadingLabel:setTextAlign(AlignCenter)
@@ -1764,15 +1814,15 @@ function updateRankGemsEffects()
     -- Mostrar totais organizados por tipo
     local effects = {}
     local bonusIcons = {
-      atk = "⚔️",
-      def = "🛡️",
-      manaregen = "💙",
-      healthregen = "❤️",
-      speed = "⚡"
+      atk = "A = ",
+      def = "D = ",
+      manaregen = "MR = ",
+      healthregen = "HR = ",
+      speed = "Speed = "
     }
     
     for bonusType, totalValue in pairs(bonusTotals) do
-      local icon = bonusIcons[bonusType] or "💎"
+      local icon = bonusIcons[bonusType] or "$"
       table.insert(effects, icon .. "+" .. totalValue .. " " .. bonusType:upper())
     end
     
@@ -1790,11 +1840,11 @@ function updateRankGemsEffects()
   
   -- Atualizar tooltip com informações detalhadas
   if #equippedGems > 0 then
-    local tooltipText = "🔮 DETALHES DOS BÔNUS ATIVOS:\n\n"
+    local tooltipText = "DETALHES DOS BÔNUS ATIVOS:\n\n"
     
     for i, gem in ipairs(equippedGems) do
       tooltipText = tooltipText .. "Slot " .. i .. ": " .. gem.name .. "\n"
-      tooltipText = tooltipText .. "  ▶ +" .. gem.value .. " " .. gem.bonus:upper() .. "\n\n"
+      tooltipText = tooltipText .. "  > +" .. gem.value .. " " .. gem.bonus:upper() .. "\n\n"
     end
     
     tooltipText = tooltipText .. "💡 Clique no botão '?' para análise detalhada"
@@ -3161,7 +3211,7 @@ end
 
 -- Debug function to check active gem bonuses
 function debugGemBonuses()
-  g_logger.info("=== DEBUG: ACTIVE GEM BONUSES ===")
+  -- g_logger.info("=== DEBUG: ACTIVE GEM BONUSES ===")
   
   local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
   if not content then
@@ -3486,7 +3536,7 @@ end
 
 -- Handler for ConjurerData opcode (301)
 function onConjurerData(protocol, opcode, buffer)
-  g_logger.info("Received ConjurerData opcode with buffer length: " .. buffer:len())
+  -- g_logger.info("Received ConjurerData opcode with buffer length: " .. buffer:len())
   
   if buffer == '' then 
     g_logger.error("Empty buffer received for ConjurerData")
@@ -3582,6 +3632,15 @@ end  local success, data = pcall(function()
     return
   end
   
+  -- Update global conjurer data for slot unlock calculations
+  if data.level and data.experience and data.nextLevelExp then
+    currentConjurerData = {
+      level = data.level,
+      experience = data.experience,
+      nextLevelExp = data.nextLevelExp
+    }
+    currentConjurerLevel = data.level
+  end
   
   -- Update the UI with the received data
   if data.level and data.experience and data.nextLevelExp then
