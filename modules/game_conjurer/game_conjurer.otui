@@ -69,7 +69,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #c0c0c0
-          opacity: 0.4
           !tooltip: tr('Novice Conjurer: Beginning your journey in conjuration magic.')
         UIWidget
           id: rankApprenticeIcon
@@ -79,7 +78,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #a1e65b
-          opacity: 0.4
           !tooltip: tr('Apprentice Conjurer: Learning the fundamentals of magical creation.')
         UIWidget
           id: rankAdeptIcon
@@ -89,7 +87,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #5bcbe6
-          opacity: 0.4
           !tooltip: tr('Adept Conjurer: Mastering advanced conjuration techniques.')
         UIWidget
           id: rankMasterIcon
@@ -99,7 +96,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #e65bc5
-          opacity: 0.4
           !tooltip: tr('Master Conjurer: Able to conjure complex objects and elements.')
         UIWidget
           id: rankElderIcon
@@ -109,7 +105,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #e6c75b
-          opacity: 0.4
           !tooltip: tr('Elder Conjurer: Wisdom of ancient conjuration knowledge.')
         UIWidget
           id: rankLegendaryIcon
@@ -119,7 +114,6 @@ MainWindow
           image-smooth: true
           border-width: 2
           border-color: #ff5500
-          opacity: 0.4
           !tooltip: tr('Legendary Conjurer: Ultimate mastery of conjuration arts.')
 
       UIWidget
@@ -135,7 +129,7 @@ MainWindow
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankNovice
             width: 64
@@ -143,29 +137,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Novice')
-            margin-bottom: 3
           Label
             id: rankNoviceBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: '+10%'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankNoviceDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: 'Base rank'
+            text: ''
+            visible: false
 
         UIWidget
           id: rankApprenticeNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankApprentice
             width: 64
@@ -173,29 +167,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Apprentice')
-            margin-bottom: 3
           Label
             id: rankApprenticeBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: '+15%'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankApprenticeDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: '15/04/2024'
+            text: ''
+            visible: false
 
         UIWidget
           id: rankAdeptNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankAdept
             width: 64
@@ -203,29 +197,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Adept')
-            margin-bottom: 3
           Label
             id: rankAdeptBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: 'Current'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankAdeptDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: '18/04/2024'
+            text: ''
+            visible: false
 
         UIWidget
           id: rankMasterNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankMaster
             width: 64
@@ -233,29 +227,29 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Master')
-            margin-bottom: 3
           Label
             id: rankMasterBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: 'Locked'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankMasterDate
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #888888
-            text: '15000 exp'
+            text: ''
+            visible: false
 
         UIWidget
           id: rankElderNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankElder
             width: 64
@@ -263,15 +257,14 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Elder')
-            margin-bottom: 3
           Label
             id: rankElderBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: 'Locked'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankElderDate
             width: 64
@@ -279,13 +272,14 @@ MainWindow
             font: verdana-11px-rounded
             color: #888888
             text: ''
+            visible: false
 
         UIWidget
           id: rankLegendaryNameBox
           width: 64
           layout:
             type: verticalBox
-            spacing: 4
+            spacing: 2
           Label
             id: rankLegendary
             width: 64
@@ -293,15 +287,14 @@ MainWindow
             font: verdana-11px-rounded
             color: #cccccc
             !text: tr('Legendary')
-            margin-bottom: 3
           Label
             id: rankLegendaryBonus
             width: 64
             text-align: center
             font: verdana-11px-rounded
             color: #ffaa00
-            text: 'Locked'
-            margin-bottom: 3
+            text: ''
+            visible: false
           Label
             id: rankLegendaryDate
             width: 64
@@ -309,6 +302,7 @@ MainWindow
             font: verdana-11px-rounded
             color: #888888
             text: ''
+            visible: false
 
   Label
     id: currentLevelLabel

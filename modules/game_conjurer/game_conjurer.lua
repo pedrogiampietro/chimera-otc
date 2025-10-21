@@ -192,6 +192,15 @@ function init()
   -- Inicializar sistema de monitoramento de dano por gemas
   setupGemDamageMonitoring()
   
+  -- Initialize all ranks as locked first
+  for i = 0, 5 do
+    local rankIconWidget = conjurerWindow:recursiveGetChildById(rankIconIds[i])
+    if rankIconWidget then
+      rankIconWidget:setOpacity(0.2)
+      rankIconWidget:setImageColor('#222222')
+    end
+  end
+  
   -- Initialize with default values
   updateConjurerUI(0, 0, 1000)
   
@@ -559,59 +568,31 @@ function updateConjurerUI(level, exp, nextExp)
     currentLevelLabel:setText(tr('Current Level: ') .. level .. ' - ' .. tr(rankName))
   end
 
-  -- Bonus values for each rank
-  local bonusValues = {
-    [0] = '+5% XP',
-    [1] = '+7% XP',
-    [2] = '+10% XP',
-    [3] = '+12% XP',
-    [4] = '+15% XP',
-    [5] = '+20% XP'
-  }
-  
-  -- Unlock dates for each rank (these would typically come from the server)
-  local unlockDates = {
-    [0] = '12/04/2024',
-    [1] = '15/04/2024',
-    [2] = '18/04/2024',
-    [3] = '20/04/2024',
-    [4] = '22/04/2024',
-    [5] = '25/04/2024'
-  }
+  -- Removed bonus values and unlock dates (mocks)
 
   -- Update rank icons and labels
   for i = 0, 5 do
-    local rankIconWidget = conjurerWindow:getChildById(rankIconIds[i])
-    local rankLabelWidget = conjurerWindow:getChildById(rankIds[i])
-    local rankBonusWidget = conjurerWindow:getChildById(rankIds[i] .. 'Bonus')
-    local rankDateWidget = conjurerWindow:getChildById(rankIds[i] .. 'Date')
+    local rankIconWidget = conjurerWindow:recursiveGetChildById(rankIconIds[i])
+    local rankLabelWidget = conjurerWindow:recursiveGetChildById(rankIds[i])
+    local rankBonusWidget = conjurerWindow:recursiveGetChildById(rankIds[i] .. 'Bonus')
+    local rankDateWidget = conjurerWindow:recursiveGetChildById(rankIds[i] .. 'Date')
     
     if rankIconWidget and rankLabelWidget then
       if i <= level then
-        -- Rank is unlocked
+        -- Rank is unlocked - make it very visible
         rankIconWidget:setOpacity(1.0)
         rankIconWidget:setBorderColor(rankColors[i])
-        rankIconWidget:setBorderWidth(3)
+        rankIconWidget:setBorderWidth(4)  -- Borda mais grossa
         rankLabelWidget:setColor(rankColors[i])
         
-        -- Set bonus text and date text
+        -- Hide bonus and date widgets (remove mocks)
         if rankBonusWidget then
-          rankBonusWidget:setText(bonusValues[i])
-          rankBonusWidget:setColor('#ffaa00')  -- Dourado
-          rankBonusWidget:setOpacity(1.0)      -- Garantir visibilidade total
+          rankBonusWidget:setVisible(false)
         end
         
         if rankDateWidget then
-          -- Exibe informação adicional: a data ou quantidade de conjurers
-          if i == 0 then
-            rankDateWidget:setText(tr('Base rank'))
-          elseif i == level then
-            rankDateWidget:setText(tr('Current'))
-          else
-            rankDateWidget:setText(unlockDates[i])
-          end
-          rankDateWidget:setColor('#888888')  -- Cinza claro
-          rankDateWidget:setOpacity(1.0)      -- Garantir visibilidade total
+          -- Hide date widget for all unlocked ranks
+          rankDateWidget:setVisible(false)
         end
         
         -- Add a glow effect to the current level
@@ -619,39 +600,24 @@ function updateConjurerUI(level, exp, nextExp)
           rankIconWidget:setImageColor('#ffffff')
           scheduleEvent(function() pulsateRankIcon(rankIconWidget) end, 500)
         else
-          rankIconWidget:setImageColor('#cccccc')
+          -- Already unlocked ranks - brighter
+          rankIconWidget:setImageColor('#ffffff')
         end
       else
-        -- Rank is still locked
-        rankIconWidget:setOpacity(0.4)
-        rankIconWidget:setBorderColor('#444444')
-        rankIconWidget:setBorderWidth(2)
-        rankLabelWidget:setColor('#666666')
-        rankIconWidget:setImageColor('#777777')
+        -- Rank is still locked - make it very dark
+        rankIconWidget:setOpacity(0.2)  -- Bem mais escuro
+        rankIconWidget:setBorderColor('#111111')  -- Borda quase preta
+        rankIconWidget:setBorderWidth(1)
+        rankLabelWidget:setColor('#333333')  -- Texto bem escuro
+        rankIconWidget:setImageColor('#222222')  -- Ícone muito escuro
         
-        -- Clear bonus and date for locked ranks
+        -- Hide bonus and date widgets for locked ranks
         if rankBonusWidget then
-          rankBonusWidget:setText(tr('Locked'))
-          rankBonusWidget:setColor('#666666')  -- Cinza
+          rankBonusWidget:setVisible(false)
         end
         
         if rankDateWidget then
-          local nextExp = {
-            [0] = 1000,
-            [1] = 5000,
-            [2] = 15000,
-            [3] = 50000,
-            [4] = 150000,
-            [5] = "MAX"
-          }
-          
-          if i == level + 1 then
-            -- Próximo rank - mostre a experiência necessária
-            rankDateWidget:setText(nextExp[i] .. " exp")
-            rankDateWidget:setColor('#666666')  -- Cinza
-          else
-            rankDateWidget:setText('')
-          end
+          rankDateWidget:setVisible(false)
         end
       end
     end
@@ -1172,7 +1138,7 @@ function setupRankGemSystem(content, rankId)
     }
     
     local spells = rankSpells[rankId] or "Unknown spells"
-    gemSlotsInfo:setText(tr('Gemas aplicam bônus em: ') .. spells)
+    gemSlotsInfo:setText(tr('Gemas aplicam bonus em: ') .. spells)
   end
   
   local slotsUnlocked = 0
@@ -1360,7 +1326,7 @@ function updateGemsPanel(gemsData)
   
   if not gemsData or #gemsData == 0 then
     local noGemsLabel = g_ui.createWidget('Label', gemsPanel)
-    noGemsLabel:setText(tr('Nenhuma gema encontrada no inventário.\nUse /gem [tipo] para obter gemas.\nTipos: attack, defense, mana, health, speed'))
+    -- noGemsLabel:setText(tr('Nenhuma gema encontrada no inventario.'))
     noGemsLabel:setColor('#888888')
     noGemsLabel:setFont('verdana-11px-rounded')
     noGemsLabel:setTextAlign(AlignCenter)
@@ -1435,13 +1401,13 @@ function updateGemsPanel(gemsData)
         -- Tooltip elegante e informativo
         local tooltipText = '◆ ' .. gemInfo.name .. ' ◆\n'
         tooltipText = tooltipText .. '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
-        tooltipText = tooltipText .. '▶ Tipo: ' .. gemInfo.bonus:upper() .. '\n'
-        tooltipText = tooltipText .. '▶ Bonus: +' .. gemInfo.value .. '\n'
+        tooltipText = tooltipText .. '> Tipo: ' .. gemInfo.bonus:upper() .. '\n'
+        tooltipText = tooltipText .. '> Bonus: +' .. gemInfo.value .. '\n'
         if count > 1 then
-          tooltipText = tooltipText .. '▶ Quantidade: ' .. count .. '\n'
+          tooltipText = tooltipText .. '> Quantidade: ' .. count .. '\n'
         end
         tooltipText = tooltipText .. '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
-        tooltipText = tooltipText .. '⚡ Arraste para equipar nos slots'
+        tooltipText = tooltipText ..  'Arraste para equipar nos slots'
         gemWidget:setTooltip(tooltipText)
         
         -- Badge de quantidade estilizado
