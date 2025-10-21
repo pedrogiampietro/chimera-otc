@@ -1,6 +1,7 @@
 local conjurerWindow = nil
 local conjurerButton = nil
 local conjurerRankingWindow = nil
+local currentRankIdForGems = nil -- Armazena o rankId atual para filtrar gemas
 
 local rankIds = {
   [0] = 'rankNovice',
@@ -196,7 +197,7 @@ function init()
   for i = 0, 5 do
     local rankIconWidget = conjurerWindow:recursiveGetChildById(rankIconIds[i])
     if rankIconWidget then
-      rankIconWidget:setOpacity(0.2)
+      rankIconWidget:setOpacity(0.6)
       rankIconWidget:setImageColor('#222222')
     end
   end
@@ -605,7 +606,7 @@ function updateConjurerUI(level, exp, nextExp)
         end
       else
         -- Rank is still locked - make it very dark
-        rankIconWidget:setOpacity(0.2)  -- Bem mais escuro
+        rankIconWidget:setOpacity(0.6)  -- Bem mais escuro
         rankIconWidget:setBorderColor('#111111')  -- Borda quase preta
         rankIconWidget:setBorderWidth(1)
         rankLabelWidget:setColor('#333333')  -- Texto bem escuro
@@ -1254,7 +1255,7 @@ function setupRankGemSystem(content, rankId)
   
   -- Configurar gemas disponíveis
   g_logger.info("Setting up available gems...")
-  setupAvailableGems(content)
+  setupAvailableGems(content, rankId)
   
   -- Carregar gemas equipadas para este rank
   loadRankGems(rankId)
@@ -1263,7 +1264,7 @@ function setupRankGemSystem(content, rankId)
 end
 
 -- Setup available gems panel
-function setupAvailableGems(content)
+function setupAvailableGems(content, rankId)
   local gemsPanel = content:recursiveGetChildById('availableGemsPanel')
   if not gemsPanel then 
     g_logger.warning("availableGemsPanel not found!")
@@ -1280,12 +1281,15 @@ function setupAvailableGems(content)
   loadingLabel:setTextAlign(AlignCenter)
   
   -- Solicitar lista de gemas do servidor (similar ao autoloot)
-  requestGemsFromServer()
+  requestGemsFromServer(rankId)
 end
 
 -- Request gems list from server (similar to autoloot backpack list)
-function requestGemsFromServer()
-  g_logger.info("Requesting gems list from server...")
+function requestGemsFromServer(rankId)
+  g_logger.info("Requesting gems list from server for rank " .. tostring(rankId) .. "...")
+  
+  -- Armazenar o rankId globalmente para usar quando a resposta chegar
+  currentRankIdForGems = rankId
   
   local protocolGame = g_game.getProtocolGame()
   if protocolGame then
@@ -1298,8 +1302,25 @@ function requestGemsFromServer()
   end
 end
 
+-- Get all equipped gems across all ranks (excluding current rank being viewed)
+function getEquippedGemsInOtherRanks(currentRankId)
+  local equippedGems = {}
+  
+  -- Verificar todas as ranks exceto a atual
+  for rankId = 0, 5 do
+    if rankId ~= currentRankId and localEquippedGems[rankId] then
+      for slotNum, gemData in pairs(localEquippedGems[rankId]) do
+        -- Adicionar itemId à lista de gemas equipadas
+        table.insert(equippedGems, gemData.itemId)
+      end
+    end
+  end
+  
+  return equippedGems
+end
+
 -- Update gems panel with data from server
-function updateGemsPanel(gemsData)
+function updateGemsPanel(gemsData, currentRankId)
   -- Encontrar o painel de gemas
   local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
   if not content then 
@@ -1314,6 +1335,9 @@ function updateGemsPanel(gemsData)
   end
   
   gemsPanel:destroyChildren()
+  
+  -- Get gems equipped in other ranks
+  local equippedInOtherRanks = getEquippedGemsInOtherRanks(currentRankId or 0)
   
   -- Mapeamento de itemId para dados da gema
   local gemDataMap = {
@@ -1348,6 +1372,21 @@ function updateGemsPanel(gemsData)
   for _, gemData in ipairs(gemsData) do
     local itemId = gemData.itemId
     local count = gemData.count or 1
+    
+    -- Check if this gem is equipped in another rank
+    local isEquippedElsewhere = false
+    for _, equippedItemId in ipairs(equippedInOtherRanks) do
+      if equippedItemId == itemId then
+        isEquippedElsewhere = true
+        break
+      end
+    end
+    
+    -- Skip this gem if it's equipped in another rank
+    if isEquippedElsewhere then
+      g_logger.info("Gem " .. itemId .. " is equipped in another rank, skipping")
+      goto continue
+    end
     
     local gemInfo = gemDataMap[itemId]
     if gemInfo then
@@ -1532,6 +1571,8 @@ function updateGemsPanel(gemsData)
     else
       g_logger.warning("Unknown gem itemId: " .. itemId)
     end
+    
+    ::continue::
   end
   
   -- Atualizar informação do inventário
@@ -1668,7 +1709,7 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
   if not isTestGem then
     local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
     if content then
-      setupAvailableGems(content)
+      setupAvailableGems(content, rankId)
     end
   end
   
@@ -1739,7 +1780,7 @@ function removeGemFromSlot(rankId, slotNumber)
   -- Para gemas de teste, não precisamos atualizar o painel (elas continuam lá)
   if not isTestGem then
     -- Atualizar painel de gemas disponíveis (adicionar de volta)
-    setupAvailableGems(content)
+    setupAvailableGems(content, rankId)
   end
   
   return true
@@ -3042,7 +3083,8 @@ function onConjurerGemData(protocol, opcode, buffer)
   -- Verificar se é uma resposta de lista de gemas disponíveis (similar ao autoloot)
   if data.action == "gemList" and data.gems then
     g_logger.info("Received gems list from server with " .. #data.gems .. " gem types")
-    updateGemsPanel(data.gems)
+    -- Usar o rankId armazenado globalmente
+    updateGemsPanel(data.gems, currentRankIdForGems)
     return
   end
   
