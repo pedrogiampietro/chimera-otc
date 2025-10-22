@@ -34,6 +34,14 @@ inventoryWindow = nil
 inventoryPanel = nil
 inventoryButton = nil
 purseButton = nil
+specialContainerSlot = nil
+specialContainerWindow = nil
+
+local SPECIAL_CONTAINER_OPCODE = 0x50
+local SPECIAL_CONTAINER_BASE_POSITION = 100
+local specialContainerSlots = {}
+local specialContainerItems = {}
+local specialContainerInitialized = false
 
 combatControlsWindow = nil
 fightOffensiveBox = nil
@@ -64,6 +72,9 @@ function init()
   })
   connect(g_game, { onGameStart = refresh })
 
+  ProtocolGame.registerExtendedOpcode(SPECIAL_CONTAINER_OPCODE, onSpecialContainerExtendedOpcode)
+  connect(g_game, { onGameStart = onSpecialContainerGameStart, onGameEnd = onSpecialContainerGameEnd })
+
   g_keyboard.bindKeyDown('Ctrl+I', toggle)
 
   inventoryWindow = g_ui.loadUI('inventory', modules.game_interface.getRightPanel())
@@ -75,6 +86,74 @@ function init()
     local purse = g_game.getLocalPlayer():getInventoryItem(InventorySlotPurse)
     if purse then
       g_game.use(purse)
+    end
+  end
+  
+  -- special container
+  specialContainerSlot = inventoryWindow:recursiveGetChildById('specialContainerSlot')
+  if not specialContainerSlot then
+    g_logger.info("Special container slot not found in OTUI, creating dynamically...")
+    
+    -- Find slot8 (feet) to position below it
+    local slot8 = inventoryWindow:recursiveGetChildById('slot8')
+    local conditionPanel = inventoryWindow:recursiveGetChildById('conditionPanel')
+    
+    if slot8 then
+      g_logger.info("Found slot8 (feet), creating special container button...")
+      
+      -- Create the slot button
+      specialContainerSlot = g_ui.createWidget('UIButton', inventoryPanel)
+      specialContainerSlot:setId('specialContainerSlot')
+      specialContainerSlot:setSize({width = 40, height = 10})
+      specialContainerSlot:setText(tr('open'))
+      specialContainerSlot:setFont('verdana-11px-rounded')
+      specialContainerSlot:setTextAlign(AlignCenter)
+      specialContainerSlot:setColor('#ffffff')
+      specialContainerSlot:setBackgroundColor('#555555')
+      specialContainerSlot:setBorderWidth(1)
+      specialContainerSlot:setBorderColor('#888888')
+      specialContainerSlot:setTooltip(tr('Click to open Special Container'))
+      
+      -- Position it in the new expanded area at the bottom
+      -- Use fixed position in the expanded space - below all slots
+      if conditionPanel then
+        local condPos = conditionPanel:getPosition()
+        local condSize = conditionPanel:getSize()
+        -- Position well below everything else
+        local buttonX = condPos.x + (condSize.width / 2) - 60
+        local buttonY = 150  -- Lower fixed Y position
+        specialContainerSlot:setPosition({x = buttonX, y = buttonY})
+        g_logger.info("Special container button positioned at fixed Y=" .. buttonY .. ", X=" .. buttonX)
+      else
+        -- Fallback: use fixed position at bottom
+        specialContainerSlot:setPosition({x = 50, y = 200})
+        g_logger.info("Special container button positioned at fallback position")
+      end
+      
+      -- Make sure it's visible
+      specialContainerSlot:setVisible(true)
+      specialContainerSlot:raise()
+      
+      g_logger.info("Special container button size: " .. specialContainerSlot:getSize().width .. "x" .. specialContainerSlot:getSize().height)
+      g_logger.info("Special container button visible: " .. tostring(specialContainerSlot:isVisible()))
+    else
+      g_logger.error("Could not find slot8")
+    end
+  else
+    g_logger.info("Special container slot found in OTUI")
+  end
+  
+  if specialContainerSlot then
+    specialContainerSlot.onMouseRelease = function(self, mousePos, mouseButton)
+      if mouseButton == MouseRightButton then
+        toggleSpecialContainer()
+        return true
+      end
+      return false
+    end
+    
+    specialContainerSlot.onClick = function(self)
+      toggleSpecialContainer()
     end
   end
   
@@ -141,6 +220,8 @@ function init()
 -- status end
   
   if g_game.isOnline() then
+    specialContainerInitialized = true
+    requestSpecialContainerData()
     refresh()
   end
   inventoryWindow:setup()
@@ -152,6 +233,9 @@ function terminate()
     onBlessingsChange = onBlessingsChange
   })
   disconnect(g_game, { onGameStart = refresh })
+
+  ProtocolGame.unregisterExtendedOpcode(SPECIAL_CONTAINER_OPCODE, onSpecialContainerExtendedOpcode)
+  disconnect(g_game, { onGameStart = onSpecialContainerGameStart, onGameEnd = onSpecialContainerGameEnd })
 
   g_keyboard.unbindKeyDown('Ctrl+I')
 
@@ -536,4 +620,369 @@ function onStatesChange(localPlayer, now, old)
       toggleIcon(bitChanged)
     end
   end
+end
+
+local function getSpecialContainerSlotWidget(slotIndex)
+  if not specialContainerWindow then
+    return nil
+  end
+
+  local slot = specialContainerSlots[slotIndex]
+  if slot and not slot:isDestroyed() then
+    return slot
+  end
+
+  slot = specialContainerWindow:recursiveGetChildById('specialSlot' .. slotIndex)
+  if slot then
+    specialContainerSlots[slotIndex] = slot
+  end
+  return slot
+end
+
+local function styleSpecialContainerSlot(slot, hasItem, isPending)
+  if not slot then return end
+
+  if hasItem then
+    slot:setBorderWidth(1)
+    if isPending then
+      slot:setBorderColor('#ffaa00')
+    else
+      slot:setBorderColor('#c9a86a')
+    end
+    slot:setImageColor('#ffffff')
+  else
+    slot:setBorderWidth(1)
+    slot:setBorderColor('#5c5c5c')
+    slot:setImageColor('#888888')
+    slot:setItemCount(0)
+  end
+end
+
+local function updateSpecialContainerSlot(slotIndex)
+  local slot = getSpecialContainerSlotWidget(slotIndex)
+  if not slot then 
+    return 
+  end
+
+  local itemData = specialContainerItems[slotIndex]
+  
+  if itemData then
+    -- Test if item exists in client
+    local itemExists = false
+    
+    -- Safe test for item existence
+    local success, result = pcall(function()
+      return g_things.getThingType(itemData.id, ThingCategoryItem)
+    end)
+    
+    if success and result then
+      itemExists = true
+    end
+    
+    if itemExists then
+      slot:setItemId(itemData.id)
+      slot:setItemCount(itemData.count or 1)
+      
+      if itemData.pending then
+        slot:setTooltip(string.format('%s\nID: %d\n%s %d\n%s', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1, tr('Waiting for server confirmation...')))
+      else
+        slot:setTooltip(string.format('%s\nID: %d\n%s %d', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1))
+      end
+    else
+      -- Use gold coin (3031) as fallback
+      slot:setItemId(3031)
+      slot:setItemCount(itemData.count or 1)
+      slot:setTooltip(string.format('%s\nOriginal ID: %d (not found)\nFallback: Gold Coin\n%s %d', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1))
+    end
+    
+    styleSpecialContainerSlot(slot, true, itemData.pending)
+  else
+    slot:setItemId(0)
+    slot:setTooltip(tr('Empty special container slot'))
+    styleSpecialContainerSlot(slot, false)
+  end
+end
+
+local function refreshSpecialContainerSlots()
+  for i = 1, 3 do
+    updateSpecialContainerSlot(i)
+  end
+end
+
+local function resetSpecialContainerState()
+  specialContainerItems = {}
+  refreshSpecialContainerSlots()
+end
+
+local function sendSpecialContainerOpcode(opcode, payload)
+  if not g_game.isOnline() then
+    return false
+  end
+
+  if g_game.sendExtendedOpcode then
+    g_game.sendExtendedOpcode(opcode, payload)
+    return true
+  end
+
+  local protocol = g_game.getProtocolGame()
+  if protocol and protocol.sendExtendedOpcode then
+    protocol:sendExtendedOpcode(opcode, payload)
+    return true
+  end
+
+  g_logger.warning('Extended opcode API unavailable; unable to communicate with server for special container')
+  return false
+end
+
+function requestSpecialContainerData()
+  if not g_game.isOnline() then return end
+  local payload = json.encode({ action = 'request' })
+  sendSpecialContainerOpcode(SPECIAL_CONTAINER_OPCODE, payload)
+end
+
+local function applySpecialContainerData(items)
+  specialContainerItems = {}
+
+  if type(items) == 'table' then
+    for key, entry in pairs(items) do
+      local slotIndex = nil
+      if type(key) == 'number' then
+        slotIndex = key
+      elseif type(key) == 'string' then
+        slotIndex = tonumber(key)
+      end
+
+      if slotIndex and entry and entry.id then
+        specialContainerItems[slotIndex] = {
+          id = entry.id,
+          count = entry.count or 1,
+          pending = false  -- Explicitly set pending to false when loading from server
+        }
+      end
+    end
+  end
+
+  refreshSpecialContainerSlots()
+end
+
+function onSpecialContainerExtendedOpcode(protocol, opcode, buffer)
+  if opcode ~= SPECIAL_CONTAINER_OPCODE then
+    return
+  end
+
+  if not buffer or buffer:len() == 0 then
+    return
+  end
+
+  local status, data = pcall(function() return json.decode(buffer) end)
+  if not status or type(data) ~= 'table' then
+    return
+  end
+
+  local action = data.action
+  if action == 'loadSpecialContainer' then
+    applySpecialContainerData(data.items or {})
+  elseif action == 'updateSlot' then
+    local slotIndex = tonumber(data.slot)
+    if slotIndex then
+      if data.item and data.item.id then
+        specialContainerItems[slotIndex] = {
+          id = data.item.id,
+          count = data.item.count or 1
+        }
+      else
+        specialContainerItems[slotIndex] = nil
+      end
+      updateSpecialContainerSlot(slotIndex)
+    end
+  elseif action == 'error' and data.message then
+    modules.game_textmessage.displayGameMessage(data.message)
+  end
+end
+
+function onSpecialContainerGameStart()
+  specialContainerInitialized = true
+  requestSpecialContainerData()
+end
+
+function onSpecialContainerGameEnd()
+  specialContainerInitialized = false
+  resetSpecialContainerState()
+  specialContainerSlots = {}
+  if specialContainerWindow then
+    specialContainerWindow:close()
+    specialContainerWindow:destroy()
+    specialContainerWindow = nil
+  end
+end
+
+-- Special Container functions
+function toggleSpecialContainer()
+  if specialContainerWindow and specialContainerWindow:isVisible() then
+    specialContainerWindow:close()
+  else
+    openSpecialContainer()
+  end
+end
+
+function openSpecialContainer()
+  if not specialContainerWindow then
+    -- Create MiniWindow dynamically using the proper style
+    specialContainerWindow = g_ui.createWidget('MiniWindow', modules.game_interface.getRightPanel())
+    
+    if not specialContainerWindow then
+      g_logger.error("Failed to create special container window")
+      return
+    end
+    
+    specialContainerWindow:setId('specialContainerWindow')
+    specialContainerWindow:setText(tr('Special Container'))
+    specialContainerWindow:setHeight(85)
+    specialContainerWindow:setWidth(130)
+    specialContainerWindow:disableResize() -- Disable resizing
+    specialContainerWindow:setup()
+    
+    -- Get the contents panel
+    local contentsPanel = specialContainerWindow:getChildById('contentsPanel') or specialContainerWindow:getChildById('miniwindowContents')
+    
+    if not contentsPanel then
+      -- Create contents panel manually
+      contentsPanel = g_ui.createWidget('Panel', specialContainerWindow)
+      contentsPanel:setId('contentsPanel')
+      contentsPanel:addAnchor(AnchorTop, 'parent', AnchorTop)
+      contentsPanel:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+      contentsPanel:addAnchor(AnchorRight, 'parent', AnchorRight)
+      contentsPanel:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+      contentsPanel:setMarginTop(28)
+      contentsPanel:setMarginLeft(6)
+      contentsPanel:setMarginRight(6)
+      contentsPanel:setMarginBottom(3)
+    end
+    
+    contentsPanel:setPadding(2)
+    contentsPanel:setClipping(false)
+    
+    -- Disable scrollbar if exists
+    local scrollbar = specialContainerWindow:getChildById('miniwindowScrollBar')
+    if scrollbar then
+      scrollbar:setVisible(false)
+      scrollbar:disable()
+    end
+    
+    -- Create only 3 slots with ANCHORS for proper positioning
+    specialContainerSlots = {}
+    
+    for i = 1, 3 do
+      local slot = g_ui.createWidget('Item', contentsPanel)
+      slot:setId('specialSlot' .. i)
+      slot:setImageSource('/images/ui/item')
+      slot:setWidth(34)
+      slot:setHeight(34)
+      slot:setPhantom(false)
+      slot:setVisible(true)
+      slot:setFocusable(false)
+
+      slot:addAnchor(AnchorTop, 'parent', AnchorTop)
+      slot:setMarginTop(2)
+      slot:setMarginBottom(2)
+
+      if i == 1 then
+        slot:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        slot:setMarginLeft(2)
+      else
+        slot:addAnchor(AnchorLeft, 'prev', AnchorRight)
+        slot:setMarginLeft(4)
+      end
+      
+      specialContainerSlots[i] = slot
+      updateSpecialContainerSlot(i)
+      
+      
+      slot.onDrop = function(self, dragged)
+        return onSpecialContainerDrop(self, dragged, i)
+      end
+      
+      slot.onMouseRelease = function(self, mousePos, mouseButton)
+        if mouseButton == MouseRightButton then
+          return removeFromSpecialContainer(i)
+        end
+        return false
+      end
+    end
+  end
+  
+  if specialContainerWindow then
+    if g_game.isOnline() then
+      requestSpecialContainerData()
+    end
+    specialContainerWindow:open()
+    specialContainerWindow:setup()
+  end
+end
+
+function onSpecialContainerClose()
+  if specialContainerWindow then
+    specialContainerWindow:hide()
+  end
+end
+
+
+
+function onSpecialContainerClose()
+  if specialContainerWindow then
+    specialContainerWindow:hide()
+  end
+end
+
+function onSpecialContainerDrop(slot, dragged, slotIndex)
+  if specialContainerItems[slotIndex] then
+    modules.game_textmessage.displayGameMessage(tr('This slot is already occupied.'))
+    return false
+  end
+
+  if not dragged or not dragged.getItem or not dragged:getItem() then
+    return false
+  end
+  
+  local item = dragged:getItem()
+  if not item then
+    return false
+  end
+  
+  local itemId = item:getId()
+  local count = item:getCount()
+  
+  -- Mark as pending on client while waiting for server confirmation
+  specialContainerItems[slotIndex] = {
+    id = itemId,
+    count = count,
+    pending = true
+  }
+  updateSpecialContainerSlot(slotIndex)
+  
+  -- Use slots 11, 12, 13 (above CONST_SLOT_AMMO=10) for special container
+  -- These slots don't have UI elements in the default client
+  local toPos = {x = 65535, y = 10 + slotIndex, z = 0}  -- 11, 12, 13
+  g_game.move(item, toPos, count)
+  
+  modules.game_textmessage.displayGameMessage(tr('Moving to special container...'))
+  
+  return true
+end
+
+function removeFromSpecialContainer(slotIndex)
+  local itemData = specialContainerItems[slotIndex]
+  if not itemData then
+    modules.game_textmessage.displayGameMessage(tr('This slot is already empty.'))
+    return false
+  end
+  
+  local payload = json.encode({ action = 'remove', slot = slotIndex })
+  if specialContainerItems[slotIndex] then
+    specialContainerItems[slotIndex].pending = true
+    updateSpecialContainerSlot(slotIndex)
+  end
+  sendSpecialContainerOpcode(SPECIAL_CONTAINER_OPCODE, payload)
+
+  return true
 end

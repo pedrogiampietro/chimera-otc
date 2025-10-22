@@ -1,0 +1,42 @@
+UIMiniWindow
+  id: specialContainerWindow
+  !text: tr('Special Container')
+  height: 80
+  size: 186 80
+  @onClose: modules.game_inventory.onSpecialContainerClose()
+
+  UIMiniWindowContainer
+    padding: 3
+    layout:
+      type: horizontalBox
+      spacing: 1
+      
+    Item
+      id: specialSlot1
+      &slotIndex: 1
+      image-source: /images/ui/item
+      size: 34 34
+      
+    Item
+      id: specialSlot2
+      &slotIndex: 2
+      image-source: /images/ui/item
+      size: 34 34
+      
+    Item
+      id: specialSlot3
+      &slotIndex: 3
+      image-source: /images/ui/item
+      size: 34 34
+      
+    Item
+      id: specialSlot4
+      &slotIndex: 4
+      image-source: /images/ui/item
+      size: 34 34
+      
+    Item
+      id: specialSlot5
+      &slotIndex: 5
+      image-source: /images/ui/item
+      size: 34 34

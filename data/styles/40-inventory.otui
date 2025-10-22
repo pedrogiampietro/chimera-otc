@@ -109,6 +109,23 @@ SoulCapLabel < GameLabel
   width: 36
   height: 20
   icon-source: /images/game/slots/soulcap
+
+SpecialContainerSlot < UIButton
+  id: specialContainerSlot
+  size: 34 34
+  image-source: /images/ui/item
+  image-color: #888888
+  icon: /images/game/slots/back
+  icon-size: 24 24
+  icon-offset: 5 5
+  !tooltip: tr('Special Container\nRight-click to open')
+  
+  $hover:
+    image-color: #ffffff
+    icon-color: #ffaa00
+    
+  $pressed:
+    image-color: #aaaaaa
       
 FightOffensiveBox < CombatBox
   image-source: /images/game/combatmodes/fightoffensive
@@ -126,7 +143,7 @@ MountButton < CombatBox
 
 InventoryWindow < MiniWindow
   icon: /images/topbuttons/new/inventory
-  height: 200
+  height: 240
   id: inventoryWindow
   @onClose: modules.game_inventory.onMiniWindowClose()
   &save: true
@@ -202,6 +219,11 @@ InventoryWindow < MiniWindow
         id: capLabel
         anchors.top: slot9.bottom
         anchors.horizontalCenter: slot9.horizontalCenter
+
+      SpecialContainerSlot
+        anchors.top: capLabel.top
+        anchors.left: capLabel.right
+        margin-left: 5
 
       PurseButton
         anchors.left: slot3.left
