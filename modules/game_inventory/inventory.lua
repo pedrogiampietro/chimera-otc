@@ -961,6 +961,34 @@ function onSpecialContainerDrop(slot, dragged, slotIndex)
   local itemId = item:getId()
   local count = item:getCount()
   
+  -- Check if dragging from another special container slot
+  local fromSlotIndex = nil
+  for i = 1, 5 do
+    local fromSlot = getSpecialContainerSlotWidget(i)
+    if fromSlot and fromSlot == dragged then
+      fromSlotIndex = i
+      break
+    end
+  end
+  
+  -- If moving between special container slots, send move action
+  if fromSlotIndex then
+    -- Send move action to server
+    local data = {
+      action = 'move',
+      fromSlot = fromSlotIndex,
+      toSlot = slotIndex
+    }
+    
+    local protocolGame = g_game.getProtocolGame()
+    if protocolGame then
+      protocolGame:sendExtendedOpcode(SPECIAL_CONTAINER_OPCODE, json.encode(data))
+    end
+    
+    modules.game_textmessage.displayGameMessage(tr('Moving item...'))
+    return true
+  end
+  
   -- Mark as pending on client while waiting for server confirmation
   specialContainerItems[slotIndex] = {
     id = itemId,
