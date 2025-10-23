@@ -28,8 +28,6 @@ Makefile
 *.autosave
 CMakeLists.txt.user*
 *.xml
-*.otb
-*.otbm
 *.log
 *.bak
 *.swp

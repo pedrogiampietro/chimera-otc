@@ -92,26 +92,40 @@ function init()
   -- special container
   specialContainerSlot = inventoryWindow:recursiveGetChildById('specialContainerSlot')
   if not specialContainerSlot then
-    g_logger.info("Special container slot not found in OTUI, creating dynamically...")
-    
     -- Find slot8 (feet) to position below it
     local slot8 = inventoryWindow:recursiveGetChildById('slot8')
     local conditionPanel = inventoryWindow:recursiveGetChildById('conditionPanel')
     
     if slot8 then
-      g_logger.info("Found slot8 (feet), creating special container button...")
-      
-      -- Create the slot button
+      -- Create the slot button with purse image
       specialContainerSlot = g_ui.createWidget('UIButton', inventoryPanel)
       specialContainerSlot:setId('specialContainerSlot')
-      specialContainerSlot:setSize({width = 40, height = 10})
-      specialContainerSlot:setText(tr('open'))
-      specialContainerSlot:setFont('verdana-11px-rounded')
-      specialContainerSlot:setTextAlign(AlignCenter)
-      specialContainerSlot:setColor('#ffffff')
-      specialContainerSlot:setBackgroundColor('#555555')
-      specialContainerSlot:setBorderWidth(1)
-      specialContainerSlot:setBorderColor('#888888')
+      specialContainerSlot:setSize({width = 34, height = 12})  -- Adjusted to match sprite size
+      specialContainerSlot:setImageSource('/images/game/slots/purse')
+      
+      -- Set image clip for normal state (top half of sprite)
+      specialContainerSlot:setImageClip({x = 0, y = 0, width = 34, height = 12})
+      
+      -- Add mouse events for pressed state visual feedback
+      specialContainerSlot.onMousePress = function(self, mousePos, mouseButton)
+        if mouseButton == MouseLeftButton then
+          -- Switch to pressed state (bottom half of sprite)
+          self:setImageClip({x = 0, y = 12, width = 34, height = 12})
+          return false  -- Let the event continue
+        end
+        return false
+      end
+      
+      specialContainerSlot.onMouseRelease = function(self, mousePos, mouseButton)
+        if mouseButton == MouseLeftButton then
+          -- Switch back to normal state (top half of sprite)
+          self:setImageClip({x = 0, y = 0, width = 34, height = 12})
+          return false  -- Let the event continue for onClick
+        end
+        return false
+      end
+      
+      specialContainerSlot:setBorderWidth(0)  -- Remove border since the image should handle the visual
       specialContainerSlot:setTooltip(tr('Click to open Special Container'))
       
       -- Position it in the new expanded area at the bottom
@@ -119,33 +133,28 @@ function init()
       if conditionPanel then
         local condPos = conditionPanel:getPosition()
         local condSize = conditionPanel:getSize()
-        -- Position well below everything else
-        local buttonX = condPos.x + (condSize.width / 2) - 60
+        -- Position well below everything else (adjusted for item size)
+        local buttonX = condPos.x + (condSize.width / 2) - 40  -- Center the 34px wide item
         local buttonY = 150  -- Lower fixed Y position
         specialContainerSlot:setPosition({x = buttonX, y = buttonY})
-        g_logger.info("Special container button positioned at fixed Y=" .. buttonY .. ", X=" .. buttonX)
       else
         -- Fallback: use fixed position at bottom
         specialContainerSlot:setPosition({x = 50, y = 200})
-        g_logger.info("Special container button positioned at fallback position")
       end
       
       -- Make sure it's visible
       specialContainerSlot:setVisible(true)
       specialContainerSlot:raise()
-      
-      g_logger.info("Special container button size: " .. specialContainerSlot:getSize().width .. "x" .. specialContainerSlot:getSize().height)
-      g_logger.info("Special container button visible: " .. tostring(specialContainerSlot:isVisible()))
-    else
-      g_logger.error("Could not find slot8")
     end
-  else
-    g_logger.info("Special container slot found in OTUI")
   end
   
   if specialContainerSlot then
     specialContainerSlot.onMouseRelease = function(self, mousePos, mouseButton)
-      if mouseButton == MouseRightButton then
+      if mouseButton == MouseLeftButton then
+        -- Switch back to normal state (top half of sprite) for left button
+        self:setImageClip({x = 0, y = 0, width = 34, height = 12})
+      elseif mouseButton == MouseRightButton then
+        -- Handle right click to toggle container
         toggleSpecialContainer()
         return true
       end
@@ -704,7 +713,7 @@ local function updateSpecialContainerSlot(slotIndex)
 end
 
 local function refreshSpecialContainerSlots()
-  for i = 1, 3 do
+  for i = 1, 5 do
     updateSpecialContainerSlot(i)
   end
 end
@@ -838,7 +847,7 @@ function openSpecialContainer()
     specialContainerWindow:setId('specialContainerWindow')
     specialContainerWindow:setText(tr('Special Container'))
     specialContainerWindow:setHeight(85)
-    specialContainerWindow:setWidth(130)
+    specialContainerWindow:setWidth(202)
     specialContainerWindow:disableResize() -- Disable resizing
     specialContainerWindow:setup()
     
@@ -869,10 +878,10 @@ function openSpecialContainer()
       scrollbar:disable()
     end
     
-    -- Create only 3 slots with ANCHORS for proper positioning
+    -- Create only 5 slots with ANCHORS for proper positioning
     specialContainerSlots = {}
     
-    for i = 1, 3 do
+    for i = 1, 5 do
       local slot = g_ui.createWidget('Item', contentsPanel)
       slot:setId('specialSlot' .. i)
       slot:setImageSource('/images/ui/item')
@@ -888,7 +897,7 @@ function openSpecialContainer()
 
       if i == 1 then
         slot:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-        slot:setMarginLeft(2)
+        slot:setMarginLeft(10)
       else
         slot:addAnchor(AnchorLeft, 'prev', AnchorRight)
         slot:setMarginLeft(4)
@@ -960,9 +969,9 @@ function onSpecialContainerDrop(slot, dragged, slotIndex)
   }
   updateSpecialContainerSlot(slotIndex)
   
-  -- Use slots 11, 12, 13 (above CONST_SLOT_AMMO=10) for special container
+  -- Use slots 11, 12, 13, 14, 15 (above CONST_SLOT_AMMO=10) for special container
   -- These slots don't have UI elements in the default client
-  local toPos = {x = 65535, y = 10 + slotIndex, z = 0}  -- 11, 12, 13
+  local toPos = {x = 65535, y = 10 + slotIndex, z = 0}  -- 11, 12, 13, 14, 15
   g_game.move(item, toPos, count)
   
   modules.game_textmessage.displayGameMessage(tr('Moving to special container...'))

@@ -1,8 +1,8 @@
 UIMiniWindow
   id: specialContainerWindow
   !text: tr('Special Container')
-  height: 80
-  size: 186 80
+  height: 50
+  size: 186 50
   @onClose: modules.game_inventory.onSpecialContainerClose()
 
   UIMiniWindowContainer
