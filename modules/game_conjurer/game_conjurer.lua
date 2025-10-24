@@ -1124,8 +1124,6 @@ end
 
 -- Setup gem system for specific rank
 function setupRankGemSystem(content, rankId)
-  g_logger.info("Setting up gem system for rank: " .. rankId)
-  
   -- Configurar informações das gemas do rank
   local gemSlotsInfo = content:recursiveGetChildById('gemSlotsInfo')
   if gemSlotsInfo then
@@ -1147,10 +1145,8 @@ function setupRankGemSystem(content, rankId)
   
   if rankId > currentLevel then
     slotsUnlocked = 0
-    g_logger.info("Rank " .. rankId .. " is locked (current level: " .. currentLevel .. ")")
   elseif rankId < currentLevel then
     slotsUnlocked = 3
-    g_logger.info("Rank " .. rankId .. " is completed - all 3 slots unlocked")
   elseif rankId == currentLevel then
     local currentExp = currentConjurerData.experience or 0
     local nextLevelExp = currentConjurerData.nextLevelExp or 500
@@ -1165,8 +1161,6 @@ function setupRankGemSystem(content, rankId)
     else
       slotsUnlocked = 0
     end
-    
-    g_logger.info("Current rank " .. rankId .. " - EXP: " .. expPercentage .. "% - Slots unlocked: " .. slotsUnlocked)
   end
   
   -- Configurar slots de gemas
@@ -1175,12 +1169,9 @@ function setupRankGemSystem(content, rankId)
     local gemSlotBox = content:recursiveGetChildById('gem_slot_box' .. i)
     local gemSlotLabel = content:recursiveGetChildById('gemSlot' .. i .. '_label')
     
-    g_logger.info("Setting up slot " .. i .. " - Found slot: " .. tostring(gemSlot ~= nil) .. ", box: " .. tostring(gemSlotBox ~= nil))
-    
     if gemSlot and gemSlotBox then
       if i <= slotsUnlocked then
         -- Slot desbloqueado
-        g_logger.info("Unlocking slot " .. i)
         gemSlotBox:setBackgroundColor('#333333')
         gemSlotBox:setBorderColor('#00aa00')
         gemSlot:setOpacity(1.0)
@@ -1193,11 +1184,8 @@ function setupRankGemSystem(content, rankId)
         
         -- Configurar drag & drop para gemas
         gemSlot.onDrop = function(self, dragged)
-          g_logger.info("Drop event triggered on slot " .. i)
-          
           -- Verificar se é uma gema válida
           if not dragged or not dragged.gemData then
-            g_logger.warning("Invalid gem dropped - no gemData")
             return false
           end
           
@@ -1206,14 +1194,12 @@ function setupRankGemSystem(content, rankId)
         
         -- Clique direito remove gema
         gemSlot.onMouseRightRelease = function(self)
-          g_logger.info("Right click detected on slot " .. i)
           return removeGemFromSlot(rankId, i)
         end
         
         -- Alternativa: usar onMousePress para clique direito
         gemSlot.onMousePress = function(self, mousePos, mouseButton)
           if mouseButton == MouseRightButton then
-            g_logger.info("Right mouse press on slot " .. i)
             return removeGemFromSlot(rankId, i)
           end
           return false
@@ -1223,7 +1209,6 @@ function setupRankGemSystem(content, rankId)
         gemSlot:setTooltip(tr('Arraste uma gema aqui ou clique direito para remover'))
         
       else
-        g_logger.info("Locking slot " .. i)
         gemSlotBox:setBackgroundColor('#222222')
         gemSlotBox:setBorderColor('#444444')
         gemSlot:setOpacity(0.3)
@@ -1248,19 +1233,14 @@ function setupRankGemSystem(content, rankId)
         gemSlot.onMouseRightRelease = nil
         gemSlot.onMousePress = nil
       end
-    else
-      g_logger.warning("Could not find slot " .. i .. " widgets!")
     end
   end
   
   -- Configurar gemas disponíveis
-  g_logger.info("Setting up available gems...")
   setupAvailableGems(content, rankId)
   
   -- Carregar gemas equipadas para este rank
   loadRankGems(rankId)
-  
-  g_logger.info("Gem system setup completed for rank " .. rankId)
 end
 
 -- Setup available gems panel
@@ -1286,8 +1266,6 @@ end
 
 -- Request gems list from server (similar to autoloot backpack list)
 function requestGemsFromServer(rankId)
-  g_logger.info("Requesting gems list from server for rank " .. tostring(rankId) .. "...")
-  
   -- Armazenar o rankId globalmente para usar quando a resposta chegar
   currentRankIdForGems = rankId
   
@@ -1296,19 +1274,16 @@ function requestGemsFromServer(rankId)
     -- Enviar requisição para listar gemas disponíveis
     local data = {action = "listGems"}
     protocolGame:sendExtendedOpcode(ExtendedIds.ConjurerGemRequest, json.encode(data))
-    g_logger.info("Sent gem list request to server")
-  else
-    g_logger.error("Protocol not available to request gems")
   end
 end
 
--- Get all equipped gems across all ranks (excluding current rank being viewed)
+-- Get all equipped gems across all ranks (including current rank being viewed)
 function getEquippedGemsInOtherRanks(currentRankId)
   local equippedGems = {}
   
-  -- Verificar todas as ranks exceto a atual
+  -- Verificar TODAS as ranks, incluindo a atual
   for rankId = 0, 5 do
-    if rankId ~= currentRankId and localEquippedGems[rankId] then
+    if localEquippedGems[rankId] then
       for slotNum, gemData in pairs(localEquippedGems[rankId]) do
         -- Adicionar itemId à lista de gemas equipadas
         table.insert(equippedGems, gemData.itemId)
@@ -1324,13 +1299,11 @@ function updateGemsPanel(gemsData, currentRankId)
   -- Encontrar o painel de gemas
   local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
   if not content then 
-    g_logger.warning("Could not find rankDetailsContent to update gems")
     return 
   end
   
   local gemsPanel = content:recursiveGetChildById('availableGemsPanel')
   if not gemsPanel then 
-    g_logger.warning("availableGemsPanel not found!")
     return 
   end
   
@@ -1341,11 +1314,11 @@ function updateGemsPanel(gemsData, currentRankId)
   
   -- Mapeamento de itemId para dados da gema
   local gemDataMap = {
-    [2155] = {name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444"},
-    [2158] = {name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff"},
-    [2156] = {name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44"},
-    [2154] = {name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44"},
-    [2153] = {name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff"}
+    [5273] = {name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444"},
+    [5274] = {name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff"},
+    [5275] = {name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44"},
+    [5276] = {name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44"},
+    [5277] = {name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff"}
   }
   
   if not gemsData or #gemsData == 0 then
@@ -1384,7 +1357,6 @@ function updateGemsPanel(gemsData, currentRankId)
     
     -- Skip this gem if it's equipped in another rank
     if isEquippedElsewhere then
-      g_logger.info("Gem " .. itemId .. " is equipped in another rank, skipping")
       goto continue
     end
     
@@ -1534,7 +1506,6 @@ function updateGemsPanel(gemsData, currentRankId)
         -- Configurar eventos de mouse para drag
         gemWidget.onMousePress = function(self, mousePos, mouseButton)
           if mouseButton == MouseLeftButton then
-            g_logger.info("Starting gem drag for: " .. gemInfo.name .. " (ID: " .. itemId .. ")")
             return true
           end
           return false
@@ -1566,10 +1537,7 @@ function updateGemsPanel(gemsData, currentRankId)
         end
         
         gemsFound = gemsFound + 1
-        g_logger.info("Created gem widget: " .. gemInfo.name .. " (count: " .. count .. ")")
       end
-    else
-      g_logger.warning("Unknown gem itemId: " .. itemId)
     end
     
     ::continue::
@@ -1586,90 +1554,62 @@ function updateGemsPanel(gemsData, currentRankId)
       inventoryInfo:setColor('#888888')
     end
   end
-  
-  g_logger.info("Total gems loaded: " .. gemsFound)
 end
 
 -- Handle gem drop on slot
 function handleGemDrop(slot, dragged, rankId, slotNumber)
-  g_logger.info("handleGemDrop called - slot: " .. slotNumber .. ", rank: " .. rankId)
-  
   if not dragged then
-    g_logger.warning("No dragged widget")
     return false
   end
   
-  g_logger.info("Dragged widget class: " .. dragged:getClassName())
-  g_logger.info("Dragged widget ID: " .. (dragged:getId() or "no ID"))
-  
   if not dragged.gemData then
-    g_logger.warning("No gemData in dragged widget")
-    
     -- Tentar obter gemData do item ID
     local itemId = dragged:getItemId()
     if itemId then
-      g_logger.info("Dragged widget item ID: " .. itemId)
-      
       -- Mapear item ID para gem data
       local gemMap = {
-        [2155] = {id = 1, name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444", itemId = 2155},
-        [2158] = {id = 2, name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff", itemId = 2158},
-        [2156] = {id = 3, name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44", itemId = 2156},
-        [2154] = {id = 4, name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44", itemId = 2154},
-        [2153] = {id = 5, name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff", itemId = 2153}
+        [5273] = {id = 1, name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444", itemId = 5273},
+        [5274] = {id = 2, name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff", itemId = 5274},
+        [5275] = {id = 3, name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44", itemId = 5275},
+        [5276] = {id = 4, name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44", itemId = 5276},
+        [5277] = {id = 5, name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff", itemId = 5277}
       }
       
       local gem = gemMap[itemId]
       if gem then
-        g_logger.info("Found gem data for item ID: " .. gem.name)
         dragged.gemData = gem
       else
-        g_logger.warning("No gem data found for item ID: " .. itemId)
         return false
       end
     else
-      g_logger.warning("No item ID in dragged widget")
       return false
     end
   end
   
   local gem = dragged.gemData
-  g_logger.info("Gem data: " .. gem.name .. " (ID: " .. gem.itemId .. ")")
   
   local player = g_game.getLocalPlayer()
   if not player then
-    g_logger.warning("No player found")
     return false
   end
   
-  -- Para gemas de teste, pular verificação de inventário
-  local isTestGem = (gem.itemId == 2155 or gem.itemId == 2158 or gem.itemId == 2156 or gem.itemId == 2154 or gem.itemId == 2153)
-  if isTestGem then
-    g_logger.info("Using test gem, skipping inventory check")
-  else
-    -- Verificar se o jogador ainda tem a gema no inventário
-    if player:getItemsCount(gem.itemId) <= 0 then
-      modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
-      return false
-    end
+  -- Verificar se o jogador ainda tem a gema no inventário
+  if player:getItemsCount(gem.itemId) <= 0 then
+    modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
+    return false
   end
   
   -- Verificar se já há uma gema equipada neste slot
   if slot.equippedGem then
-    g_logger.info("Slot already has a gem equipped")
     modules.game_textmessage.displayGameMessage(tr('Remova a gema atual primeiro!'), 'Conjurer System')
     return false
   end
-  
-  g_logger.info("Equipping gem visually...")
   
   -- Equipar a gema visualmente (usar setImageSource para UIItem virtual)
   local imagePath = string.format('/images/items/%d.png', gem.itemId)
   if g_resources.fileExists(imagePath) then
     slot:setImageSource(imagePath)
-    g_logger.info("Set gem image using setImageSource: " .. imagePath)
   else
-    g_logger.warning("Image not found: " .. imagePath .. ", using fallback setItemId")
     slot:setItemId(gem.itemId) -- Fallback
   end
   slot:setImageColor('#ffffff') -- Cor normal para gemas equipadas
@@ -1690,14 +1630,8 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
     color = gem.color
   }
   
-  g_logger.info("Gem equipped successfully! (Saved locally for rank " .. rankId .. ", slot " .. slotNumber .. ")")
-  
-  -- Sincronizar com servidor (funciona em modo teste ou online)
+  -- Sincronizar com servidor
   syncGemsWithServer(rankId)
-  
-  if isTestGem then
-    g_logger.info("Test gem - saved locally and synced when server available")
-  end
   
   -- Atualizar tooltip
   slot:setTooltip(gem.name .. '\n+' .. gem.value .. ' ' .. gem.bonus .. '\nClique direito para remover')
@@ -1705,12 +1639,10 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
   -- Atualizar efeitos ativos
   updateRankGemsEffects()
   
-  -- Para gemas de teste, não precisamos atualizar o painel
-  if not isTestGem then
-    local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
-    if content then
-      setupAvailableGems(content, rankId)
-    end
+  -- Atualizar painel de gemas disponíveis (remover a gema equipada da lista)
+  local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
+  if content then
+    setupAvailableGems(content, rankId)
   end
   
   return true
@@ -1718,38 +1650,24 @@ end
 
 -- Remove gem from slot
 function removeGemFromSlot(rankId, slotNumber)
-  g_logger.info("removeGemFromSlot called - rank: " .. rankId .. ", slot: " .. slotNumber)
-  
   local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
   if not content then 
-    g_logger.warning("Content not found")
     return false 
   end
   
   local slot = content:recursiveGetChildById('gemSlot' .. slotNumber)
   if not slot then
-    g_logger.warning("Slot not found: gemSlot" .. slotNumber)
     return false
   end
   
   if not slot.equippedGem then
-    g_logger.warning("No gem equipped in slot " .. slotNumber)
     return false
   end
   
-  g_logger.info("Found equipped gem: " .. slot.equippedGem.name)
-  
   local equippedGem = slot.equippedGem
   
-  -- Para gemas de teste, não enviar para servidor
-  local isTestGem = (equippedGem.itemId == 2155 or equippedGem.itemId == 2158 or equippedGem.itemId == 2156 or equippedGem.itemId == 2154 or equippedGem.itemId == 2153)
-  
-  -- Remover do servidor (funciona em modo teste ou online)
+  -- Remover do servidor
   removeGemFromServer(rankId, slotNumber)
-  
-  if isTestGem then
-    g_logger.info("Test gem removed - local only")
-  end
   
   -- Limpar visualmente
   slot:setImageSource('/images/ui/item-blessed') -- Voltar ao ícone padrão
@@ -1760,7 +1678,6 @@ function removeGemFromSlot(rankId, slotNumber)
   -- Limpar do armazenamento local
   if localEquippedGems[rankId] and localEquippedGems[rankId][slotNumber] then
     localEquippedGems[rankId][slotNumber] = nil
-    g_logger.info("Removed gem from local storage: rank " .. rankId .. ", slot " .. slotNumber)
     
     -- Sincronizar remoção com servidor
     removeGemFromServer(rankId, slotNumber)
@@ -1772,16 +1689,11 @@ function removeGemFromSlot(rankId, slotNumber)
   -- Mensagem de confirmação
   modules.game_textmessage.displayGameMessage(tr('Gema removida com sucesso!'), 'Conjurer System')
   
-  g_logger.info("Gem removed successfully from slot " .. slotNumber)
-  
   -- Atualizar efeitos ativos
   updateRankGemsEffects()
   
-  -- Para gemas de teste, não precisamos atualizar o painel (elas continuam lá)
-  if not isTestGem then
-    -- Atualizar painel de gemas disponíveis (adicionar de volta)
-    setupAvailableGems(content, rankId)
-  end
+  -- Atualizar painel de gemas disponíveis (adicionar a gema de volta)
+  setupAvailableGems(content, rankId)
   
   return true
 end
@@ -1835,12 +1747,6 @@ function updateRankGemsEffects()
     
     effectsText = tr('Efeitos Ativos: ') .. table.concat(effects, ' | ')
     effectsLabel:setColor('#00ff00')
-    
-    -- Log detalhado para debug
-    g_logger.info("Active gem effects updated:")
-    for bonusType, totalValue in pairs(bonusTotals) do
-      g_logger.info("  " .. bonusType:upper() .. ": +" .. totalValue)
-    end
   end
   
   effectsLabel:setText(effectsText)
@@ -3135,11 +3041,11 @@ function updateGemSlotsDisplay(content, data)
   
   -- Mapeamento de itemId para dados da gema (IDs corretos)
   local gemsByItemId = {
-    [2155] = {name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444"},
-    [2158] = {name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff"},
-    [2156] = {name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44"},
-    [2154] = {name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44"},
-    [2153] = {name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff"}
+    [5273] = {name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444"},
+    [5274] = {name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff"},
+    [5275] = {name = "Mana Regen Gem", bonus = "manaregen", value = 2, color = "#44ff44"},
+    [5276] = {name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44"},
+    [5277] = {name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff"}
   }
   
   for i = 1, 3 do
@@ -3194,8 +3100,8 @@ function onInventoryChange(slot, item, oldItem)
   -- Verificar se item é um objeto válido e não um número
   if item and type(item) == 'userdata' and item.getId then
     local itemId = item:getId()
-    -- Verificar se é uma das gemas: 2155, 2158, 2156, 2154, 2153
-    if itemId == 2155 or itemId == 2158 or itemId == 2156 or itemId == 2154 or itemId == 2153 then
+    -- Verificar se é uma das gemas: 5273, 5274, 5275, 5276, 5277
+    if itemId == 5273 or itemId == 5274 or itemId == 5275 or itemId == 5276 or itemId == 5277 then
       isGemItem = true
     end
   end
