@@ -241,10 +241,16 @@ function save()
 end
 
 function onMiniWindowClose()
-  botButton:setOn(false)
+  if botButton then
+    botButton:setOn(false)
+  end
 end
 
 function toggle()
+  if not botButton then
+    return
+  end
+  
   if botButton:isOn() then
     botWindow:close()
     botButton:setOn(false)

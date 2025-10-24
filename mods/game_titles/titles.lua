@@ -109,9 +109,6 @@ local creatureTitles = {
 ["Mortis The Sovereign"] = {title = "[Worldboss]", color = "#ff000d"},
 ["Thalador The Stormbringer"] = {title = "[Worldboss]", color = "#ff000d"},
 ["Tymagron The Earthshaker"] = {title = "[Worldboss]", color = "#ff000d"},
-["Demon"] = {title = "[Elite Monster]", color = "#ff000d"},
-
-
 }
 
 

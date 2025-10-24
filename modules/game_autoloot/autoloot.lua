@@ -35,16 +35,16 @@ local function updateGoldBackpackStatus(message, isEnabled)
       if message and message:find("disabled") then
         statusLabel:setText('Gold has been disabled')
         statusLabel:setColor('#888888')
-      elseif isEnabled or (message and (message:find("enabled") or message:find("bag ID: 2004"))) then
-        -- Gold está habilitado, verificar se tem bag ID 2004
-        if message and message:find("will go to your bag") then
-          statusLabel:setText('Loot pounch (100%)')
+      elseif isEnabled or (message and (message:find("enabled") or message:find("Gold Pouch ID: 5265"))) then
+        -- Gold está habilitado, verificar se tem Gold Pouch ID 5265
+        if message and message:find("will go to your Gold Pouch") then
+          statusLabel:setText('Gold Pouch (100%)')
           statusLabel:setColor('#90EE90')
         elseif message and message:find("will go to bank") then
           statusLabel:setText('Bank (70%, fee: 30%)')
           statusLabel:setColor('#FFA500')
         else
-          -- Verificar dinamicamente se o player tem uma bag ID 2004
+          -- Verificar dinamicamente se o player tem uma Gold Pouch ID 5265
           checkGoldBackpackStatus()
         end
       end
@@ -419,18 +419,18 @@ function requestAutoLoot()
 end
 
 local function checkGoldBackpackStatus()
-  -- Verificar se o player tem uma bag (ID: 2004) no inventário
+  -- Verificar se o player tem uma Gold Pouch (ID: 5265) no inventário
   local player = g_game.getLocalPlayer()
   if not player then return end
   
-  local hasBag = false
+  local hasGoldPouch = false
   -- Verificar slots do inventário (slots 1-10)
   for slot = 1, 10 do
     local item = player:getInventoryItem(slot)
     if item then
       -- Função recursiva para verificar containers
       local function checkContainer(container)
-        if container:getId() == 2004 then
+        if container:getId() == 5265 then
           return true
         end
         if container:isContainer() then
@@ -447,18 +447,18 @@ local function checkGoldBackpackStatus()
       end
       
       if checkContainer(item) then
-        hasBag = true
+        hasGoldPouch = true
         break
       end
     end
   end
   
-  -- Atualizar o status baseado na presença da bag
+  -- Atualizar o status baseado na presença da Gold Pouch
   if autolootWindow then
     local statusLabel = autolootWindow:recursiveGetChildById('goldBackpackStatus')
     if statusLabel then
-      if hasBag then
-        statusLabel:setText('Gold → Bag (100%)')
+      if hasGoldPouch then
+        statusLabel:setText('Gold → Gold Pouch (100%)')
         statusLabel:setColor('#90EE90')
       else
         statusLabel:setText('Gold → Bank (70%, fee: 30%)')

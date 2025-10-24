@@ -5,12 +5,12 @@ DEFAULT_LAYOUT = "retro" -- on android it's forced to "mobile", check code bello
 
 -- If you don't use updater or other service, set it to updater = ""
 Services = {
-  website = "https://chimeraot.online",
+  website = "http://127.0.0.1",
   updater = "",--"http://yourwebsite/api/updater.php"
   stats = "", -- --"http://yourwebsite/api/stats.php"
   crash = "", --"http://yourwebsite/api/crash.php",
   feedback = "",--"http://yourwebsite/api/feedback.php",
-  status = "http://chimeraot.online/online" --http://yourwebsite/api/status.php"
+  status = "http://127.0.0.1/online" --http://yourwebsite/api/status.php"
 }
 
 -- Servers accept http login url, websocket login url or ip:port:version

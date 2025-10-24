@@ -72,6 +72,10 @@ function UIScrollArea:updateScrollBars()
 end
 
 function UIScrollArea:setVerticalScrollBar(scrollbar)
+  if not scrollbar then
+    return
+  end
+  
   self.verticalScrollBar = scrollbar
   connect(self.verticalScrollBar, 'onValueChange', function(scrollbar, value)
     local virtualOffset = self:getVirtualOffset()
@@ -83,6 +87,10 @@ function UIScrollArea:setVerticalScrollBar(scrollbar)
 end
 
 function UIScrollArea:setHorizontalScrollBar(scrollbar)
+  if not scrollbar then
+    return
+  end
+  
   self.horizontalScrollBar = scrollbar
   connect(self.horizontalScrollBar, 'onValueChange', function(scrollbar, value)
     local virtualOffset = self:getVirtualOffset()
