@@ -129,18 +129,12 @@ function init()
       specialContainerSlot:setTooltip(tr('Click to open Special Container'))
       
       -- Position it in the new expanded area at the bottom
-      -- Use fixed position in the expanded space - below all slots
-      if conditionPanel then
-        local condPos = conditionPanel:getPosition()
-        local condSize = conditionPanel:getSize()
-        -- Position well below everything else (adjusted for item size)
-        local buttonX = condPos.x + (condSize.width / 2) - 40  -- Center the 34px wide item
-        local buttonY = 150  -- Lower fixed Y position
-        specialContainerSlot:setPosition({x = buttonX, y = buttonY})
-      else
-        -- Fallback: use fixed position at bottom
-        specialContainerSlot:setPosition({x = 50, y = 200})
-      end
+      -- Use fixed position that doesn't depend on other elements
+      -- Place it centered at the bottom of the inventory
+      specialContainerSlot:addAnchor(AnchorHorizontalCenter, 'parent', AnchorHorizontalCenter)
+      specialContainerSlot:setMarginTop(-1)
+      specialContainerSlot:setMarginLeft(40)
+      specialContainerSlot:addAnchor(AnchorTop, 'parent', AnchorTop)
       
       -- Make sure it's visible
       specialContainerSlot:setVisible(true)
