@@ -1369,6 +1369,7 @@ function updateGemsPanel(gemsData, currentRankId)
       gemContainer:setBorderWidth(1)
       gemContainer:setBorderColor('#444444')
       gemContainer:setPhantom(false)
+      gemContainer:setId('gemContainer_' .. itemId)  -- Give it an ID for debugging
       -- Remover qualquer posicionamento manual para usar apenas o grid
       
       -- Moldura interna com gradiente
@@ -1407,7 +1408,9 @@ function updateGemsPanel(gemsData, currentRankId)
         end
         
         gemWidget:setPhantom(false)
-        gemWidget:setDraggable(true)
+        gemWidget:setDraggable(true)  -- Make gemWidget draggable
+        innerFrame:setDraggable(true)  -- Make innerFrame draggable
+        imageArea:setDraggable(true)   -- Make imageArea draggable
         
         -- Tooltip elegante e informativo
         local tooltipText = '◆ ' .. gemInfo.name .. ' ◆\n'
@@ -1457,15 +1460,21 @@ function updateGemsPanel(gemsData, currentRankId)
         rarityDot:setBorderWidth(1)
         rarityDot:setBorderColor('#ffffff')
         
-        -- Armazenar dados da gema
-        gemWidget.gemData = {
+        -- Armazenar dados da gema (inclui quantidade retornada pelo servidor)
+        -- Store on both gemWidget and gemContainer so it's accessible during drag
+        local gemData = {
           id = itemId,
           name = gemInfo.name,
           bonus = gemInfo.bonus,
           value = gemInfo.value,
           color = gemInfo.color,
-          itemId = itemId
+          itemId = itemId,
+          count = count
         }
+        gemWidget.gemData = gemData
+        gemContainer.gemData = gemData  -- Also store on container for drag access
+        innerFrame.gemData = gemData   -- Also store on inner frame
+        imageArea.gemData = gemData     -- Also store on image area
         
         -- Efeitos hover sofisticados
         gemContainer.onHoverChange = function(widget, hovered)
@@ -1484,57 +1493,15 @@ function updateGemsPanel(gemsData, currentRankId)
           end
         end
         
-        -- Eventos de drag
+        -- Eventos de drag on gemWidget
         gemWidget.onMousePress = function(self, mousePos, mouseButton)
           if mouseButton == MouseLeftButton then
-            g_logger.info("Dragging gem: " .. gemInfo.name)
-            return true
+            return true  -- Return true to capture the event and start drag
           end
           return false
         end
         
-        -- Armazenar dados completos da gema no widget
-        gemWidget.gemData = {
-          id = itemId,
-          name = gemInfo.name,
-          bonus = gemInfo.bonus,
-          value = gemInfo.value,
-          color = gemInfo.color,
-          itemId = itemId
-        }
-        
-        -- Configurar eventos de mouse para drag
-        gemWidget.onMousePress = function(self, mousePos, mouseButton)
-          if mouseButton == MouseLeftButton then
-            return true
-          end
-          return false
-        end
-        
-        gemWidget.onDragEnter = function(self, mousePos)
-          return true
-        end
-        
-        gemWidget.onDragLeave = function(self, droppedWidget, mousePos)
-          return true
-        end
-        
-        -- Efeito hover
-        gemWidget.onHoverChange = function(widget, hovered)
-          if hovered then
-            widget:setBorderWidth(2)
-            widget:setBorderColor('#ffaa00')
-            if nameLabel then
-              nameLabel:setColor('#ffffff')
-            end
-          else
-            widget:setBorderWidth(1)
-            widget:setBorderColor('#ffffff')
-            if nameLabel then
-              nameLabel:setColor(gemInfo.color)
-            end
-          end
-        end
+        -- Efeito hover (já configurado acima, removido duplicata)
         
         gemsFound = gemsFound + 1
       end
@@ -1574,15 +1541,21 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
         [5276] = {id = 4, name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44", itemId = 5276},
         [5277] = {id = 5, name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff", itemId = 5277}
       }
-      
+
       local gem = gemMap[itemId]
       if gem then
+        gem.count = 1  -- Set count for inventory drags
         dragged.gemData = gem
       else
         return false
       end
     else
       return false
+    end
+  else
+    -- Ensure count is set for inventory drags
+    if not dragged.gemData.count then
+      dragged.gemData.count = 1
     end
   end
   
@@ -1594,20 +1567,16 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
   end
   
   -- Verificar se o jogador ainda tem a gema no inventário
-  -- Usar a mesma lógica do servidor: getItemCount conta em todo inventário e containers
-  local itemCount = player:getItemCount and player:getItemCount(gem.itemId) or player:getItemsCount(gem.itemId)
-  
-  -- Debug: mostrar informações sobre a verificação
-  g_logger.info(string.format("Checking gem %d: getItemCount=%s, getItemsCount=%s, final count=%d", 
-    gem.itemId, 
-    player:getItemCount and tostring(player:getItemCount(gem.itemId)) or "N/A",
-    tostring(player:getItemsCount(gem.itemId)),
-    itemCount))
-  
-  if itemCount <= 0 then
-    modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
-    return false
-  end
+  -- NOTE: client-side getItemsCount only knows about opened containers; the server may report gems inside closed containers.
+  -- Use the widget-provided count as a fallback so dragging from the "available gems" panel still works.
+  -- Removed client-side inventory check as it's unreliable for closed containers.
+  -- Server will validate the actual inventory contents.
+  -- local inventoryCount = player:getItemsCount(gem.itemId) or 0
+  -- local widgetCount = (dragged and dragged.gemData and dragged.gemData.count) or 0
+  -- if inventoryCount <= 0 and widgetCount <= 0 then
+  --   modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
+  --   return false
+  -- end
   
   -- Verificar se já há uma gema equipada neste slot
   if slot.equippedGem then
@@ -3004,12 +2973,6 @@ function onConjurerGemData(protocol, opcode, buffer)
     return
   end
   
-  -- Handle debug inventory command
-  if data.action == "debugInventory" then
-    debugGemInventory()
-    return
-  end
-  
   -- Verificar se são stats do servidor para comparação
   if data.action == "statsResponse" and data.stats then
     g_logger.info("=== SERVER STATS RESPONSE ===")
@@ -3125,8 +3088,7 @@ function onInventoryChange(slot, item, oldItem)
   -- Verificar se oldItem é um objeto válido e não um número
   if oldItem and type(oldItem) == 'userdata' and oldItem.getId then
     local oldItemId = oldItem:getId()
-    -- Verificar se é uma das gemas: 5273, 5274, 5275, 5276, 5277
-    if oldItemId == 5273 or oldItemId == 5274 or oldItemId == 5275 or oldItemId == 5276 or oldItemId == 5277 then
+    if oldItemId >= 2147 and oldItemId <= 2152 then
       isGemItem = true
     end
   end
@@ -3135,34 +3097,8 @@ function onInventoryChange(slot, item, oldItem)
     -- Update available gems panel if rank details window is open
     local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
     if content then
-      -- Force refresh from server to ensure accuracy
       setupAvailableGems(content)
-      
-      -- Also request fresh data from server
-      local protocolGame = g_game.getProtocolGame()
-      if protocolGame then
-        local data = {action = "listGems"}
-        protocolGame:sendExtendedOpcode(ExtendedIds.ConjurerGemRequest, json.encode(data))
-      end
     end
-  end
-end
-
--- Debug function to check gem inventory
-function debugGemInventory()
-  local player = g_game.getLocalPlayer()
-  if not player then
-    g_logger.info("No local player found")
-    return
-  end
-  
-  g_logger.info("=== DEBUG: GEM INVENTORY CHECK ===")
-  local gemItemIds = {5273, 5274, 5275, 5276, 5277}
-  
-  for _, itemId in ipairs(gemItemIds) do
-    local getItemCount = player:getItemCount and player:getItemCount(itemId) or "N/A"
-    local getItemsCount = player:getItemsCount(itemId)
-    g_logger.info(string.format("Gem %d: getItemCount=%s, getItemsCount=%d", itemId, tostring(getItemCount), getItemsCount))
   end
 end
 
