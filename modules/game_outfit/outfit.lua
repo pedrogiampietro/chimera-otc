@@ -203,19 +203,31 @@ function create(currentOutfit, outfitList, mountList, wingList, auraList, shader
   outfitWindow.type.creature:setOutfit(outfit)
 
   if g_game.getFeature(GamePlayerMounts) then
-    setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "mount", currentOutfit, mountList)
+    if #mountList > 0 then
+      setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "mount", currentOutfit, mountList)
+    end
   end
   if g_game.getFeature(GameWingsAndAura) then
-    setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "wings", currentOutfit, wingList)
-    setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "aura", currentOutfit, auraList)
+    if #wingList > 0 then
+      setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "wings", currentOutfit, wingList)
+    end
+    if #auraList > 0 then
+      setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "aura", currentOutfit, auraList)
+    end
   end
   if g_game.getFeature(GameOutfitShaders) then
-    setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "shader", currentOutfit, shaderList)
+    if #shaderList > 0 then
+      setupSelector(g_ui.createWidget("OutfitSelectorPanel", outfitWindow.extensions), "shader", currentOutfit, shaderList)
+    end
   end
 
   if g_game.getFeature(GameHealthInfoBackground) then
-    setupSelector(g_ui.createWidget("BarSelectorPanel", outfitWindow.extensions), "healthBar", currentOutfit, hpBarList)
-    setupSelector(g_ui.createWidget("BarSelectorPanel", outfitWindow.extensions), "manaBar", currentOutfit, manaBarList)
+    if #hpBarList > 0 then
+      setupSelector(g_ui.createWidget("BarSelectorPanel", outfitWindow.extensions), "healthBar", currentOutfit, hpBarList)
+    end
+    if #manaBarList > 0 then
+      setupSelector(g_ui.createWidget("BarSelectorPanel", outfitWindow.extensions), "manaBar", currentOutfit, manaBarList)
+    end
   end
 
   if not outfitWindow.extensions:getFirstChild() then

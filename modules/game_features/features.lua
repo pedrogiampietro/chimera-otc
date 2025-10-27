@@ -16,6 +16,8 @@ function updateFeatures(version)
     g_game.enableFeature(GameBot)
     g_game.enableFeature(GameExtendedOpcode)
     g_game.enableFeature(GameExtendedClientPing)
+    g_game.enableFeature(GameWingsAndAura)
+    g_game.enableFeature(GameOutfitShaders)
     --g_game.enableFeature(GameMinimapLimitedToSingleFloor) -- it will generate minimap only for current floor
     --g_game.enableFeature(GameSpritesAlphaChannel)
     

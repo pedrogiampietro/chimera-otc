@@ -15,6 +15,16 @@ function init()
   g_shaders.createOutfitShader("outfit_rainbow", "/shaders/outfit_rainbow_vertex", "/shaders/outfit_rainbow_fragment")
   g_shaders.addTexture("outfit_rainbow", "/images/shaders/rainbow.png")
 
+  -- Elite monster shaders
+  g_shaders.createOutfitShader("outfit_elite", "/shaders/outfit_elite_vertex", "/shaders/outfit_elite_fragment")
+  g_shaders.addTexture("outfit_elite", "/images/shaders/gold.png")
+
+  g_shaders.createOutfitShader("outfit_champion", "/shaders/outfit_champion_vertex", "/shaders/outfit_champion_fragment")
+  g_shaders.addTexture("outfit_champion", "/images/shaders/stars.png")
+
+  g_shaders.createOutfitShader("outfit_legendary", "/shaders/outfit_legendary_vertex", "/shaders/outfit_legendary_fragment")
+  g_shaders.addTexture("outfit_legendary", "/images/shaders/brazil.png")
+
   -- you can use creature:setOutfitShader("outfit_rainbow") to set shader
 
 end

@@ -251,6 +251,21 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
             if (m_icon == Otc::NpcIconTrade) {
                 fillColor = Color(0xFF, 0x69, 0xB4); // Rosa
             }
+        } else if (isMonster()) {
+            // Elite Monster Health Bar Colors - Beautiful and Soft
+            if (m_skull == Otc::SkullGreen) {
+                // Elite (Green) - Verde suave e elegante
+                fillColor = Color(0x4A, 0xD8, 0x6B); // Verde suave (#4AD86B)
+            } else if (m_skull == Otc::SkullRed) {
+                // Champion (Red) - Vermelho suave e bonito
+                fillColor = Color(0xEC, 0x53, 0x53); // Vermelho suave (#EC5353)
+            } else if (m_skull == Otc::SkullBlack) {
+                // Legendary (Black) - Dourado suave e elegante
+                fillColor = Color(0xF4, 0xD0, 0x3F); // Dourado suave (#F4D03F)
+            } else {
+                // Monstros normais - cor padrão
+                fillColor = m_informationColor;
+            }
         } else {
             fillColor = m_informationColor;
         }
@@ -340,10 +355,39 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
             healthRect = healthBarBorder.expanded(-borderSize);
             healthRect.setWidth((m_healthPercent / 100.0) * healthRect.width());
 
-            // Create gradient effect for low health
-            Color gradientEnd = fillColor;
-            if (m_healthPercent <= 60 && !useGray) {
-                // Add a subtle gradient for health bar
+            // Elite Monster Special Effects
+            if (isMonster() && (m_skull == Otc::SkullGreen || m_skull == Otc::SkullRed || m_skull == Otc::SkullBlack)) {
+                // Elite monsters get special glowing effects
+                Color gradientEnd = fillColor;
+                
+                // Add soft glowing effect for elite monsters
+                float glowIntensity = (std::sin(g_clock.millis() / 300.0f) + 1.0f) / 2.0f;
+                Color glowColor = fillColor;
+                glowColor.setRed(std::min<int>(glowColor.r() + 20 * glowIntensity, 255));
+                glowColor.setGreen(std::min<int>(glowColor.g() + 20 * glowIntensity, 255));
+                glowColor.setBlue(std::min<int>(glowColor.b() + 20 * glowIntensity, 255));
+                
+                // Draw gradient fill with elite effects
+                for (int i = 0; i < healthRect.width(); ++i) {
+                    float ratio = (float)i / healthRect.width();
+                    Color currentColor = glowColor + (fillColor - glowColor) * ratio;
+                    
+                    Rect lineRect = Rect(healthRect.x() + i, healthRect.y(), 1, healthRect.height());
+                    g_drawQueue->addFilledRect(lineRect, currentColor);
+                }
+                
+                // Add gentle pulsating effect for elite monsters
+                float pulseIntensity = (std::sin(g_clock.millis() / 150.0f) + 1.0f) / 4.0f;
+                Color pulseColor = fillColor;
+                pulseColor.setRed(std::min<int>(pulseColor.r() + 25 * pulseIntensity, 255));
+                pulseColor.setGreen(std::min<int>(pulseColor.g() + 25 * pulseIntensity, 255));
+                pulseColor.setBlue(std::min<int>(pulseColor.b() + 25 * pulseIntensity, 255));
+                
+                Rect pulseRect = Rect(healthRect.x(), healthRect.y(), healthRect.width(), 1);
+                g_drawQueue->addFilledRect(pulseRect, pulseColor);
+                
+            } else if (m_healthPercent <= 60 && !useGray) {
+                // Regular gradient effect for low health
                 Color gradientStart = fillColor;
                 gradientStart.setRed(std::min<int>(gradientStart.r() + 40, 255));
                 gradientStart.setGreen(std::min<int>(gradientStart.g() + 20, 255));
@@ -351,7 +395,7 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
                 // Draw gradient fill
                 for (int i = 0; i < healthRect.width(); ++i) {
                     float ratio = (float)i / healthRect.width();
-                    Color currentColor = gradientStart + (gradientEnd - gradientStart) * ratio;
+                    Color currentColor = gradientStart + (fillColor - gradientStart) * ratio;
                     
                     Rect lineRect = Rect(healthRect.x() + i, healthRect.y(), 1, healthRect.height());
                     g_drawQueue->addFilledRect(lineRect, currentColor);
@@ -995,7 +1039,13 @@ void Creature::setOutfit(const Outfit& outfit)
     } else {
         if (outfit.getId() > 0 && !g_things.isValidDatId(outfit.getId(), ThingCategoryCreature))
             return;
+        // Preserve shader when setting outfit
+        std::string currentShader = m_outfit.getShader();
         m_outfit = outfit;
+        // If new outfit has no shader but old one had, preserve it
+        if (outfit.getShader().empty() && !currentShader.empty()) {
+            m_outfit.setShader(currentShader);
+        }
     }
     m_walkAnimationPhase = 0; // might happen when player is walking and outfit is changed.
 

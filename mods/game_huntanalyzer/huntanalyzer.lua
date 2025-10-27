@@ -24,7 +24,7 @@ function init()
   trackWindow:hide()
   expWindow:hide()
   g_keyboard.bindKeyDown('Ctrl+H', toggle)
-  analyzerButton =  modules.client_topmenu.addRightGameToggleButton('analyzerButton', tr('Analyzer (Ctrl+H)'), '/images/topbuttons/analyzers', toggle)
+  analyzerButton =  modules.client_topmenu.addRightGameToggleButton('analyzerButton', tr('Analyzer (Ctrl+H)'), '/images/topbuttons/analyzers', toggle, nil, nil, true)
   analyzerButton:setOn(mainWindow:isVisible())
 
   -- Add setup calls with protection
@@ -357,7 +357,7 @@ function setSkillValue(id, value)
 
 function onUpdateKillTracker(localPlayer, monsterName, lookType, lookHead, lookBody, lookLegs, lookFeet, addons, corpse, items)
   -- Debug para verificar se essa função está sendo chamada
-  g_logger.info("Hunt Analyzer: Monstro morto - " .. monsterName)
+  -- g_logger.info("Hunt Analyzer: Monstro morto - " .. monsterName)
   
   if not killedCreatures[monsterName] then
     killedCreatures[monsterName] = {amount = 0, lookType = lookType, lookHead = lookHead, lookBody = lookBody, lookLegs = lookLegs, lookFeet = lookFeet, addons = addons}
@@ -369,7 +369,7 @@ function onUpdateKillTracker(localPlayer, monsterName, lookType, lookHead, lookB
     
     -- Skip invalid items
     if not item or not item:getId() then
-      g_logger.debug("Hunt Analyzer: Skipping invalid item in loot")
+      -- g_logger.debug("Hunt Analyzer: Skipping invalid item in loot")
       goto continue
     end
     

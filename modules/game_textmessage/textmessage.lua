@@ -85,7 +85,7 @@ function displayMessage(mode, text)
   
   -- Check if this is a loot message
   if text and text:lower():find("loot") then
-    g_logger.info("DEBUG LOOT MESSAGE DETECTED - Mode: " .. tostring(mode) .. " | MessageModes.Loot: " .. tostring(MessageModes.Loot))
+    -- g_logger.info("DEBUG LOOT MESSAGE DETECTED - Mode: " .. tostring(mode) .. " | MessageModes.Loot: " .. tostring(MessageModes.Loot))
   end
 
   local msgtype = MessageTypes[mode]

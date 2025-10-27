@@ -1594,7 +1594,17 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
   end
   
   -- Verificar se o jogador ainda tem a gema no inventário
-  if player:getItemsCount(gem.itemId) <= 0 then
+  -- Usar a mesma lógica do servidor: getItemCount conta em todo inventário e containers
+  local itemCount = player:getItemCount and player:getItemCount(gem.itemId) or player:getItemsCount(gem.itemId)
+  
+  -- Debug: mostrar informações sobre a verificação
+  g_logger.info(string.format("Checking gem %d: getItemCount=%s, getItemsCount=%s, final count=%d", 
+    gem.itemId, 
+    player:getItemCount and tostring(player:getItemCount(gem.itemId)) or "N/A",
+    tostring(player:getItemsCount(gem.itemId)),
+    itemCount))
+  
+  if itemCount <= 0 then
     modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
     return false
   end
@@ -2994,6 +3004,12 @@ function onConjurerGemData(protocol, opcode, buffer)
     return
   end
   
+  -- Handle debug inventory command
+  if data.action == "debugInventory" then
+    debugGemInventory()
+    return
+  end
+  
   -- Verificar se são stats do servidor para comparação
   if data.action == "statsResponse" and data.stats then
     g_logger.info("=== SERVER STATS RESPONSE ===")
@@ -3109,7 +3125,8 @@ function onInventoryChange(slot, item, oldItem)
   -- Verificar se oldItem é um objeto válido e não um número
   if oldItem and type(oldItem) == 'userdata' and oldItem.getId then
     local oldItemId = oldItem:getId()
-    if oldItemId >= 2147 and oldItemId <= 2152 then
+    -- Verificar se é uma das gemas: 5273, 5274, 5275, 5276, 5277
+    if oldItemId == 5273 or oldItemId == 5274 or oldItemId == 5275 or oldItemId == 5276 or oldItemId == 5277 then
       isGemItem = true
     end
   end
@@ -3118,8 +3135,34 @@ function onInventoryChange(slot, item, oldItem)
     -- Update available gems panel if rank details window is open
     local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
     if content then
+      -- Force refresh from server to ensure accuracy
       setupAvailableGems(content)
+      
+      -- Also request fresh data from server
+      local protocolGame = g_game.getProtocolGame()
+      if protocolGame then
+        local data = {action = "listGems"}
+        protocolGame:sendExtendedOpcode(ExtendedIds.ConjurerGemRequest, json.encode(data))
+      end
     end
+  end
+end
+
+-- Debug function to check gem inventory
+function debugGemInventory()
+  local player = g_game.getLocalPlayer()
+  if not player then
+    g_logger.info("No local player found")
+    return
+  end
+  
+  g_logger.info("=== DEBUG: GEM INVENTORY CHECK ===")
+  local gemItemIds = {5273, 5274, 5275, 5276, 5277}
+  
+  for _, itemId in ipairs(gemItemIds) do
+    local getItemCount = player:getItemCount and player:getItemCount(itemId) or "N/A"
+    local getItemsCount = player:getItemsCount(itemId)
+    g_logger.info(string.format("Gem %d: getItemCount=%s, getItemsCount=%d", itemId, tostring(getItemCount), getItemsCount))
   end
 end
 
