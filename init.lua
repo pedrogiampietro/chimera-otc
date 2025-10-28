@@ -10,7 +10,7 @@ Services = {
   stats = "", -- --"http://yourwebsite/api/stats.php"
   crash = "", --"http://yourwebsite/api/crash.php",
   feedback = "",--"http://yourwebsite/api/feedback.php",
-  status = "http://127.0.0.1/online" --http://yourwebsite/api/status.php"
+  status = "http://72.61.33.157/online" --http://yourwebsite/api/status.php"
 }
 
 -- Servers accept http login url, websocket login url or ip:port:version
@@ -23,7 +23,7 @@ Servers = {
 --USE_NEW_ENERGAME = true -- uses entergamev2 based on websockets instead of entergame
 ALLOW_CUSTOM_SERVERS = true -- if true it shows option ANOTHER on server list
 
-g_app.setName("OTCv8")
+g_app.setName("Chimera")
 -- CONFIG END
 
 -- print first terminal message
