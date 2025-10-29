@@ -40,7 +40,6 @@ Module
     - game_imbuing
     - game_stats
     - game_shaders
-    - game_bot
     - game_topbuttons
   @onLoad: init()
   @onUnload: terminate()

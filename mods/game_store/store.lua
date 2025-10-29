@@ -77,23 +77,18 @@ function onExtendedOpcode(protocol, code, buffer)
 end
 
 function create()
-  g_logger.info("[Store] Create called")
   
   if gameStoreWindow then
-    g_logger.info("[Store] Window already exists")
     return
   end
-  
-  g_logger.info("[Store] Creating UI...")
+
   gameStoreWindow = g_ui.displayUI("store")
-  
+
   if not gameStoreWindow then
-    g_logger.error("[Store] Failed to load store.otui!")
     return
   end
-  
+
   gameStoreWindow:hide()
-  g_logger.info("[Store] Window created successfully")
 
   -- Ensure the button is created
   setupTopMenuButton()
@@ -151,19 +146,16 @@ end
 
 function onGameStoreUpdatePoints(data)
   if not gameStoreWindow then
-    g_logger.warning("[Store] Cannot update points - gameStoreWindow is nil")
     return
   end
   
   local infoPanel = gameStoreWindow:getChildById("infoPanel")
   if not infoPanel then
-    g_logger.warning("[Store] Cannot update points - infoPanel not found")
     return
   end
   
   local pointsWidget = infoPanel:getChildById("points")
   if not pointsWidget then
-    g_logger.warning("[Store] Cannot update points - points widget not found in infoPanel")
     return
   end
   
@@ -173,13 +165,11 @@ end
 
 function onGameStoreUpdateHistory(history)
   if not gameStoreWindow then
-    g_logger.warning("[Store] Cannot update history - gameStoreWindow is nil")
     return
   end
   
   local historyPanel = gameStoreWindow:getChildById("history")
   if not historyPanel then
-    g_logger.warning("[Store] Cannot update history - history panel not found")
     return
   end
   
@@ -480,50 +470,39 @@ function buyPoints()
 end
 
 function toggle()
-  g_logger.info("[Store] Toggle called - gameStoreWindow exists: " .. tostring(gameStoreWindow ~= nil))
-  
   -- Create window if it doesn't exist
   if not gameStoreWindow then
-    g_logger.info("[Store] Creating store window...")
     create()
   end
-  
+
   if not gameStoreWindow then
-    g_logger.error("[Store] Failed to create store window!")
     return
   end
-  
+
   if gameStoreWindow:isVisible() then
-    g_logger.info("[Store] Hiding store window")
     return hide()
   end
-  
-  g_logger.info("[Store] Showing store window")
+
   show()
 end
 
 function setupTopMenuButton()
-  g_logger.info("[Store] setupTopMenuButton called - button exists: " .. tostring(gameStoreButton ~= nil))
   
   if not gameStoreButton and modules.client_topmenu then
-    g_logger.info("[Store] Creating top menu button...")
     gameStoreButton = modules.client_topmenu.addRightGameToggleButton('gameStoreButton', tr('Store'), '/images/topbuttons/shop', toggle)
     if gameStoreButton then
       gameStoreButton:setOn(false)
-      g_logger.info("[Store] Button created successfully")
     else
-      g_logger.error("[Store] Failed to create button!")
+      -- failed to create button
     end
   elseif not modules.client_topmenu then
-    g_logger.error("[Store] client_topmenu module not available!")
+    -- client_topmenu module not available
   end
 end
 
 function show()
-  g_logger.info("[Store] Show called")
   
   if not gameStoreWindow then
-    g_logger.error("[Store] Cannot show - gameStoreWindow is nil!")
     return
   end
   
@@ -540,12 +519,9 @@ function show()
   if gameStoreButton then
     gameStoreButton:setOn(true)
   end
-  
-  g_logger.info("[Store] Window shown successfully")
 end
 
 function hide()
-  g_logger.info("[Store] Hide called")
   
   if not gameStoreWindow then
     return

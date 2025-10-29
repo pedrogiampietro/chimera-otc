@@ -128,7 +128,7 @@ local function getTaskStatus(taskId)
 end
 
 function init()
-  g_logger.info("Inicializando módulo game_tasks...")
+  -- g_logger.info("Inicializando módulo game_tasks...")
   
   -- Try to import style with error handling
   local success, errorMsg = pcall(function()
@@ -146,12 +146,12 @@ function init()
   })
   
   -- Protocol extension for tasks
-  g_logger.info("Verificando GameExtendedClientPing: " .. tostring(g_game.getFeature(GameExtendedClientPing)))
+  -- g_logger.info("Verificando GameExtendedClientPing: " .. tostring(g_game.getFeature(GameExtendedClientPing)))
   setupTopMenuButton()
   
   -- Register protocol extensions
   if ProtocolGame and ProtocolGame.registerExtendedOpcode then
-    g_logger.info("Registrando opcodes estendidos...")
+    -- g_logger.info("Registrando opcodes estendidos...")
     ProtocolGame.registerExtendedOpcode(ExtendedIds.TaskData, onExtendedTaskData)
     ProtocolGame.registerExtendedOpcode(ExtendedIds.TaskUpdate, onExtendedTaskUpdate)
   else
@@ -733,8 +733,8 @@ function updateTaskButton(task)
   -- Determine if the task is in progress
   local isInProgress = false
   
-  g_logger.debug("Verificando status da tarefa: " .. tostring(task.id))
-  g_logger.debug("Status atual: " .. tostring(task.status))
+  -- g_logger.debug("Verificando status da tarefa: " .. tostring(task.id))
+  -- g_logger.debug("Status atual: " .. tostring(task.status))
   
   -- Apenas considerar iniciada se o status for explicitamente STARTED
   if task.status == TASK_STATUS_STARTED then

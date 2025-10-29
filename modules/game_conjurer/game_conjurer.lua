@@ -2267,7 +2267,7 @@ function setupGemDamageMonitoring()
           end
         end
       end
-      g_logger.info("Gem monitoring activated via logger intercept")
+      -- g_logger.info("Gem monitoring activated via logger intercept")
     else
       g_logger.warning("No suitable method found for gem damage monitoring")
       
