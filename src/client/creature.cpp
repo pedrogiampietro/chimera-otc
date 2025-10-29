@@ -624,11 +624,11 @@ void Creature::drawInformation(const Point& point, bool useGray, const Rect& par
         return;
 
     if (m_skull != Otc::SkullNone && m_skullTexture) {
-        Rect skullRect = Rect(backgroundRect.x() + 13.5 + 12, backgroundRect.y() + 5, m_skullTexture->getSize());
+        Rect skullRect = Rect(backgroundRect.x() + 20.5 + 12, backgroundRect.y() + 8, m_skullTexture->getSize());
         g_drawQueue->addTexturedRect(skullRect, m_skullTexture, Rect(0, 0, m_skullTexture->getSize()));
     }
     if (m_shield != Otc::ShieldNone && m_shieldTexture && m_showShieldTexture) {
-        Rect shieldRect = Rect(backgroundRect.x() + 13.5, backgroundRect.y() + 5, m_shieldTexture->getSize());
+        Rect shieldRect = Rect(backgroundRect.x() + 20.5, backgroundRect.y() + 8, m_shieldTexture->getSize());
         g_drawQueue->addTexturedRect(shieldRect, m_shieldTexture, Rect(0, 0, m_shieldTexture->getSize()));
     }
     if (m_emblem != Otc::EmblemNone && m_emblemTexture) {

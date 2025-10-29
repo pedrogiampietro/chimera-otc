@@ -508,8 +508,8 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
       end
       
       if creatureThing:isPartyMember() then
-        if creatureThing:isPartyLeader() then
-          if creatureThing:isPartySharedExperienceActive() then
+        if localPlayer:isPartyLeader() then
+          if localPlayer:isPartySharedExperienceActive() then
             menu:addOption(tr('Disable Shared Experience'), function() g_game.partyShareExperience(false) end)
           else
             menu:addOption(tr('Enable Shared Experience'), function() g_game.partyShareExperience(true) end)
