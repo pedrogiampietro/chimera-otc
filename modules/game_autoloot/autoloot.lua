@@ -10,6 +10,7 @@ local autolootButton = nil
 autolootWindow = nil
 local backpackSelectorModal = nil
 local lastSelectedBackpackId = nil
+local currentCharacterName = nil
 
 local function setMoneyButtonText(isOn)
   if autolootWindow then
@@ -434,11 +435,16 @@ local function checkGoldBackpackStatus()
           return true
         end
         if container:isContainer() then
-          for i = 0, container:getItemsCount() - 1 do
+          for i = 0, 19 do
             local childItem = container:getItem(i)
-            if childItem and childItem:isContainer() then
-              if checkContainer(childItem) then
+            if childItem then
+              if childItem:getId() == 5265 then
                 return true
+              end
+              if childItem:isContainer() then
+                if checkContainer(childItem) then
+                  return true
+                end
               end
             end
           end
@@ -641,11 +647,36 @@ function onCloseWindow()
 end
 
 function refresh()
-  -- Refresh the autoloot settings when game starts
+  local player = g_game.getLocalPlayer()
+  if player then
+    local newCharacterName = player:getName()
+    if currentCharacterName ~= newCharacterName then
+      currentCharacterName = newCharacterName
+      -- Limpar lista quando trocar de personagem
+      if autolootWindow then
+        local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
+        if lootListPanel then
+          lootListPanel:destroyChildren()
+        end
+        updateItemsCount(0)
+      end
+    end
+    requestAutoLoot()
+  end
 end
 
 function offline()
   -- Clear and hide window when going offline
-  autolootWindow:hide()
-  autolootButton:setOn(false)
+  if autolootWindow then
+    autolootWindow:hide()
+    local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
+    if lootListPanel then
+      lootListPanel:destroyChildren()
+    end
+    updateItemsCount(0)
+  end
+  if autolootButton then
+    autolootButton:setOn(false)
+  end
+  currentCharacterName = nil
 end 
