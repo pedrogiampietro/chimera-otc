@@ -65,7 +65,11 @@ local implicits = {
   ["a_ice"] = "Ice Protection",
   ["a_holy"] = "Holy Protection",
   ["a_death"] = "Death Protection",
-  ["a_all"] = "Protection All"
+  ["a_all"] = "Protection All",
+  ["hpgain"] = "HP Regeneration",
+  ["hpticks"] = "HP Regen Every",
+  ["mpgain"] = "MP Regeneration",
+  ["mpticks"] = "MP Regen Every"
 }
 
 local impPercent = {
@@ -158,6 +162,7 @@ function onExtendedOpcode(protocol, code, buffer)
 end
 
 function newTooltip(data)
+  
   local _itemUId = data.uid
   local _itemName = data.itemName
   local _itemDesc = data.desc
@@ -299,6 +304,7 @@ function showTooltip(uid)
 end
 
 function buildItemTooltip(item)
+  
   tooltipWidth = 0
   longestString = 0
   tooltipWidthBase = BASE_WIDTH
@@ -426,7 +432,17 @@ function buildItemTooltip(item)
       if not implicits[key] then
         impText = value
       else
-        impText = implicits[key] .. " " .. (value > 0 and "+" or "") .. value .. (impPercent[key] and "%" or "")
+        -- Formatar valores de tempo (ticks) de milissegundos para segundos
+        local formattedValue = value
+        local suffix = impPercent[key] and "%" or ""
+        
+        if key == "hpticks" or key == "mpticks" then
+          -- Converter milissegundos para segundos
+          formattedValue = value / 1000
+          suffix = "s"
+        end
+        
+        impText = implicits[key] .. " " .. (value > 0 and "+" or "") .. formattedValue .. suffix
       end
       addString(impText, Colors.Implicit)
     end

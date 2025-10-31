@@ -36,7 +36,7 @@ local function updateGoldBackpackStatus(message, isEnabled)
       if message and message:find("disabled") then
         statusLabel:setText('Gold has been disabled')
         statusLabel:setColor('#888888')
-      elseif isEnabled or (message and (message:find("enabled") or message:find("Gold Pouch ID: 5265"))) then
+      elseif isEnabled or (message and (message:find("enabled") or message:find("Gold Pouch"))) then
         -- Gold está habilitado, verificar se tem Gold Pouch ID 5265
         if message and message:find("will go to your Gold Pouch") then
           statusLabel:setText('Gold Pouch (100%)')
@@ -401,10 +401,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
         -- Atualiza o contador de itens corretamente
         updateItemsCount(#data)
       end
-    end
-    -- (opcional) print no console
-    for i, loot in ipairs(data) do
-      print(string.format('%d. %s (ID: %d)', i, loot.name, loot.id))
     end
   else
   end

@@ -1927,13 +1927,13 @@ void ProtocolGame::parsePlayerStats(const InputMessagePtr& msg)
 
     double freeCapacity;
     if (g_game.getFeature(Otc::GameDoubleFreeCapacity))
-        freeCapacity = msg->getU32() / 100.0;
+        freeCapacity = msg->getU32();
     else
-        freeCapacity = msg->getU16() / 100.0;
+        freeCapacity = msg->getU16();
 
     double totalCapacity = freeCapacity;
     if (g_game.getFeature(Otc::GameTotalCapacity) && !g_game.getFeature(Otc::GameTibia12Protocol))
-        totalCapacity = msg->getU32() / 100.0;
+        totalCapacity = msg->getU32();
 
     double experience;
     if (g_game.getFeature(Otc::GameDoubleExperience))

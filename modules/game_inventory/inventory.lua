@@ -359,7 +359,9 @@ function onInventoryChange(player, slot, item, oldItem)
         itemWidget:setItem(item)
 
         local itemInfo = player:getInventoryItem(slot)
-        local tip = (itemInfo:getTooltip() or ""):lower()
+        
+    local tip = (itemInfo:getTooltip() or ""):lower()
+        
         local src = "/images/ui/item"
         
         if tip:find("%[legendary%]") or tip:find(" legendary") then
@@ -685,24 +687,19 @@ local function updateSpecialContainerSlot(slotIndex)
     if itemExists then
       slot:setItemId(itemData.id)
       slot:setItemCount(itemData.count or 1)
-      
-      if itemData.pending then
-        slot:setTooltip(string.format('%s\nID: %d\n%s %d\n%s', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1, tr('Waiting for server confirmation...')))
-      else
-        slot:setTooltip(string.format('%s\nID: %d\n%s %d', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1))
-      end
+      slot:removeTooltip()
     else
       -- Use gold coin (3031) as fallback
       slot:setItemId(3031)
       slot:setItemCount(itemData.count or 1)
-      slot:setTooltip(string.format('%s\nOriginal ID: %d (not found)\nFallback: Gold Coin\n%s %d', tr('Slot') .. ' ' .. slotIndex, itemData.id, tr('Amount'), itemData.count or 1))
+      slot:removeTooltip()
     end
     
     styleSpecialContainerSlot(slot, true, itemData.pending)
   else
-    slot:setItemId(0)
-    slot:setTooltip(tr('Empty special container slot'))
-    styleSpecialContainerSlot(slot, false)
+  slot:setItemId(0)
+  slot:removeTooltip()
+  styleSpecialContainerSlot(slot, false)
   end
 end
 
