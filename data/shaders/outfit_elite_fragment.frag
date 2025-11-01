@@ -1,28 +1,23 @@
-uniform mat4 u_Color;
-varying vec2 v_TexCoord;
-varying vec2 v_TexCoord2;
-varying vec2 v_TexCoord3;
-uniform sampler2D u_Tex0;
-uniform sampler2D u_Tex1;
+const float offset = 1.0 / 64.0;
 uniform float u_Time;
+uniform sampler2D u_Tex0;
+varying vec2 v_TexCoord;
 
 void main()
 {
-    gl_FragColor = texture2D(u_Tex0, v_TexCoord);
-    vec4 texcolor = texture2D(u_Tex0, v_TexCoord2);
-    vec4 effectColor = texture2D(u_Tex1, v_TexCoord3);
-    
-    if(texcolor.a > 0.1) {
-        // Subtle green aura with gentle pulsing
-        float pulse = sin(u_Time * 2.0) * 0.2 + 0.8;
-        vec4 greenAura = vec4(0.3, 0.8, 0.4, pulse * 0.4);
-        
-        // Apply gentle green tint
-        gl_FragColor = mix(gl_FragColor, gl_FragColor * greenAura, 0.3);
-        gl_FragColor *= effectColor;
-        
-        // Add subtle glow
-        gl_FragColor.rgb += greenAura.rgb * 0.1 * pulse;
-    }
-    if(gl_FragColor.a < 0.01) discard;
+	vec4 col = texture2D(u_Tex0, v_TexCoord);
+	if (col.a > 0.5)
+		gl_FragColor = col;
+	else {
+		float a = texture2D(u_Tex0, vec2(v_TexCoord.x + offset, v_TexCoord.y)).a +
+			texture2D(u_Tex0, vec2(v_TexCoord.x, v_TexCoord.y - offset)).a +
+			texture2D(u_Tex0, vec2(v_TexCoord.x - offset, v_TexCoord.y)).a +
+			texture2D(u_Tex0, vec2(v_TexCoord.x, v_TexCoord.y + offset)).a;
+		if (col.a < 1.0 && a > 0.0) {
+			float x = (cos(u_Time * 9.57) + 1.0)/2.0 * 0.2 + 0.8;
+			gl_FragColor = vec4(0.0, x, 0.0, x); // Verde pulsante
+		} else {
+			gl_FragColor = col;
+		}
+	}
 }

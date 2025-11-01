@@ -1,6 +1,4 @@
 function init()
-  -- add manually your shaders from /data/shaders
-
   -- map shaders
   g_shaders.createShader("map_default", "/shaders/map_default_vertex", "/shaders/map_default_fragment")  
 
@@ -24,12 +22,6 @@ function init()
 
   g_shaders.createOutfitShader("outfit_legendary", "/shaders/outfit_legendary_vertex", "/shaders/outfit_legendary_fragment")
   g_shaders.addTexture("outfit_legendary", "/images/shaders/brazil.png")
-
-  -- Note: Other shaders (bloom, fog, heat, etc.) are fragment-only shaders
-  -- They can be used for map effects but not for outfit shaders
-  -- Use modules.game_interface.gameMapPanel:setShader("shader_name") for map effects
-
-  -- you can use creature:setOutfitShader("outfit_rainbow") to set shader
 
 end
 
