@@ -5,12 +5,11 @@ local config = {
   loopInterval = 5, -- seconds, check mana to make runes
   eatInterval = 30, -- seconds, search for food interval
   defaultSayChannel = 1, -- channel id
-  useHotkey = true, -- if your server doesn't allow using items thru hotkeys, set to false // if false, it will search for food only in opened containers
 }
 
 local foodIds = {
   -- start with common foods ids, to save some resources..
-  3607, 3592, 3600, 3601, 3725, 3582, 3577, 3578, 3583, 3723, 3731, 3732, 3595, 3593,
+  3607, 3592, 3600, 3601, 3725, 3582, 3577, 3578, 3583, 3723, 3731, 3732, 3595, 3593, 2787, -- white mushroom
   -- rarest foods (review needed)
   841,904,22187,3726,3730,6392,6544,23535,32404,3601,6541,3586,3594,3578,24960,836,6393,24395,6545,3250,21143,3587,22185,11681,21145,10453,24394,20310,3723,3731,169,17821,13992,17820,7375,3588,21144,15795,14681,8010,3602,14085,3583,3591,21146,3579,23545,8011,11683,11682,14084,7376,3595,11461,6569,8012,3727,3732,16103,10329,3724,3728,9537,8013,8197,7158,8194,7377,901,3606,17457,6500,3599,3607,3584,3592,12310,3580,8016,8015,8014,6277,24408,7374,7373,3581,7159,3606,11459,11460,6543,6542,3725,3729,32401,8017,3582,6278,10219,6574,8177,3596,3598,3597,3600,11462,3585,3593,3590,3577,3589,8019,5096,6125,229
 }
@@ -173,6 +172,7 @@ function setOptions()
   tSettings.manaMT = tSettings.manaMT or '90'
   tSettings.spellRM = tSettings.spellRM or 'adori gran'
   tSettings.manaRM = tSettings.manaRM or '80'
+  -- no extra options
 
   for e, entry in pairs(checks) do
     local box = tWindow:recursiveGetChildById(entry)
@@ -240,7 +240,7 @@ end
 
 -- main
 function say(text)
-  g_game.talkChannel(defaultSayChannel,0,text)
+  g_game.talkChannel(config.defaultSayChannel,0,text)
 end
 
 function getSpellSoul(spell,pSoul)
@@ -260,6 +260,8 @@ end
 
 local lastEat = 0
 
+-- no debug logger in production
+
 -- execute
 function mainLoop()
   if not g_game.isOnline() or not tSettings.enabled then
@@ -276,23 +278,37 @@ function mainLoop()
 
   -- eat food
   if set.checkFood and (lastEat + config.eatInterval < g_clock.seconds()) then
-    lastEat = g_clock.seconds()
-    if config.useHotkey then
-      for _, id in pairs(foodIds) do
-        if player:getItemsCount(id) > 0 then
-          g_game.useInventoryItem(id)
-          break
+    local foodEaten = false
+    
+    -- First, try hotkey (some servers may block it)
+    for _, id in pairs(foodIds) do
+      local before = player:getItemsCount(id)
+      if before > 0 then
+        g_game.useInventoryItem(id)
+        local after = player:getItemsCount(id)
+        if after < before then
+          foodEaten = true
         end
+        break
       end
-    else
+    end
+
+    -- If hotkey is blocked or didn't find anything, scan open containers as fallback
+    if not foodEaten then
       for c, cont in pairs(g_game.getContainers()) do
+        if foodEaten then break end
         for i, item in ipairs(cont:getItems()) do
-          if table.find(foodIds,item:getId()) then
+          local iid = item:getId()
+          if table.find(foodIds, iid) then
             g_game.use(item)
+            foodEaten = true
             break
           end
         end
       end
+    end
+    if foodEaten then
+      lastEat = g_clock.seconds()
     end
   end
 

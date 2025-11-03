@@ -1,5 +1,5 @@
 -- CONFIG
-APP_NAME = "otclientv8"  -- important, change it, it's name for config dir and files in appdata
+APP_NAME = "chimera"  -- important, change it, it's name for config dir and files in appdata
 APP_VERSION = 772       -- client version for updater and login to identify outdated client
 DEFAULT_LAYOUT = "retro" -- on android it's forced to "mobile", check code bellow
 
@@ -24,6 +24,8 @@ Servers = {
 ALLOW_CUSTOM_SERVERS = true -- if true it shows option ANOTHER on server list
 
 g_app.setName("Chimera")
+-- Ensure the in-game version matches APP_VERSION shown in logs/UI
+g_app.setVersion(tostring(APP_VERSION))
 -- CONFIG END
 
 -- print first terminal message
