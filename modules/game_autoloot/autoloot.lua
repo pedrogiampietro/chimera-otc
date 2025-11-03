@@ -273,28 +273,10 @@ local function onSelectBackpackButtonClick()
 end
 
 local function onExtendedAutoLootData(protocol, opcode, buffer)
-  print('[AutoLoot] ========================================')
-  print('[AutoLoot] Received raw buffer:', buffer)
-  print('[AutoLoot] Buffer length:', buffer:len())
-  
   local success, data = pcall(json.decode, buffer)
   if not success then
-    print('[AutoLoot] ERROR: Failed to decode JSON:', buffer)
-    print('[AutoLoot] ========================================')
     return
   end
-  
-  print('[AutoLoot] Decoded data type:', type(data))
-  if type(data) == 'table' then
-    print('[AutoLoot] Data is array:', data[1] ~= nil and data.name == nil)
-    if data.action then
-      print('[AutoLoot] Data action:', data.action)
-    end
-    if data.feedback then
-      print('[AutoLoot] Data feedback:', data.feedback, 'message:', data.message)
-    end
-  end
-  print('[AutoLoot] ========================================')
   
   -- Handle backpack list response
   if data and data.action == "backpackList" and data.backpacks then
@@ -309,7 +291,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
   
   -- Feedback visual se for resposta de ação
   if data and data.feedback and data.message then
-    print('[AutoLoot] Processing feedback:', data.feedback, data.message)
     if data.feedback == "success" or data.feedback == "info" then
       displayInfoBox("AutoLoot", data.message)
       -- Atualiza o texto do botão de gold se a mensagem for sobre gold
@@ -342,7 +323,6 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
   
   -- Se recebeu um array de itens, atualiza a lista
   if data and type(data) == 'table' and #data >= 0 then
-    print('[AutoLoot] Updating item list with', #data, 'items')
     -- Atualiza a interface se a janela existir
     if autolootWindow then
       local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
@@ -510,22 +490,16 @@ local function onAddItemButtonClick()
     return
   end
 
-  print('[AutoLoot] Sending add item request:', itemName)
-  
   -- Envie o pedido para o servidor (action = "add")
   local protocol = g_game.getProtocolGame()
   if protocol then
     local data = { action = "add", item = itemName }
-    local jsonData = json.encode(data)
-    print('[AutoLoot] JSON data:', jsonData)
-    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, jsonData)
+    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
     
     -- Limpar o campo após enviar
     addItemEdit:setText("")
     
     -- O servidor agora envia automaticamente a lista atualizada, não precisamos solicitar
-  else
-    print('[AutoLoot] ERROR: Protocol not available!')
   end
 end
 
