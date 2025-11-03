@@ -957,12 +957,14 @@ function sendMessage(message, tab)
     if tab == defaultTab then
       speaktypedesc = chatCommandSayMode or SayModes[consolePanel:getChildById('sayModeButton').sayMode].speakTypeDesc
       if speaktypedesc ~= 'say' then sayModeChange(2) end -- head back to say mode
+      -- Use g_game.talk() for default tab to avoid sending to channel 0
+      g_game.talk(message)
+      return
     else
       speaktypedesc = chatCommandSayMode or 'channelYellow'
+      g_game.talkChannel(SpeakTypesSettings[speaktypedesc].speakType, channel, message)
+      return
     end
-
-    g_game.talkChannel(SpeakTypesSettings[speaktypedesc].speakType, channel, message)
-    return
   else
     local isPrivateCommand = false
     local priv = true
@@ -1138,10 +1140,13 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
       modules.game_textmessage.displayPrivateMessage(name .. ':\n' .. message)
     end
   else
-    local channel = tr('Default')
-    if not defaultMessage then
-      channel = channels[channelId]
+    -- Handle default messages (say, whisper, yell) - add directly to default tab
+    if defaultMessage then
+      addTabText(composedMessage, speaktype, defaultTab, name)
+      return
     end
+    
+    local channel = channels[channelId]
 
     -- Special handling for loot channel (Channel ID 9) - color ALL loot messages
     if channelId == 9 then

@@ -15,7 +15,7 @@ Services = {
 
 -- Servers accept http login url, websocket login url or ip:port:version
 Servers = {
-  LocalTestServ = "www.chimeraot.online:7171:772"
+  LocalTestServ = "127.0.0.1:7171:772"
 }
 
 --Server = "ws://yourwebsite:3000/"
