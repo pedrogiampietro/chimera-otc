@@ -14,7 +14,7 @@ function init()
     onSoulChange = onSoulChange,
     onFreeCapacityChange = onFreeCapacityChange,
     onTotalCapacityChange = onTotalCapacityChange,
-    onStaminaChange = onStaminaChange,
+    -- onStaminaChange = onStaminaChange,
     onOfflineTrainingChange = onOfflineTrainingChange,
     onRegenerationChange = onRegenerationChange,
     onSpeedChange = onSpeedChange,
@@ -46,7 +46,7 @@ function terminate()
     onSoulChange = onSoulChange,
     onFreeCapacityChange = onFreeCapacityChange,
     onTotalCapacityChange = onTotalCapacityChange,
-    onStaminaChange = onStaminaChange,
+    -- onStaminaChange = onStaminaChange,
     onOfflineTrainingChange = onOfflineTrainingChange,
     onRegenerationChange = onRegenerationChange,
     onSpeedChange = onSpeedChange,
@@ -221,7 +221,7 @@ function refresh()
   onManaChange(player, player:getMana(), player:getMaxMana())
   onSoulChange(player, player:getSoul())
   onFreeCapacityChange(player, player:getFreeCapacity())
-  onStaminaChange(player, player:getStamina())
+  -- onStaminaChange(player, player:getStamina())
   onMagicLevelChange(player, player:getMagicLevel(), player:getMagicLevelPercent())
   onOfflineTrainingChange(player, player:getOfflineTrainingTime())
   onRegenerationChange(player, player:getRegenerationTime())

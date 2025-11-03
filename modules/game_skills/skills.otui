@@ -110,31 +110,6 @@ DragonMiniWindow
         margin-right: 8
         margin-top: 22
 
-    SkillButton
-      id: stamina
-      height: 40
-      SkillNameLabel
-        !text: tr('Stamina')
-      SkillValueLabel
-      UIWidget
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        margin-top: 16
-        margin-left: 2
-        margin-right: 2
-        height: 22
-        phantom: true
-        image-source: /images/ui/healthinfo/progress_bar_stamina_bg
-        image-border: 8
-      SkillPercentPanel
-        image-source: /images/ui/healthinfo/progress_bar_stamina
-        background-color: alpha
-        height: 10
-        margin-left: 8
-        margin-right: 8
-        margin-top: 22
-
     HorizontalSeparator
       margin-top: 2
       margin-bottom: 5

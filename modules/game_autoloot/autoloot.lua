@@ -273,7 +273,28 @@ local function onSelectBackpackButtonClick()
 end
 
 local function onExtendedAutoLootData(protocol, opcode, buffer)
-  local data = json.decode(buffer)
+  print('[AutoLoot] ========================================')
+  print('[AutoLoot] Received raw buffer:', buffer)
+  print('[AutoLoot] Buffer length:', buffer:len())
+  
+  local success, data = pcall(json.decode, buffer)
+  if not success then
+    print('[AutoLoot] ERROR: Failed to decode JSON:', buffer)
+    print('[AutoLoot] ========================================')
+    return
+  end
+  
+  print('[AutoLoot] Decoded data type:', type(data))
+  if type(data) == 'table' then
+    print('[AutoLoot] Data is array:', data[1] ~= nil and data.name == nil)
+    if data.action then
+      print('[AutoLoot] Data action:', data.action)
+    end
+    if data.feedback then
+      print('[AutoLoot] Data feedback:', data.feedback, 'message:', data.message)
+    end
+  end
+  print('[AutoLoot] ========================================')
   
   -- Handle backpack list response
   if data and data.action == "backpackList" and data.backpacks then
@@ -288,6 +309,7 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
   
   -- Feedback visual se for resposta de ação
   if data and data.feedback and data.message then
+    print('[AutoLoot] Processing feedback:', data.feedback, data.message)
     if data.feedback == "success" or data.feedback == "info" then
       displayInfoBox("AutoLoot", data.message)
       -- Atualiza o texto do botão de gold se a mensagem for sobre gold
@@ -303,18 +325,24 @@ local function onExtendedAutoLootData(protocol, opcode, buffer)
         local nome = data.message:match("Autoloot backpack set to:%s*(.+)")
         setBackpackAtualLabel(nome)
       end
+      -- NÃO fazer return aqui, pois o servidor pode enviar a lista logo em seguida
+      -- O servidor agora envia automaticamente a lista atualizada após add/remove/clear
     elseif data.feedback == "error" then
       displayErrorBox("AutoLoot", data.message)
       -- Se for erro de backpack, limpa o label
       if data.message:find("backpack") then
         setBackpackAtualLabel(nil)
       end
+      return
     else
       displayInfoBox("AutoLoot", data.message)
     end
-    return
+    -- NÃO retornar aqui, continuar processando
   end
-  if data and type(data) == 'table' then
+  
+  -- Se recebeu um array de itens, atualiza a lista
+  if data and type(data) == 'table' and #data >= 0 then
+    print('[AutoLoot] Updating item list with', #data, 'items')
     -- Atualiza a interface se a janela existir
     if autolootWindow then
       local lootListPanel = autolootWindow:recursiveGetChildById('lootListPanel')
@@ -421,35 +449,35 @@ local function checkGoldBackpackStatus()
   if not player then return end
   
   local hasGoldPouch = false
-  -- Verificar slots do inventário (slots 1-10)
+  
+  -- First, check inventory slots directly for Gold Pouch
   for slot = 1, 10 do
     local item = player:getInventoryItem(slot)
-    if item then
-      -- Função recursiva para verificar containers
-      local function checkContainer(container)
-        if container:getId() == 5265 then
-          return true
-        end
-        if container:isContainer() then
-          for i = 0, 19 do
-            local childItem = container:getItem(i)
-            if childItem then
-              if childItem:getId() == 5265 then
-                return true
-              end
-              if childItem:isContainer() then
-                if checkContainer(childItem) then
-                  return true
-                end
-              end
-            end
-          end
-        end
-        return false
+    if item and item:getId() == 5265 then
+      hasGoldPouch = true
+      break
+    end
+  end
+  
+  -- If not found in inventory slots, check inside opened containers
+  if not hasGoldPouch then
+    local containers = g_game.getContainers()
+    for _, container in pairs(containers) do
+      -- Check if this container is a Gold Pouch
+      if container:getId() == 5265 then
+        hasGoldPouch = true
+        break
       end
       
-      if checkContainer(item) then
-        hasGoldPouch = true
+      -- Check all items inside this container
+      for _, item in ipairs(container:getItems()) do
+        if item:getId() == 5265 then
+          hasGoldPouch = true
+          break
+        end
+      end
+      
+      if hasGoldPouch then
         break
       end
     end
@@ -482,14 +510,22 @@ local function onAddItemButtonClick()
     return
   end
 
+  print('[AutoLoot] Sending add item request:', itemName)
+  
   -- Envie o pedido para o servidor (action = "add")
   local protocol = g_game.getProtocolGame()
   if protocol then
     local data = { action = "add", item = itemName }
-    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, json.encode(data))
+    local jsonData = json.encode(data)
+    print('[AutoLoot] JSON data:', jsonData)
+    protocol:sendExtendedOpcode(ExtendedIds.AutoLootRequest, jsonData)
     
     -- Limpar o campo após enviar
     addItemEdit:setText("")
+    
+    -- O servidor agora envia automaticamente a lista atualizada, não precisamos solicitar
+  else
+    print('[AutoLoot] ERROR: Protocol not available!')
   end
 end
 
