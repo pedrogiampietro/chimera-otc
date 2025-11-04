@@ -71,22 +71,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OpenGL|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
     <SourcePath>$(VC_SourcePath);$(ProjectDir)../src;</SourcePath>
-    <TargetName>otclient_gl</TargetName>
+    <TargetName>chimera_gl</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OpenGL|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
     <SourcePath>$(VC_SourcePath);$(ProjectDir)../src;</SourcePath>
-    <TargetName>otclient_gl</TargetName>
+    <TargetName>chimera_gl</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DirectX|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
     <SourcePath>$(VC_SourcePath);$(ProjectDir)../src;</SourcePath>
-    <TargetName>otclient_dx</TargetName>
+    <TargetName>chimera_dx</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DirectX|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
     <SourcePath>$(VC_SourcePath);$(ProjectDir)../src;</SourcePath>
-    <TargetName>otclient_dx</TargetName>
+    <TargetName>chimera_dx</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='DirectX|Win32'">
     <VcpkgUseStatic>true</VcpkgUseStatic>

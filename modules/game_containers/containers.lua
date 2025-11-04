@@ -1,4 +1,5 @@
 local gameStart = 0
+local MAX_VISIBLE_CONTAINERS = 8 -- Maximum containers visible at once per panel
 
 function init()
 	connect(Container, {
@@ -55,8 +56,16 @@ function destroy(container)
 end
 
 function refreshContainerItems(container)
+    if not container.itemsPanel then
+        return
+    end
+    
     for slot = 0, container:getCapacity() - 1 do
         local itemWidget = container.itemsPanel:getChildById("item" .. slot)
+        if not itemWidget then
+            return
+        end
+        
         local item = container:getItem(slot)
         local tip = item and item:getTooltip() and item:getTooltip():lower() or ""
         
@@ -147,19 +156,21 @@ end
 local function setFrames()
 	for _, container in pairs(g_game.getContainers()) do
 	  local panel = container.itemsPanel
-	  for _, child in pairs(panel:getChildren()) do
-		local tip = (child:getTooltip() or ""):lower()
-		local src = "/images/ui/item"
-		if tip:find("%[legendary%]") or tip:find(" legendary") then
-		  src = "/images/ui/rarity_gold"
-		elseif tip:find("%[epic%]") or tip:find(" epic") then
-		  src = "/images/ui/rarity_purple"
-		elseif tip:find("%[common%]") or tip:find(" common") then
-		  src = "/images/ui/rarity_white"
-		elseif tip:find("%[rare%]") or tip:find(" rare") then
-		  src = "/images/ui/rarity_blue"
+	  if panel then
+		for _, child in pairs(panel:getChildren()) do
+			local tip = (child:getTooltip() or ""):lower()
+			local src = "/images/ui/item"
+			if tip:find("%[legendary%]") or tip:find(" legendary") then
+			  src = "/images/ui/rarity_gold"
+			elseif tip:find("%[epic%]") or tip:find(" epic") then
+			  src = "/images/ui/rarity_purple"
+			elseif tip:find("%[common%]") or tip:find(" common") then
+			  src = "/images/ui/rarity_white"
+			elseif tip:find("%[rare%]") or tip:find(" rare") then
+			  src = "/images/ui/rarity_blue"
+			end
+			child:setImageSource(src)
 		end
-		child:setImageSource(src)
 	  end
 	end
 end
@@ -172,7 +183,40 @@ function onContainerOpen(container, previousContainer)
 		previousContainer.window = nil
 		previousContainer.itemsPanel = nil
 	else
-		containerWindow = g_ui.createWidget("ContainerWindow", modules.game_interface.getContainerPanel())
+		local containerPanel = modules.game_interface.getContainerPanel()
+		
+		-- Check if we have too many containers open in this panel
+		if containerPanel and containerPanel:getClassName() == 'UIMiniWindowContainer' then
+			local openContainers = {}
+			for _, cont in pairs(g_game.getContainers()) do
+				if cont.window and cont.window:isVisible() and cont.window:getParent() == containerPanel then
+					table.insert(openContainers, {container = cont, yPos = cont.window:getY()})
+				end
+			end
+			
+			-- Sort by Y position (oldest/highest first)
+			table.sort(openContainers, function(a, b) return a.yPos < b.yPos end)
+			
+			-- Check if we're running out of space (calculate estimated Y position)
+			local panelHeight = containerPanel:getHeight()
+			local estimatedNextY = 0
+			if #openContainers > 0 then
+				local lastContainer = openContainers[#openContainers]
+				if lastContainer.container.window then
+					estimatedNextY = lastContainer.container.window:getY() + lastContainer.container.window:getHeight() + 5
+				end
+			end
+			
+			-- Close oldest container if we exceed the limit OR if running out of screen space
+			if #openContainers >= MAX_VISIBLE_CONTAINERS or estimatedNextY > (panelHeight - 150) then
+				local oldestContainer = openContainers[1]
+				if oldestContainer and oldestContainer.container and oldestContainer.container.window then
+					g_game.close(oldestContainer.container)
+				end
+			end
+		end
+		
+		containerWindow = g_ui.createWidget("ContainerWindow", containerPanel)
 
 		containerWindow:setBorderWidth(2)
 		containerWindow:setBorderColor("#FFFFFF")

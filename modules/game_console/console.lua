@@ -1672,91 +1672,112 @@ end
 function processLootMessage(message, defaultColor)
   local coloredTextTable = {}
   local currentIndex = 1
-  
-  -- Rarity colors
-  local rarityColors = {
-    ["rare "] = "#4A90E2",     -- Blue for rare
-    ["epic "] = "#9B59B6",     -- Purple for epic  
-    ["legendary "] = "#F1C40F", -- Yellow for legendary
-    ["unidentified "] = "#27AE60" -- Green for unidentified
+
+  -- Helper: plain contains with Lua patterns supported
+  local function containsAny(haystack, patterns)
+    local s = haystack:lower()
+    for _, p in ipairs(patterns) do
+      if s:find(p) then return true end
+    end
+    return false
+  end
+
+  -- Rarity colors (single source of truth)
+  local COLORS = {
+    RARE = "#4A90E2",        -- Blue
+    EPIC = "#9B59B6",        -- Purple
+    LEGENDARY = "#F1C40F",   -- Gold/Yellow
+    UNIDENTIFIED = "#27AE60",-- Green
+    BASE = "#FF6600"         -- Orange for base text / separators
   }
-  
-  -- First handle unidentified items with asterisks (*)
-  if string.find(message, "%*[^%*]+%*") then
-    for startAsterisk, endAsterisk in string.gmatch(message, "%*().-()%*") do
+
+  -- Flexible rarity patterns to match multiple formats
+  -- We intentionally support:
+  --  - prefix in brackets: [legendary]
+  --  - prefix word: legendary helm, epic shield
+  --  - suffix word: helmet legendary
+  --  - followed by comma/paren: legendary), legendary,
+  local RARITY_PATTERNS = {
+    rare       = {"%[rare%]",       " rare ", "^rare ", " rare$", "rare,", "rare%)"},
+    epic       = {"%[epic%]",       " epic ", "^epic ", " epic$", "epic,", "epic%)"},
+    legendary  = {"%[legendary%]",  " legendary ", "^legendary ", " legendary$", "legendary,", "legendary%)"},
+    unidentified = {"%[unidentified%]", " unidentified ", "^unidentified ", " unidentified$", "unidentified,", "unidentified%)"},
+  }
+
+  -- First handle unidentified items wrapped with asterisks: *item*
+  if message:find("%*[^%*]+%*") then
+    for startAsterisk, endAsterisk in message:gmatch("%*().-()%*") do
       -- Add text before the asterisk
       if currentIndex < startAsterisk - 1 then
         table.insert(coloredTextTable, message:sub(currentIndex, startAsterisk - 2))
-        table.insert(coloredTextTable, "#FF6600") -- Orange for text around unidentified items
+        table.insert(coloredTextTable, COLORS.BASE)
       end
-      
+
       -- Add the unidentified item text with green color
       table.insert(coloredTextTable, message:sub(startAsterisk - 1, endAsterisk))
-      table.insert(coloredTextTable, "#27AE60") -- Green for unidentified with asterisks
-      
+      table.insert(coloredTextTable, COLORS.UNIDENTIFIED)
+
       currentIndex = endAsterisk + 1
     end
-    
+
     -- Add any remaining text
     if currentIndex <= #message then
       table.insert(coloredTextTable, message:sub(currentIndex))
-      table.insert(coloredTextTable, "#FF6600") -- Orange for remaining text
+      table.insert(coloredTextTable, COLORS.BASE)
     end
-    
+
     return coloredTextTable
   end
-  
+
   -- Handle rarity-based coloring for items without asterisks
   local processedMessage = message
-  local segments = {}
-  
+
   -- Split message by commas to process individual items
   local items = {}
-  local lootStart = string.find(processedMessage, ": ")
+  local lootStart = processedMessage:find(": ")
   if lootStart then
-    local lootPart = string.sub(processedMessage, lootStart + 2)
-    local beforeLoot = string.sub(processedMessage, 1, lootStart + 1)
-    
+    local lootPart = processedMessage:sub(lootStart + 2)
+    local beforeLoot = processedMessage:sub(1, lootStart + 1)
+
     -- Split items by comma
-    for item in string.gmatch(lootPart, "([^,]+)") do
-      table.insert(items, string.match(item, "^%s*(.-)%s*$")) -- trim whitespace
+    for item in lootPart:gmatch("([^,]+)") do
+      table.insert(items, (item:match("^%s*(.-)%s*$"))) -- trim whitespace
     end
-    
+
     -- Add the "Loot de..." part
     table.insert(coloredTextTable, beforeLoot .. " ")
-    table.insert(coloredTextTable, "#FF6600") -- Orange for loot prefix
-    
+    table.insert(coloredTextTable, COLORS.BASE)
+
     -- Process each item
     for i, item in ipairs(items) do
-      local colored = false
-      
-      -- Check for rarity keywords
-      for rarity, color in pairs(rarityColors) do
-        if string.find(string.lower(item), string.lower(rarity)) then
-          table.insert(coloredTextTable, item)
-          table.insert(coloredTextTable, color)
-          colored = true
-          break
-        end
+      local lower = item:lower()
+      local colorToUse = nil
+
+      if containsAny(lower, RARITY_PATTERNS.legendary) then
+        colorToUse = COLORS.LEGENDARY
+      elseif containsAny(lower, RARITY_PATTERNS.epic) then
+        colorToUse = COLORS.EPIC
+      elseif containsAny(lower, RARITY_PATTERNS.rare) then
+        colorToUse = COLORS.RARE
+      elseif containsAny(lower, RARITY_PATTERNS.unidentified) then
+        colorToUse = COLORS.UNIDENTIFIED
       end
-      
-      if not colored then
-        table.insert(coloredTextTable, item)
-        table.insert(coloredTextTable, "#FF6600") -- Orange for regular loot items
-      end
-      
+
+      table.insert(coloredTextTable, item)
+      table.insert(coloredTextTable, colorToUse or COLORS.BASE)
+
       -- Add comma separator except for last item
       if i < #items then
         table.insert(coloredTextTable, ", ")
-        table.insert(coloredTextTable, "#FF6600") -- Orange for separators
+        table.insert(coloredTextTable, COLORS.BASE)
       end
     end
   else
-    -- Fallback if pattern doesn't match - use orange for all loot
+    -- Fallback if pattern doesn't match - use base color for all loot
     table.insert(coloredTextTable, message)
-    table.insert(coloredTextTable, "#FF6600") -- Orange for fallback loot messages
+    table.insert(coloredTextTable, COLORS.BASE)
   end
-  
+
   return coloredTextTable
 end
 
