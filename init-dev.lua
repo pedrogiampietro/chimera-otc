@@ -15,7 +15,7 @@ Services = {
 
 -- Servers accept http login url, websocket login url or ip:port:version
 Servers = {
-  LocalTestServ = "www.chimeraot.online:7171:772"
+  LocalTestServ = "127.0.0.1:7171:772"
 }
 
 --Server = "ws://yourwebsite:3000/"
@@ -24,6 +24,8 @@ Servers = {
 ALLOW_CUSTOM_SERVERS = true -- if true it shows option ANOTHER on server list
 
 g_app.setName("Chimera")
+-- Ensure the in-game version matches APP_VERSION shown in logs/UI
+g_app.setVersion(tostring(APP_VERSION))
 -- CONFIG END
 
 -- print first terminal message

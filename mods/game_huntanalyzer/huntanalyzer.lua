@@ -24,7 +24,7 @@ function init()
   trackWindow:hide()
   expWindow:hide()
   g_keyboard.bindKeyDown('Ctrl+H', toggle)
-  analyzerButton =  modules.client_topmenu.addRightGameToggleButton('analyzerButton', tr('Analyzer (Ctrl+H)'), '/images/topbuttons/analyzers', toggle, nil, nil, true)
+  analyzerButton =  modules.client_topmenu.addRightGameToggleButton('analyzerButton', tr('Analyzer (Ctrl+H)'), '/images/topbuttons/analyzers', toggle, false, 8)
   analyzerButton:setOn(mainWindow:isVisible())
 
   -- Add setup calls with protection

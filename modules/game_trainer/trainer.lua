@@ -180,7 +180,9 @@ function setOptions()
   end
   for e, entry in pairs(texts) do
     local text = tWindow:recursiveGetChildById(entry)
-    text:setText(tSettings[entry])
+    if text then
+      text:setText(tSettings[entry])
+    end
   end
 end
 
@@ -210,6 +212,55 @@ function inputSpell(id)
     tSettings[id] = tInput.text:getText()
     tWindow:recursiveGetChildById(id):setText(tSettings[id])
     tInput:destroy()
+  end
+
+  local cancelFunc = function()
+    tInput:destroy()
+  end
+
+  -- buttons
+  tInput.buttonOk.onClick = okFunc
+  tInput.onEnter = okFunc
+  tInput.buttonClose.onClick = cancelFunc
+  tInput.onEscape = cancelFunc
+end
+
+function inputPercent(id)
+  destroyInput()
+
+  -- create window
+  tInput = g_ui.createWidget('TrainerAddPercent', g_ui.getRootWidget())
+  tInput:show()
+  tInput:raise()
+  tInput:focus()
+  tInput:setText(id == 'manaRM' and "Edit Mana % for Rune Making" or "Edit Mana % for Mana Training")
+  
+  tInput.text:setText(tSettings[id])
+  tInput.text:setCursorPos(tSettings[id]:len())
+
+  tInput.text.onTextChange = function(self, text)
+    -- Remove non-numeric characters
+    local numOnly = text:gsub("[^0-9]", "")
+    if numOnly ~= text then
+      self:setText(numOnly)
+      return
+    end
+    
+    -- Enable OK button only if valid
+    local val = tonumber(numOnly)
+    tInput.buttonOk:setEnabled(val and val >= 1 and val <= 100)
+  end
+
+  -- functions
+  local okFunc = function()
+    local text = tInput.text:getText()
+    local val = tonumber(text)
+    
+    if val and val >= 1 and val <= 100 then
+      tSettings[id] = text
+      tWindow:recursiveGetChildById(id):setText(text)
+      tInput:destroy()
+    end
   end
 
   local cancelFunc = function()

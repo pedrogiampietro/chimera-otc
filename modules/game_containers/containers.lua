@@ -1,6 +1,42 @@
 local gameStart = 0
 local MAX_VISIBLE_CONTAINERS = 8 -- Maximum containers visible at once per panel
 
+-- Heuristic to detect corpse/monster loot containers (to be auto-closable)
+-- Goal: Do NOT auto-close player backpacks or regular storage containers
+local function isAutoClosableLoot(container)
+	-- Safeguards
+	if not container then return false end
+
+	-- Prefer checking the container item characteristics
+	local citem = container:getContainerItem()
+	local name = (container:getName() or ""):lower()
+
+	-- Common corpse name patterns across servers
+	local isCorpseByName = (name:find('dead') ~= nil)
+		or (name:find('remains') ~= nil)
+		or (name:find('slain') ~= nil)
+		or (name:find('corpse') ~= nil)
+
+	-- If the underlying item is not pickupable and has no parent, it's very likely ground loot (e.g., corpse)
+	local isLikelyGroundLoot = false
+	if citem and citem.isPickupable and not citem:isPickupable() and (not container:hasParent()) then
+		isLikelyGroundLoot = true
+	end
+
+	-- Conversely, avoid closing known personal/storage containers by name
+	local isPersonalContainerByName = (name:find('backpack') ~= nil)
+		or (name:find('bag') ~= nil)
+		or (name:find('chest') ~= nil)
+		or (name:find('box') ~= nil)
+		or (name:find('crate') ~= nil)
+		or (name:find('locker') ~= nil)
+		or (name:find('depot') ~= nil)
+		or (name:find('stash') ~= nil)
+
+	-- Auto-close only monster loot/corpse-like containers, and never personal storage
+	return (isCorpseByName or isLikelyGroundLoot) and not isPersonalContainerByName
+end
+
 function init()
 	connect(Container, {
 		onOpen = onContainerOpen,
@@ -183,14 +219,17 @@ function onContainerOpen(container, previousContainer)
 		previousContainer.window = nil
 		previousContainer.itemsPanel = nil
 	else
-		local containerPanel = modules.game_interface.getContainerPanel()
+	local containerPanel = modules.game_interface.getContainerPanel()
 		
 		-- Check if we have too many containers open in this panel
 		if containerPanel and containerPanel:getClassName() == 'UIMiniWindowContainer' then
 			local openContainers = {}
 			for _, cont in pairs(g_game.getContainers()) do
 				if cont.window and cont.window:isVisible() and cont.window:getParent() == containerPanel then
-					table.insert(openContainers, {container = cont, yPos = cont.window:getY()})
+					-- Only consider auto-closable loot containers here (skip backpacks and personal storage)
+					if isAutoClosableLoot(cont) then
+						table.insert(openContainers, {container = cont, yPos = cont.window:getY()})
+					end
 				end
 			end
 			
@@ -211,6 +250,7 @@ function onContainerOpen(container, previousContainer)
 			if #openContainers >= MAX_VISIBLE_CONTAINERS or estimatedNextY > (panelHeight - 150) then
 				local oldestContainer = openContainers[1]
 				if oldestContainer and oldestContainer.container and oldestContainer.container.window then
+					-- Close only the oldest auto-closable (loot) container
 					g_game.close(oldestContainer.container)
 				end
 			end

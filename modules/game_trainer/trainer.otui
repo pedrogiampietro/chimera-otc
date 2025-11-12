@@ -24,6 +24,34 @@ TrainerAddSpell < MainWindow
     anchors.bottom: parent.bottom
     size: 45 21
     text: Save
+
+TrainerAddPercent < MainWindow
+  id: TrainerAddPercent
+  size: 275 100
+  text: Edit Mana Percentage
+
+  TextEdit
+    id: text
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 5
+    max-length: 3
+
+  Button
+    id: buttonClose
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    size: 45 21
+    text: Close
+
+  Button
+    id: buttonOk
+    anchors.right: prev.left
+    margin-right: 5
+    anchors.bottom: parent.bottom
+    size: 45 21
+    text: Save
     
 TrainerCheckBox < CheckBox
   anchors.left: parent.left
@@ -36,19 +64,26 @@ TrainerCheckBox < CheckBox
 TrainerTextEdit < TextEdit
   anchors.left: parent.left
   anchors.top: prev.bottom
-  width: 137
+  width: 100
   margin: 0 5 0 5
   @onClick: modules.game_trainer.inputSpell(self:getId())
 
-TrainerSpinBox < SpinBox
+TrainerPercentEdit < TextEdit
+  anchors.top: prev.top
+  anchors.left: prev.right
+  width: 50
+  margin: 0 3 0 3
+  text-align: center
+  editable: false
+  @onClick: modules.game_trainer.inputPercent(self:getId())
+
+TrainerPercentLabel < Label
   anchors.top: prev.top
   anchors.left: prev.right
   anchors.right: parent.right
-  margin: 0 5 0 3
-  minimum: 1
-  maximum: 100
-  focusable: true
-  @onValueChange: modules.game_trainer.setOption(self:getId(), self:getValue())
+  margin: 3 5 0 0
+  text: %
+  text-align: left
     
 MiniWindow
   id: trainerWindow
@@ -84,8 +119,10 @@ MiniWindow
       id: spellMT
       !text: tr('spell')
 
-    TrainerSpinBox
+    TrainerPercentEdit
       id: manaMT
+
+    TrainerPercentLabel
 
     TrainerCheckBox
       id: checkRM
@@ -95,8 +132,10 @@ MiniWindow
       id: spellRM
       !text: tr('spell')
 
-    TrainerSpinBox
+    TrainerPercentEdit
       id: manaRM
+
+    TrainerPercentLabel
 
     TrainerCheckBox
       id: checkIdle
