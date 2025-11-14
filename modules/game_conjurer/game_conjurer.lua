@@ -791,34 +791,26 @@ function showRankDetails(rankId)
     descWidget:setTextAlign(AlignCenter)
   end
 
-  -- Requisito para o próximo rank
-  local reqLabel = content:recursiveGetChildById('rankDetailsRequirement')
-  if reqLabel then
-    reqLabel:setText(requirementText)
-  end
-
-  -- Data de desbloqueio
-  local dateLabel = content:recursiveGetChildById('rankDetailsDate')
-  if dateLabel then
-    dateLabel:setText(tr('Unlocked on:') .. ' ' .. date)
-  end
-
   -- Configurar sistema de gemas do rank
   setupRankGemSystem(content, rankId)
   
   -- Carregar gemas salvas localmente
   loadLocalEquippedGems(content, rankId)
 
-  -- Botão de ajuda
-  local helpButton = content:recursiveGetChildById('rankDetailsHelpButton')
-  if helpButton then
-    helpButton.onClick = function()
-      showGemEffectsDetailed()
+  -- Configurar botões Back e Close (já definidos no OTUI)
+  local backButton = window:recursiveGetChildById('rankDetailsBackButton')
+  if backButton then
+    backButton.onClick = function()
+      window:destroy()
     end
-    helpButton:setTooltip(tr('Clique para ver análise detalhada dos bônus das gemas'))
   end
 
-  -- Botão de fechar já está configurado no OTUI
+  local closeButton = window:recursiveGetChildById('rankDetailsCloseButton')
+  if closeButton then
+    closeButton.onClick = function()
+      window:destroy()
+    end
+  end
 end
 
 -- Exemplo de animação de desbloqueio
@@ -1329,13 +1321,6 @@ function updateGemsPanel(gemsData, currentRankId)
     noGemsLabel:setTextAlign(AlignCenter)
     noGemsLabel:setSize({width = 350, height = 80})
     noGemsLabel:setTextWrap(true)
-    
-    -- Atualizar info
-    local inventoryInfo = content:recursiveGetChildById('gemsInventoryInfo')
-    if inventoryInfo then
-      inventoryInfo:setText(tr('Nenhuma gema encontrada no inventário'))
-      inventoryInfo:setColor('#888888')
-    end
     return
   end
   
@@ -1355,11 +1340,8 @@ function updateGemsPanel(gemsData, currentRankId)
       end
     end
     
-    -- Skip this gem if it's equipped in another rank
-    if isEquippedElsewhere then
-      goto continue
-    end
-    
+    -- Processar apenas se a gema não estiver equipada em outro rank
+    if not isEquippedElsewhere then
     local gemInfo = gemDataMap[itemId]
     if gemInfo then
       -- Container principal da gema com design elegante
@@ -1506,19 +1488,6 @@ function updateGemsPanel(gemsData, currentRankId)
         gemsFound = gemsFound + 1
       end
     end
-    
-    ::continue::
-  end
-  
-  -- Atualizar informação do inventário
-  local inventoryInfo = content:recursiveGetChildById('gemsInventoryInfo')
-  if inventoryInfo then
-    if gemsFound > 0 then
-      inventoryInfo:setText(tr('Gemas encontradas: ') .. gemsFound .. tr(' tipo(s) diferentes'))
-      inventoryInfo:setColor('#00aa00')
-    else
-      inventoryInfo:setText(tr('Nenhuma gema encontrada'))
-      inventoryInfo:setColor('#888888')
     end
   end
 end

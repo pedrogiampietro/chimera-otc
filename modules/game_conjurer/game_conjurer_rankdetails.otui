@@ -11,8 +11,12 @@ MainWindow
     layout:
       type: verticalBox
       spacing: 10
-    anchors.fill: parent
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: rankDetailsBackButton.top
     margin: 18
+    margin-bottom: 10
     
     UIWidget
       id: rankDetailsHeader
@@ -47,35 +51,21 @@ MainWindow
       text-wrap: true
       width: 320
       margin-bottom: 2
-    
-    Label
-      id: rankDetailsDate
-      font: verdana-11px-rounded
-      color: #888888
-      text: ''
-      margin-top: 2
-    
-    Label
-      id: rankDetailsRequirement
-      font: verdana-11px-rounded
-      color: #e65b5b
-      text: ''
-      margin-top: 2
 
     Label
-      !text: tr('Slots de Gemas do Rank:')
+      !text: tr('Slots de Gemas:')
       font: verdana-11px-rounded
       color: #a1e65b
-      margin-top: 20
+      margin-top: 10
 
     UIWidget
       id: gem_slot_container
-      height: 80
+      height: 70
       margin-top: 5
       
       Label
         id: gemSlotsInfo
-        !text: tr('Aplique gemas para receber bonus nas runas/magias deste rank')
+        !text: tr('Aplique gemas para receber bônus')
         font: verdana-11px-rounded
         color: #cccccc
         anchors.left: parent.left
@@ -184,28 +174,19 @@ MainWindow
       !text: tr('Efeitos Ativos: Nenhuma gema equipada')
       font: verdana-11px-rounded
       color: #ffaa00
-      margin-top: 10
+      margin-top: 5
       text-wrap: true
       width: 400
 
     Label
-      !text: tr('Gemas do Inventario:')
+      !text: tr('Gemas Disponíveis:')
       font: verdana-11px-rounded
       color: #a1e65b
-      margin-top: 15
-      
-    Label
-      id: gemsInventoryInfo
-      !text: tr('Arraste as gemas abaixo para os slots verdes para equipá-las')
-      font: verdana-11px-rounded
-      color: #ffaa00
-      margin-top: 2
-      text-wrap: true
-      width: 400
+      margin-top: 10
 
     UIWidget
       id: available_gems_container
-      height: 110
+      height: 130
       margin-top: 5
       background-color: #1a1a1a
       border-width: 1
@@ -223,24 +204,26 @@ MainWindow
           cell-spacing: 4
           num-columns: 6
 
-    UIWidget
-      id: rankDetailsButtonRow
-      layout:
-        type: horizontalBox
-        spacing: 8
-      margin-top: 10
-      Button
-        id: rankDetailsHelpButton
-        text: '?'
-        font: verdana-11px-rounded
-        width: 28
-        height: 28
-        tooltip: tr('Sobre ranks')
-        @onClick: rankDetailsHelp()
-      Button
-        id: rankDetailsCloseButton
-        text: tr('Fechar')
-        font: verdana-11px-rounded
-        width: 90
-        height: 28
-        @onClick: self:getParent():getParent():getParent():destroy() 
+  Button
+    id: rankDetailsBackButton
+    anchors.left: parent.left
+    anchors.bottom: parent.bottom
+    margin-left: 15
+    margin-bottom: 15
+    text: "Back"
+    width: 90
+    height: 30
+    font: verdana-11px-rounded
+    @onClick: self:getParent():destroy()
+    
+  Button
+    id: rankDetailsCloseButton
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-right: 15
+    margin-bottom: 15
+    text: "Close"
+    width: 90
+    height: 30
+    font: verdana-11px-rounded
+    @onClick: self:getParent():destroy() 
