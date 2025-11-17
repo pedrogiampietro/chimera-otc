@@ -1617,7 +1617,8 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
                 end
                 addText(composedMessage, speaktype, channelName, name)
             else
-                local channelName = channels[channelId] or ('Channel ' .. tostring(channelId))
+                local channelName = channels[channelId] or
+                                        ('Channel ' .. tostring(channelId))
                 if not getTab(channelName) then
                     addChannel(channelName, channelId)
                 end
