@@ -53,7 +53,7 @@ MainWindow
       margin-bottom: 2
 
     Label
-      !text: tr('Slots de Gemas:')
+      !text: tr('Gem Slots:')
       font: verdana-11px-rounded
       color: #a1e65b
       margin-top: 10
@@ -65,7 +65,7 @@ MainWindow
       
       Label
         id: gemSlotsInfo
-        !text: tr('Aplique gemas para receber bônus')
+        !text: tr('Apply gems to receive bonuses')
         font: verdana-11px-rounded
         color: #cccccc
         anchors.left: parent.left
@@ -85,17 +85,17 @@ MainWindow
         border-width: 2
         border-color: #666666
         
-        UIItem
+        UIWidget
           id: gemSlot1
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
           margin-left: 7
           margin-top: 7
-          virtual: true
-          image-source: /images/ui/item-blessed
+          background-color: #222222
+          border-width: 1
+          border-color: #aaaaaa
           opacity: 0.5
-          image-color: #aaaaaa
           
         Label
           id: gemSlot1_label
@@ -116,17 +116,17 @@ MainWindow
         border-width: 2
         border-color: #666666
         
-        UIItem
+        UIWidget
           id: gemSlot2
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
           margin-left: 7
           margin-top: 7
-          virtual: true
-          image-source: /images/ui/item-blessed
+          background-color: #222222
+          border-width: 1
+          border-color: #aaaaaa
           opacity: 0.5
-          image-color: #aaaaaa
           
         Label
           id: gemSlot2_label
@@ -148,17 +148,17 @@ MainWindow
         border-width: 2
         border-color: #666666
         
-        UIItem
+        UIWidget
           id: gemSlot3
           size: 36 36
           anchors.left: parent.left
           anchors.top: parent.top
           margin-left: 7
           margin-top: 7
-          virtual: true
-          image-source: /images/ui/item-blessed
+          background-color: #222222
+          border-width: 1
+          border-color: #aaaaaa
           opacity: 0.5
-          image-color: #aaaaaa
           
         Label
           id: gemSlot3_label
@@ -171,7 +171,7 @@ MainWindow
 
     Label
       id: rankGemsEffects
-      !text: tr('Efeitos Ativos: Nenhuma gema equipada')
+      !text: tr('Active Effects: No gem equipped')
       font: verdana-11px-rounded
       color: #ffaa00
       margin-top: 5
@@ -179,7 +179,7 @@ MainWindow
       width: 400
 
     Label
-      !text: tr('Gemas Disponíveis:')
+      !text: tr('Available Gems:')
       font: verdana-11px-rounded
       color: #a1e65b
       margin-top: 10
@@ -191,13 +191,13 @@ MainWindow
       background-color: #1a1a1a
       border-width: 1
       border-color: #666666
-      clipping: true
+      
       
       ScrollablePanel
         id: availableGemsPanel
         anchors.fill: parent
         margin: 6
-        clipping: true
+        
         layout:
           type: grid
           cell-size: 62 62

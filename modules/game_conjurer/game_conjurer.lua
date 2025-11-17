@@ -1116,6 +1116,14 @@ end
 
 -- Setup gem system for specific rank
 function setupRankGemSystem(content, rankId)
+    -- Adicionar log no onDrop do container principal dos slots para depuração
+    local slotContainer = content:recursiveGetChildById('gem_slot_container')
+    if slotContainer then
+      slotContainer.onDrop = function(self, dragged)
+        g_logger.info(string.format("[GEM-DROP-CONTAINER] onDrop chamado no gem_slot_container do rank %s. Dragged: %s", tostring(rankId), dragged and dragged.gemData and dragged.gemData.name or "N/A"))
+        return false
+      end
+    end
   -- Configurar informações das gemas do rank
   local gemSlotsInfo = content:recursiveGetChildById('gemSlotsInfo')
   if gemSlotsInfo then
@@ -1129,7 +1137,7 @@ function setupRankGemSystem(content, rankId)
     }
     
     local spells = rankSpells[rankId] or "Unknown spells"
-    gemSlotsInfo:setText(tr('Gemas aplicam bonus em: ') .. spells)
+    gemSlotsInfo:setText('Gems grant bonuses to: ' .. spells)
   end
   
   local slotsUnlocked = 0
@@ -1160,6 +1168,14 @@ function setupRankGemSystem(content, rankId)
     local gemSlot = content:recursiveGetChildById('gemSlot' .. i)
     local gemSlotBox = content:recursiveGetChildById('gem_slot_box' .. i)
     local gemSlotLabel = content:recursiveGetChildById('gemSlot' .. i .. '_label')
+
+    -- Adicionar log no onDrop do container do slot
+    if gemSlotBox then
+      gemSlotBox.onDrop = function(self, dragged)
+        g_logger.info(string.format("[GEM-DROP-BOX] onDrop chamado no gem_slot_box%s do rank %s. Dragged: %s", tostring(i), tostring(rankId), dragged and dragged.gemData and dragged.gemData.name or "N/A"))
+        return false
+      end
+    end
     
     if gemSlot and gemSlotBox then
       if i <= slotsUnlocked then
@@ -1176,11 +1192,12 @@ function setupRankGemSystem(content, rankId)
         
         -- Configurar drag & drop para gemas
         gemSlot.onDrop = function(self, dragged)
+          g_logger.info(string.format("[GEM-DROP] onDrop chamado no slot %s do rank %s. Dragged: %s", tostring(i), tostring(rankId), dragged and dragged.gemData and dragged.gemData.name or "N/A"))
           -- Verificar se é uma gema válida
           if not dragged or not dragged.gemData then
+            g_logger.warning("[GEM-DROP] Dragged ou gemData inválido no drop!")
             return false
           end
-          
           return handleGemDrop(self, dragged, rankId, i)
         end
         
@@ -1198,7 +1215,7 @@ function setupRankGemSystem(content, rankId)
         end
         
         -- Tooltip
-        gemSlot:setTooltip(tr('Arraste uma gema aqui ou clique direito para remover'))
+        gemSlot:setTooltip('Right-click to remove')
         
       else
         gemSlotBox:setBackgroundColor('#222222')
@@ -1208,16 +1225,15 @@ function setupRankGemSystem(content, rankId)
         
         if gemSlotLabel then
           gemSlotLabel:setColor('#666666')
-          gemSlotLabel:setText(tr('Bloqueado'))
+          gemSlotLabel:setText('Locked')
         end
-        
         local tooltipText = ''
         if rankId > currentLevel then
-          tooltipText = tr('Desbloqueado ao alcançar o rank') .. ' ' .. tostring(rankId)
+          tooltipText = 'Unlocked at rank ' .. tostring(rankId)
         else
           local expNeeded = {50, 75, 100}
           local expPercent = expNeeded[i] or 100
-          tooltipText = tr('Desbloqueado com') .. ' ' .. tostring(expPercent) .. '% ' .. tr('de EXP no rank')
+          tooltipText = 'Unlocked with ' .. tostring(expPercent) .. '% EXP in rank'
         end
         gemSlot:setTooltip(tooltipText)
         
@@ -1394,16 +1410,15 @@ function updateGemsPanel(gemsData, currentRankId)
         innerFrame:setDraggable(true)  -- Make innerFrame draggable
         imageArea:setDraggable(true)   -- Make imageArea draggable
         
-        -- Tooltip elegante e informativo
-        local tooltipText = '◆ ' .. gemInfo.name .. ' ◆\n'
-        tooltipText = tooltipText .. '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
-        tooltipText = tooltipText .. '> Tipo: ' .. gemInfo.bonus:upper() .. '\n'
-        tooltipText = tooltipText .. '> Bonus: +' .. gemInfo.value .. '\n'
-        if count > 1 then
-          tooltipText = tooltipText .. '> Quantidade: ' .. count .. '\n'
-        end
-        tooltipText = tooltipText .. '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
-        tooltipText = tooltipText ..  'Arraste para equipar nos slots'
+        -- Tooltip elegante e informativo (fixo)
+        -- Tooltip simples para evitar problemas de encoding
+        local tooltipText = string.format(
+          '%s\nType: %s\nBonus: +%s%s',
+          gemInfo.name or '-',
+          (gemInfo.bonus and gemInfo.bonus:upper() or '-'),
+          tostring(gemInfo.value or '-'),
+          (count and count > 1) and (string.format('\nAmount: %d', count)) or ''
+        )
         gemWidget:setTooltip(tooltipText)
         
         -- Badge de quantidade estilizado
@@ -1475,12 +1490,22 @@ function updateGemsPanel(gemsData, currentRankId)
           end
         end
         
-        -- Eventos de drag on gemWidget
-        gemWidget.onMousePress = function(self, mousePos, mouseButton)
-          if mouseButton == MouseLeftButton then
-            return true  -- Return true to capture the event and start drag
+        -- Evento de clique duplo para equipar gema no primeiro slot livre
+        gemWidget.onDoubleClick = function(self)
+          g_logger.info(string.format("[GEM-EQUIP-CLICK] Clique duplo em gema: %s (itemId: %s)", self and self.gemData and self.gemData.name or "N/A", self and self.gemData and tostring(self.gemData.itemId) or "N/A"))
+          -- Procurar o primeiro slot livre
+          local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
+          if not content then return end
+          local rankId = content.rankId or currentRankIdForGems or 0
+          for slotNum = 1, 3 do
+            local slot = content:recursiveGetChildById('gemSlot' .. slotNum)
+            if slot and not slot.equippedGem then
+              g_logger.info(string.format("[GEM-EQUIP-CLICK] Equipando gema '%s' no slot %d do rank %d", self.gemData.name, slotNum, rankId))
+              handleGemDrop(slot, self, rankId, slotNum)
+              return
+            end
           end
-          return false
+          modules.game_textmessage.displayGameMessage(tr('Todos os slots já estão ocupados!'), 'Conjurer System')
         end
         
         -- Efeito hover (já configurado acima, removido duplicata)
@@ -1497,12 +1522,10 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
   if not dragged then
     return false
   end
-  
+
   if not dragged.gemData then
-    -- Tentar obter gemData do item ID
     local itemId = dragged:getItemId()
     if itemId then
-      -- Mapear item ID para gem data
       local gemMap = {
         [5273] = {id = 1, name = "Attack Gem", bonus = "atk", value = 5, color = "#ff4444", itemId = 5273},
         [5274] = {id = 2, name = "Defense Gem", bonus = "def", value = 5, color = "#4444ff", itemId = 5274},
@@ -1510,10 +1533,9 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
         [5276] = {id = 4, name = "Health Regen Gem", bonus = "healthregen", value = 3, color = "#ffaa44", itemId = 5276},
         [5277] = {id = 5, name = "Speed Gem", bonus = "speed", value = 10, color = "#ff44ff", itemId = 5277}
       }
-
       local gem = gemMap[itemId]
       if gem then
-        gem.count = 1  -- Set count for inventory drags
+        gem.count = 1
         dragged.gemData = gem
       else
         return false
@@ -1522,51 +1544,39 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
       return false
     end
   else
-    -- Ensure count is set for inventory drags
     if not dragged.gemData.count then
       dragged.gemData.count = 1
     end
   end
-  
+
   local gem = dragged.gemData
-  
+
   local player = g_game.getLocalPlayer()
   if not player then
     return false
   end
-  
-  -- Verificar se o jogador ainda tem a gema no inventário
-  -- NOTE: client-side getItemsCount only knows about opened containers; the server may report gems inside closed containers.
-  -- Use the widget-provided count as a fallback so dragging from the "available gems" panel still works.
-  -- Removed client-side inventory check as it's unreliable for closed containers.
-  -- Server will validate the actual inventory contents.
-  -- local inventoryCount = player:getItemsCount(gem.itemId) or 0
-  -- local widgetCount = (dragged and dragged.gemData and dragged.gemData.count) or 0
-  -- if inventoryCount <= 0 and widgetCount <= 0 then
-  --   modules.game_textmessage.displayGameMessage(tr('Você não possui esta gema no inventário!'), 'Conjurer System')
-  --   return false
-  -- end
-  
-  -- Verificar se já há uma gema equipada neste slot
-  if slot.equippedGem then
-    modules.game_textmessage.displayGameMessage(tr('Remova a gema atual primeiro!'), 'Conjurer System')
+
+  -- Verificar se o slot está bloqueado
+  if slot:getOpacity() < 0.5 or slot:getImageColor() == '#555555' then
+    modules.game_textmessage.displayGameMessage('This slot is locked. Unlock it to equip a gem.', 'Conjurer System')
     return false
   end
-  
-  -- Equipar a gema visualmente (usar setImageSource para UIItem virtual)
+  if slot.equippedGem then
+    modules.game_textmessage.displayGameMessage('Remove the current gem first!', 'Conjurer System')
+    return false
+  end
+
   local imagePath = string.format('/images/items/%d.png', gem.itemId)
   if g_resources.fileExists(imagePath) then
     slot:setImageSource(imagePath)
   else
-    slot:setItemId(gem.itemId) -- Fallback
+    slot:setItemId(gem.itemId)
   end
-  slot:setImageColor('#ffffff') -- Cor normal para gemas equipadas
+  slot:setImageColor('#ffffff')
   slot:setOpacity(1.0)
-  
-  -- Armazenar dados da gema no slot
+
   slot.equippedGem = gem
-  
-  -- Salvar localmente para persistência (especialmente gemas de teste)
+
   if not localEquippedGems[rankId] then
     localEquippedGems[rankId] = {}
   end
@@ -1577,22 +1587,20 @@ function handleGemDrop(slot, dragged, rankId, slotNumber)
     value = gem.value,
     color = gem.color
   }
-  
-  -- Sincronizar com servidor
+  g_logger.info(string.format("[GEM-EQUIP] Gema salva localmente: %s (slot %s, rank %s)", gem.name, tostring(slotNumber), tostring(rankId)))
+
   syncGemsWithServer(rankId)
-  
-  -- Atualizar tooltip
+  g_logger.info("[GEM-EQUIP] Sincronização enviada ao servidor.")
+
   slot:setTooltip(gem.name .. '\n+' .. gem.value .. ' ' .. gem.bonus .. '\nClique direito para remover')
-  
-  -- Atualizar efeitos ativos
   updateRankGemsEffects()
-  
-  -- Atualizar painel de gemas disponíveis (remover a gema equipada da lista)
+
   local content = g_ui.getRootWidget():recursiveGetChildById('rankDetailsContent')
   if content then
     setupAvailableGems(content, rankId)
   end
-  
+
+  -- Equip process finished
   return true
 end
 
@@ -1675,7 +1683,7 @@ function updateRankGemsEffects()
   end
   
   if #equippedGems == 0 then
-    effectsText = tr('Efeitos Ativos: Nenhuma gema equipada')
+    effectsText = 'Active Effects: No gem equipped'
     effectsLabel:setColor('#888888')
   else
     -- Mostrar totais organizados por tipo
