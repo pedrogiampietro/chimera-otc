@@ -3,6 +3,7 @@ MessageSettings = {
   consoleRed      = { color = TextColors.customWarning,    consoleTab='Default' },
   consoleOrange   = { color = TextColors.orange, consoleTab='Default' },
   consoleBlue     = { color = TextColors.blue,   consoleTab='Default' },
+  consoleYellow   = { color = TextColors.yellow, consoleTab='Default' },
   centerRed       = { color = TextColors.customWarning,    consoleTab='Server Log', screenTarget='lowCenterLabel' },
   centerGreen     = { color = TextColors.customDesc,  consoleTab='Server Log', screenTarget='highCenterLabel',   consoleOption='showInfoMessagesInConsole' },
   centerWhite     = { color = TextColors.customInfo,  consoleTab='Server Log', screenTarget='middleCenterLabel', consoleOption='showEventMessagesInConsole' },
@@ -48,6 +49,9 @@ MessageTypes = {
   [MessageModes.BeyondLast] = MessageSettings.centerWhite,
   [MessageModes.Report] = MessageSettings.consoleRed,
   [MessageModes.HotkeyUse] = MessageSettings.centerGreen,
+
+  [MessageModes.NpcFrom] = MessageSettings.consoleYellow,
+  [MessageModes.NpcFromStartBlock] = MessageSettings.consoleYellow,
 
   [254] = MessageSettings.private
 }

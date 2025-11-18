@@ -30,7 +30,7 @@ SpeakTypesSettings = {
     },
     privateNpcToPlayer = {
         speakType = MessageModes.NpcFrom,
-        color = '#49DDC6',
+        color = '#eec900',
         private = true,
         npcChat = true
     },
@@ -834,26 +834,37 @@ function getHighlightedText(text)
     return tmpData
 end
 
-function getNewHighlightedText(text, color, highlightColor)
+function getNewHighlightedTextSingleQuotes(text, color, highlightColor)
     local tmpData = {}
-
-    for i, part in ipairs(text:split("{")) do
-        if i == 1 then
-            table.insert(tmpData, part)
-            table.insert(tmpData, color)
-        else
-            for j, part2 in ipairs(part:split("}")) do
-                if j == 1 then
-                    table.insert(tmpData, part2)
-                    table.insert(tmpData, highlightColor)
-                else
-                    table.insert(tmpData, part2)
-                    table.insert(tmpData, color)
-                end
+    local i = 1
+    while i <= #text do
+        local start = text:find("{", i)
+        if start then
+            -- Add text before {
+            if start > i then
+                table.insert(tmpData, text:sub(i, start - 1))
+                table.insert(tmpData, color)
             end
+            -- Find closing }
+            local close = text:find("}", start + 1)
+            if close then
+                local highlighted = text:sub(start + 1, close - 1)
+                table.insert(tmpData, highlighted)
+                table.insert(tmpData, highlightColor)
+                i = close + 1
+            else
+                -- No closing }, add rest as normal
+                table.insert(tmpData, text:sub(start))
+                table.insert(tmpData, color)
+                break
+            end
+        else
+            -- No more {, add rest
+            table.insert(tmpData, text:sub(i))
+            table.insert(tmpData, color)
+            break
         end
     end
-
     return tmpData
 end
 
@@ -892,7 +903,7 @@ function addTabText(text, speaktype, tab, creatureName)
     if speaktype.npcChat and
         (g_game.getCharacterName() ~= creatureName or g_game.getCharacterName() ==
             'Account Manager') then
-        local highlightData = getNewHighlightedText(text, speaktype.color,
+        local highlightData = getNewHighlightedTextSingleQuotes(text, speaktype.color,
                                                     "#1f9ffe")
         if #highlightData > 2 then label:setColoredText(highlightData) end
     end
@@ -1373,6 +1384,12 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
         end
     end
 
+    -- Detect NPC messages: Say mode, not player, name doesn't start with '('
+    local isNpcMessage = (mode == MessageModes.Say and name ~= g_game.getCharacterName() and not name:find("^%("))
+    if isNpcMessage then
+        speaktype = SpeakTypesSettings.privateNpcToPlayer
+    end
+
     if mode == MessageModes.RVRChannel then channelId = violationsChannelId end
 
     if (mode == MessageModes.Say or mode == MessageModes.Whisper or mode ==
@@ -1385,7 +1402,7 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
         -- Remove curly braces from screen message
         local staticMessage = message
         if isNpcMode then
-            local highlightData = getNewHighlightedText(staticMessage,
+            local highlightData = getNewHighlightedTextSingleQuotes(staticMessage,
                                                         speaktype.color,
                                                         "#1f9ffe")
             if #highlightData > 2 then
@@ -1423,7 +1440,11 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
     elseif mode == MessageModes.RVRContinue then
         addText(composedMessage, speaktype, name .. '\'...', name)
     elseif speaktype.private then
-        addPrivateText(composedMessage, speaktype, name, false, name)
+        if speaktype == SpeakTypesSettings.privateNpcToPlayer then
+            addTabText(composedMessage, speaktype, defaultTab, name)
+        else
+            addPrivateText(composedMessage, speaktype, name, false, name)
+        end
         if modules.client_options.getOption('showPrivateMessagesOnScreen') and
             speaktype ~= SpeakTypesSettings.privateNpcToPlayer then
             modules.game_textmessage.displayPrivateMessage(name .. ':\n' ..
