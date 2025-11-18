@@ -849,6 +849,24 @@ function onSpecialContainerExtendedOpcode(protocol, opcode, buffer)
         end
     elseif action == 'error' and data.message then
         modules.game_textmessage.displayGameMessage(data.message)
+        -- Clear pending state if specified
+        if data.clearSlot then
+            local slotIndex = tonumber(data.clearSlot)
+            if slotIndex and specialContainerItems[slotIndex] and specialContainerItems[slotIndex].pending then
+                specialContainerItems[slotIndex] = nil
+                updateSpecialContainerSlot(slotIndex)
+            end
+        else
+            -- If no specific slot, clear all pending items (fallback)
+            for i = 1, 5 do
+                if specialContainerItems[i] and specialContainerItems[i].pending then
+                    specialContainerItems[i] = nil
+                    updateSpecialContainerSlot(i)
+                end
+            end
+        end
+        -- Request fresh data from server to ensure sync
+        requestSpecialContainerData()
     end
 end
 
@@ -1030,12 +1048,25 @@ function onSpecialContainerDrop(slot, dragged, slotIndex)
     end
 
     -- Mark as pending on client while waiting for server confirmation
-    specialContainerItems[slotIndex] = {
-        id = itemId,
-        count = count,
-        pending = true
-    }
-    updateSpecialContainerSlot(slotIndex)
+    -- Add a small delay to allow server validation
+    addEvent(function()
+        if not specialContainerItems[slotIndex] then -- Only set if not already cleared by error
+            specialContainerItems[slotIndex] = {
+                id = itemId,
+                count = count,
+                pending = true
+            }
+            updateSpecialContainerSlot(slotIndex)
+            
+            -- Set a timeout to clear if no confirmation received
+            addEvent(function()
+                if specialContainerItems[slotIndex] and specialContainerItems[slotIndex].pending then
+                    specialContainerItems[slotIndex] = nil
+                    updateSpecialContainerSlot(slotIndex)
+                end
+            end, 2000) -- 2 second timeout
+        end
+    end, 200) -- 200ms delay
 
     -- Use slots 11, 12, 13, 14, 15 (above CONST_SLOT_AMMO=10) for special container
     -- These slots don't have UI elements in the default client
