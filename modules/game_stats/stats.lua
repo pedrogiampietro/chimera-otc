@@ -51,6 +51,36 @@ function update()
   ui.ping:setColor(color)
 end
 
+function showBonusButton()
+  if ui and ui.bonusButton then
+    ui.bonusButton:show()
+  end
+end
+
+function hideBonusButton()
+  if ui and ui.bonusButton then
+    ui.bonusButton:hide()
+  end
+end
+
+function setBonusTooltip(tooltip)
+  if ui and ui.bonusButton then
+    ui.bonusButton:setTooltip(tooltip)
+  end
+end
+
+function setBonusIcon(iconPath)
+  if ui and ui.bonusButton then
+    ui.bonusButton:setIcon(iconPath)
+  end
+end
+
+function setBonusOnClick(callback)
+  if ui and ui.bonusButton then
+    ui.bonusButton.onClick = callback
+  end
+end
+
 function show()
   ui:setVisible(true)
 end

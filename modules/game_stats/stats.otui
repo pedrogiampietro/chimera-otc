@@ -16,3 +16,9 @@ UIWidget
   Label
     id: ping
     font: verdana-11px-rounded
+
+  Button
+    id: bonusButton
+    text: 
+    font: verdana-11px-rounded
+    visible: false
