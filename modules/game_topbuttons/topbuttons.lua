@@ -32,9 +32,7 @@ local function updateBonusDisplay()
         -- Schedule next update
         bonusUpdateEvent = scheduleEvent(updateBonusDisplay, 1000)
     else
-        if modules.game_stats then
-            modules.game_stats.hideBonusButton()
-        end
+        if modules.game_stats then modules.game_stats.hideBonusButton() end
         removeEvent(bonusUpdateEvent)
     end
 end
@@ -61,7 +59,8 @@ local function showBonusWindow()
 
         local bonusType = bonusData.rewards.type or "xp"
         local multiplier = bonusData.rewards.multiplier or 1
-        bonusStr = "Active bonus: " .. bonusType .. " x" .. multiplier .. "\nTime left: " .. timeStr
+        bonusStr = "Active bonus: " .. bonusType .. " x" .. multiplier ..
+                       "\nTime left: " .. timeStr
     end
 
     modules.game_textmessage.displayGameMessage(bonusStr)

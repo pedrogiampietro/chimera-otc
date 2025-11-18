@@ -1731,7 +1731,7 @@ void ProtocolGame::parseEditText(const InputMessagePtr& msg)
     uint id = msg->getU32();
 
     int itemId;
-    if (g_game.getProtocolVersion() >= 1010) {
+    if (g_game.getFeature(Otc::GameItemTooltip)) {
         // TODO: processEditText with ItemPtr as parameter
         ItemPtr item = getItem(msg, 0, g_game.getFeature(Otc::GameItemTooltip));
         itemId = item->getId();
