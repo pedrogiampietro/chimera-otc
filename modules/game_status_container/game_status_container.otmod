@@ -1,0 +1,9 @@
+Module
+  name: game_status_container
+  description: View status elemental weapons
+  author: Pedro Giampietro
+  website: https://github.com/edubart/otclient
+  sandboxed: true
+  scripts: [ game_status_container ]
+  @onLoad: init()
+  @onUnload: terminate()

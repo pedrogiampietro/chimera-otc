@@ -231,6 +231,43 @@ function init()
         end
     end
 
+    -- status container slot (left side)
+    local statusContainerSlot = inventoryWindow:recursiveGetChildById(
+                                    'statusContainerSlot')
+    if not statusContainerSlot then
+        local slot8 = inventoryWindow:recursiveGetChildById('slot8')
+        if slot8 then
+            -- Create the status container slot button
+            statusContainerSlot = g_ui.createWidget('UIButton', inventoryPanel)
+            statusContainerSlot:setId('statusContainerSlot')
+            statusContainerSlot:setSize({width = 34, height = 12})
+            statusContainerSlot:setImageSource('/images/game/prey/prey_damage') -- Use same image for now, can change later
+
+            -- Set image clip for normal state (full sprite since this image doesn't have pressed state)
+            statusContainerSlot:setImageClip({
+                x = 0,
+                y = 0,
+                width = 34,
+                height = 12
+            })
+
+            -- Remove mouse press/release effects since this image doesn't have a pressed state
+            statusContainerSlot:setBorderWidth(0)
+            statusContainerSlot:setTooltip(tr('Click to open Status Container'))
+
+            -- Position it to the left of the special container slot
+            statusContainerSlot:addAnchor(AnchorHorizontalCenter, 'parent',
+                                          AnchorHorizontalCenter)
+            statusContainerSlot:setMarginTop(-1)
+            statusContainerSlot:setMarginLeft(-40) -- Left side
+            statusContainerSlot:addAnchor(AnchorTop, 'parent', AnchorTop)
+
+            -- Make sure it's visible
+            statusContainerSlot:setVisible(true)
+            statusContainerSlot:raise()
+        end
+    end
+
     if specialContainerSlot then
         specialContainerSlot.onMouseRelease =
             function(self, mousePos, mouseButton)
@@ -247,6 +284,31 @@ function init()
 
         specialContainerSlot.onClick = function(self)
             toggleSpecialContainer()
+        end
+    end
+
+    if statusContainerSlot then
+        statusContainerSlot.onMouseRelease =
+            function(self, mousePos, mouseButton)
+                if mouseButton == MouseLeftButton then
+                    -- No visual feedback needed for this button
+                    return false -- Let the event continue for onClick
+                elseif mouseButton == MouseRightButton then
+                    -- Handle right click to toggle status container
+                    if modules.game_status_container and
+                        modules.game_status_container.toggleStatusContainer then
+                        modules.game_status_container.toggleStatusContainer()
+                    end
+                    return true
+                end
+                return false
+            end
+
+        statusContainerSlot.onClick = function(self)
+            if modules.game_status_container and
+                modules.game_status_container.toggleStatusContainer then
+                modules.game_status_container.toggleStatusContainer()
+            end
         end
     end
 
@@ -458,10 +520,32 @@ function onInventoryChange(player, slot, item, oldItem)
         end
 
         itemWidget:setImageSource(src)
+
+        -- Add right-click menu for elementable weapons
+        itemWidget.onMousePress = function(widget, mousePos, mouseButton)
+            if mouseButton == MouseRightButton then
+                local item = widget:getItem()
+                if item then
+                    local itemId = item:getId()
+                    -- Check if it's an elementable weapon
+                    local weaponElements = {
+                        [5331] = true, -- Vampiric Pounder
+                        [5337] = true, -- Grave Carver
+                        [5343] = true -- Grave Carver Grinder
+                    }
+                    if weaponElements[itemId] then
+                        modules.game_interface.createThingMenu(mousePos, nil,
+                                                               item, nil)
+                    end
+                end
+            end
+        end
     else
         itemWidget:setStyle(InventorySlotStyles[slot])
         itemWidget:setItem(nil)
         itemWidget:setTooltip(nil)
+        -- Remove right-click for empty slots
+        itemWidget.onMousePress = nil
     end
 end
 
@@ -852,7 +936,8 @@ function onSpecialContainerExtendedOpcode(protocol, opcode, buffer)
         -- Clear pending state if specified
         if data.clearSlot then
             local slotIndex = tonumber(data.clearSlot)
-            if slotIndex and specialContainerItems[slotIndex] and specialContainerItems[slotIndex].pending then
+            if slotIndex and specialContainerItems[slotIndex] and
+                specialContainerItems[slotIndex].pending then
                 specialContainerItems[slotIndex] = nil
                 updateSpecialContainerSlot(slotIndex)
             end
@@ -1057,10 +1142,11 @@ function onSpecialContainerDrop(slot, dragged, slotIndex)
                 pending = true
             }
             updateSpecialContainerSlot(slotIndex)
-            
+
             -- Set a timeout to clear if no confirmation received
             addEvent(function()
-                if specialContainerItems[slotIndex] and specialContainerItems[slotIndex].pending then
+                if specialContainerItems[slotIndex] and
+                    specialContainerItems[slotIndex].pending then
                     specialContainerItems[slotIndex] = nil
                     updateSpecialContainerSlot(slotIndex)
                 end

@@ -13,6 +13,7 @@ Module
     - game_outfit
     - game_healthinfo
     - game_skills
+    - game_status_container
     - game_inventory
     - game_containers
     - game_viplist
