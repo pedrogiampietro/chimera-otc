@@ -71,7 +71,29 @@ function clean()
     end
 end
 
-function markStart() gameStart = g_clock.millis() end
+function markStart() 
+    gameStart = g_clock.millis()
+    -- Restore active slot after game start
+    addEvent(function() restoreActiveSlot() end, 1000) -- Delay to ensure everything is loaded
+end
+
+function restoreActiveSlot()
+    if not g_game.isOnline() then return end
+    
+    -- Request active slot from server
+    local payload = json.encode({
+        action = 'get_active_slot'
+    })
+    
+    if g_game.sendExtendedOpcode then
+        g_game.sendExtendedOpcode(STATUS_CONTAINER_OPCODE, payload)
+    else
+        local protocol = g_game.getProtocolGame()
+        if protocol and protocol.sendExtendedOpcode then
+            protocol:sendExtendedOpcode(STATUS_CONTAINER_OPCODE, payload)
+        end
+    end
+end
 
 function updateSlotAppearance(slot, isActive)
     if not slot then return end
@@ -157,6 +179,11 @@ function onStatusContainerExtendedOpcode(protocol, opcode, buffer)
     elseif action == 'transform_failed' then
         modules.game_textmessage.displayGameMessage(tr(
                                                         'Failed to transform weapon.'))
+    elseif action == 'set_active_slot' then
+        -- Restore the active slot from server
+        if data.slot and data.slot >= 1 and data.slot <= 6 then
+            setActiveSlot(data.slot)
+        end
     end
 end
 
