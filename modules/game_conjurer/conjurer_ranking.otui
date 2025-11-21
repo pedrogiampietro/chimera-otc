@@ -79,27 +79,25 @@ MainWindow
       anchors.top: tableHeader.bottom
       anchors.left: parent.left 
       anchors.right: parent.right
-      anchors.bottom: refreshButton.top
+      anchors.bottom: parent.bottom
       margin-top: 5
-      margin-bottom: 10
       
-      Panel
+      ScrollablePanel
         id: rankingListPanel
         anchors.fill: parent
+        margin: 2
+        vertical-scrollbar: rankingScrollBar
         layout:
           type: verticalBox
           spacing: 2
-    
-    Button
-      id: refreshButton
-      anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
-      margin-bottom: 10
-      text: Refresh
-      width: 120
-      height: 30
-      font: verdana-11px-rounded
-      @onClick: modules.game_conjurer.refreshConjurerRanking()
+          
+      VerticalScrollBar
+        id: rankingScrollBar
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        step: 14
+        pixels-scroll: true
   
   Button
     id: buttonClose

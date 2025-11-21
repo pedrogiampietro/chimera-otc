@@ -84,7 +84,7 @@ MainWindow
       id: rankingListPanel
       anchors.top: tableHeader.bottom
       anchors.left: parent.left
-      anchors.right: parent.right
+      anchors.right: rankingScrollBar.left
       anchors.bottom: parent.bottom
       margin-top: 5
       layout:
@@ -95,7 +95,7 @@ MainWindow
       id: rankingScrollBar
       anchors.top: tableHeader.bottom
       anchors.right: parent.right
-      anchors.bottom: refreshButton.top
+      anchors.bottom: parent.bottom
       step: 28
       pixels-scroll: true
       margin-top: 5

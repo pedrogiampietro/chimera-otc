@@ -453,7 +453,7 @@ function toggleConjurerRankingWindow()
         local refreshButton = conjurerRankingWindow:recursiveGetChildById(
                                   'refreshButton')
         if refreshButton then
-            refreshButton.onClick = refreshConjurerRanking
+            refreshButton:hide() -- Hide the refresh button as requested
         end
 
         -- Initially hide the window
@@ -864,80 +864,105 @@ function onConjurerRanking(protocol, opcode, buffer)
     local data = json.decode(buffer)
     if not data then return end
 
+    -- g_logger.info("[ConjurerRanking] onConjurerRanking called, buffer length: " .. #buffer)
+    -- g_logger.info("[ConjurerRanking] Decoded data entries: " .. #data)
+
     -- Check if ranking window exists
-    if not conjurerRankingWindow then return end
+    if not conjurerRankingWindow then 
+        -- g_logger.warning("[ConjurerRanking] Ranking window not found!")
+        return 
+    end
 
     -- Find ranking panel
     local panel =
         conjurerRankingWindow:recursiveGetChildById('rankingListPanel')
-    if not panel then return end
+    if not panel then 
+        -- g_logger.warning("[ConjurerRanking] rankingListPanel not found!")
+        return 
+    end
 
+    -- g_logger.info("[ConjurerRanking] Found panel, destroying children")
     panel:destroyChildren()
 
     -- Add a small delay to prevent UI update loops
     scheduleEvent(function()
 
-        -- Create ranking rows
-        for i, entry in ipairs(data) do
-            -- Always use the fallback method since RankingRow style might not be available
+        -- g_logger.info("[ConjurerRanking] Creating ranking rows for " .. #data .. " entries")
+
+        -- Create ranking rows (limit to 15 items for scroll)
+        local maxItems = math.min(15, #data)
+        for i = 1, maxItems do
+            local entry = data[i]
+            -- g_logger.info(string.format("[ConjurerRanking] Creating row %d: %s (exp: %s)", i, entry.name, entry.experience))
+
+            -- Create row widget with proper structure (fallback since RankingRow style not available)
             local row = g_ui.createWidget('UIWidget', panel)
             if row then
                 row:setHeight(30)
                 row:setBackgroundColor(i % 2 == 0 and '#222222' or '#191919')
+                row:setMarginBottom(2)
 
-                -- Helper function to safely create and configure a widget
-                local function createColumnWidget(text, width, isLast)
-                    -- Create the widget
-                    local widget = g_ui.createWidget('UIWidget', row)
-                    if not widget then return nil end
+                -- Position column (#)
+                local posWidget = g_ui.createWidget('UIWidget', row)
+                posWidget:setId('position')
+                posWidget:setText('#' .. entry.position)
+                posWidget:setTextAlign(AlignCenter)
+                posWidget:setFont("verdana-11px-rounded")
+                posWidget:setColor('#ffffff')
+                posWidget:setSize({width = 50, height = 30})
+                posWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+                posWidget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
 
-                    -- Set basic properties
-                    widget:setText(text)
-                    widget:setTextAlign(AlignCenter)
-                    widget:setFont("verdana-11px-rounded")
-                    widget:setColor('#ffffff')
+                -- Name column
+                local nameWidget = g_ui.createWidget('UIWidget', row)
+                nameWidget:setId('name')
+                nameWidget:setText(entry.name)
+                nameWidget:setTextAlign(AlignCenter)
+                nameWidget:setFont("verdana-11px-rounded")
+                nameWidget:setColor('#ffffff')
+                nameWidget:setSize({width = 220, height = 30})
+                nameWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+                nameWidget:addAnchor(AnchorLeft, 'position', AnchorRight)
 
-                    -- Set position and size
-                    widget:setHeight(30)
-                    if width then widget:setWidth(width) end
+                -- Level column
+                local levelWidget = g_ui.createWidget('UIWidget', row)
+                levelWidget:setId('level')
+                levelWidget:setText(tostring(calculateLevel(entry.experience)))
+                levelWidget:setTextAlign(AlignCenter)
+                levelWidget:setFont("verdana-11px-rounded")
+                levelWidget:setColor('#ffffff')
+                levelWidget:setSize({width = 80, height = 30})
+                levelWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+                levelWidget:addAnchor(AnchorLeft, 'name', AnchorRight)
 
-                    return widget
-                end
-
-                -- Create all column widgets first
-                local posWidget = createColumnWidget('#' .. entry.position, 50)
-                local nameWidget = createColumnWidget(entry.name, 220)
-                local levelWidget = createColumnWidget(
-                                        tostring(calculateLevel(entry.experience)),
-                                        80)
-                local expWidget = createColumnWidget(tostring(entry.experience))
-
-                -- Now manually position them
-                if posWidget then
-                    posWidget:setPosition({x = 0, y = 0})
-                end
-
-                if nameWidget and posWidget then
-                    nameWidget:setPosition({x = 50, y = 0})
-                elseif nameWidget then
-                    nameWidget:setPosition({x = 0, y = 0})
-                end
-
-                if levelWidget and nameWidget then
-                    levelWidget:setPosition({x = 270, y = 0})
-                elseif levelWidget then
-                    levelWidget:setPosition({x = 0, y = 0})
-                end
-
-                if expWidget and levelWidget then
-                    expWidget:setPosition({x = 350, y = 0})
-                    expWidget:setWidth(130)
-                elseif expWidget then
-                    expWidget:setPosition({x = 0, y = 0})
-                end
+                -- Experience column
+                local expWidget = g_ui.createWidget('UIWidget', row)
+                expWidget:setId('experience')
+                expWidget:setText(tostring(entry.experience))
+                expWidget:setTextAlign(AlignCenter)
+                expWidget:setFont("verdana-11px-rounded")
+                expWidget:setColor('#ffffff')
+                expWidget:setSize({width = 130, height = 30})
+                expWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+                expWidget:addAnchor(AnchorLeft, 'level', AnchorRight)
+                expWidget:addAnchor(AnchorRight, 'parent', AnchorRight)
             else
                 g_logger.warning("Failed to create row widget")
             end
+        end
+
+        -- g_logger.info("[ConjurerRanking] Finished creating rows")
+
+        -- Setup scroll bar for the ranking list
+        local scrollBar = conjurerRankingWindow:recursiveGetChildById('rankingScrollBar')
+        if scrollBar then
+            -- Set fixed height for the panel to enable scrolling
+            panel:setHeight(450) -- Fixed height to show about 15 rows (30px each)
+            panel:setLayoutType(LayoutType.VerticalBox)
+            panel:setFitChildren(false) -- Disable fit-children to allow scrolling
+            -- g_logger.info("[ConjurerRanking] Scroll bar found and panel configured for scrolling")
+        else
+            -- g_logger.warning("[ConjurerRanking] Scroll bar not found")
         end
 
     end, 100) -- 100ms delay
