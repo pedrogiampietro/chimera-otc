@@ -107,11 +107,14 @@ function updateSlotAppearance(slot, isActive)
     end
 end
 
-function setActiveSlot(slotIndex)
+function setActiveSlot(slotIndex, attemptTransform)
+    if attemptTransform == nil then attemptTransform = true end
     activeSlot = slotIndex
 
     -- Tentar transformar o item equipado se for uma arma transformável
-    tryTransformWeapon(slotIndex)
+    if attemptTransform then
+        tryTransformWeapon(slotIndex)
+    end
 
     -- Atualizar aparência de todos os slots
     for i = 1, 6 do
@@ -141,6 +144,8 @@ function tryTransformWeapon(slotIndex)
         equippedId = leftHand:getId()
         equippedSlot = "left"
     end
+
+    if not equippedId then return end
 
     local payload = json.encode({
         action = 'transform_elemental',
@@ -180,7 +185,7 @@ function onStatusContainerExtendedOpcode(protocol, opcode, buffer)
     elseif action == 'set_active_slot' then
         -- Restore the active slot from server
         if data.slot and data.slot >= 1 and data.slot <= 6 then
-            setActiveSlot(data.slot)
+            setActiveSlot(data.slot, false)
         end
     end
 end
