@@ -71,7 +71,7 @@ function clean()
     end
 end
 
-function markStart() 
+function markStart()
     gameStart = g_clock.millis()
     -- Restore active slot after game start
     addEvent(function() restoreActiveSlot() end, 1000) -- Delay to ensure everything is loaded
@@ -79,12 +79,10 @@ end
 
 function restoreActiveSlot()
     if not g_game.isOnline() then return end
-    
+
     -- Request active slot from server
-    local payload = json.encode({
-        action = 'get_active_slot'
-    })
-    
+    local payload = json.encode({action = 'get_active_slot'})
+
     if g_game.sendExtendedOpcode then
         g_game.sendExtendedOpcode(STATUS_CONTAINER_OPCODE, payload)
     else

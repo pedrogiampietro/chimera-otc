@@ -22,11 +22,14 @@ local conjurerRanks = {
   'Adept',
   'Master',
   'Elder',
-  'Legendary'
+  'Legendary',
+  'Legendary I',
+  'Legendary II',
+  'Legendary III'
 }
 
-local conjurerExp = { 0, 500, 1500, 3000, 6000, 10000 }
-local conjurerMultipliers = { 1, 2, 4, 7, 10, 15 }
+local conjurerExp = { 0, 500, 1500, 3000, 6000, 10000, 15000, 20000, 25000 }
+local conjurerMultipliers = { 1, 2, 4, 7, 10, 15, 20, 25, 30 }
 
 -- Check if extended opcodes are available
 local function checkExtendedOpcodesAvailability()
@@ -265,11 +268,15 @@ function updateRankingTab(rankingData)
   local panel = window:getChildById('rankingListPanel')
   panel:destroyChildren()
   
+  g_logger.info("Updating ranking tab with " .. #rankingData .. " entries")
+  
   for i, entry in ipairs(rankingData) do
     local row = g_ui.createWidget('RankingTableRow', panel)
     row:getChildById('position'):setText(entry.position)
     row:getChildById('name'):setText(entry.name)
-    row:getChildById('experience'):setText(entry.experience)
+    row:getChildById('experience'):setText(entry.experience .. ' (' .. (entry.rankName or 'Unknown') .. ')')
+    
+    g_logger.info("Created row " .. i .. ": " .. entry.name .. " - " .. entry.experience .. ' (' .. (entry.rankName or 'Unknown') .. ')')
     
     -- Apply alternating background colors
     if i % 2 == 0 then
@@ -311,6 +318,11 @@ function onConjurerRanking(protocol, opcode, buffer)
     return
   end
   
+  g_logger.info("Decoded ranking data: " .. #data .. " entries")
+  for i, entry in ipairs(data) do
+    g_logger.info("Entry " .. i .. ": " .. entry.name .. " - " .. entry.experience .. " exp (" .. (entry.rankName or "Unknown") .. ")")
+  end
+  
   updateRankingTab(data)
 end
 
@@ -340,11 +352,11 @@ function toggleConjurerRankingWindow()
     -- Fallback: create a simple message box with mock data
     local messageBox = displayInfoBox(tr('Conjurer Ranking'), 
       tr('Top 5 Conjurers:\n\n') ..
-      '1. Wizard King - 9500 exp\n' ..
-      '2. Archmage - 8200 exp\n' ..
-      '3. Sorcerer - 6800 exp\n' ..
-      '4. Conjurer - 5400 exp\n' ..
-      '5. Apprentice - 4100 exp')
+      '1. Wizard King - 25000 (Legendary III)\n' ..
+      '2. Archmage - 20000 (Legendary II)\n' ..
+      '3. Sorcerer - 15000 (Legendary I)\n' ..
+      '4. Elder Mage - 10000 (Legendary)\n' ..
+      '5. Master Conjurer - 6000 (Elder)')
     
     if messageBox then
       messageBox:setWidth(300)
