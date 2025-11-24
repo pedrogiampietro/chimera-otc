@@ -12,7 +12,7 @@ local npcTitles = {
 ["Jesus"] = {title = "[Promoter]", color = "#f5c367"},
 ["Ale Patron"] = {title = "[Global Bonus]", color = "#f5c367"},
 ["Kael"] = {title = "[Explorer]", color = "#f5c367"},
-[""] = {title = "[ ]", color = "#f5c367"},
+["Alden"] = {title = "[Old Explorer]", color = "#f5c367"},
 [""] = {title = "[ ]", color = "#f5c367"},
 [""] = {title = "[ ]", color = "#f5c367"},
 [""] = {title = "[ ]", color = "#f5c367"},
