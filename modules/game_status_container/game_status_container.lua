@@ -112,9 +112,7 @@ function setActiveSlot(slotIndex, attemptTransform)
     activeSlot = slotIndex
 
     -- Tentar transformar o item equipado se for uma arma transformável
-    if attemptTransform then
-        tryTransformWeapon(slotIndex)
-    end
+    if attemptTransform then tryTransformWeapon(slotIndex) end
 
     -- Atualizar aparência de todos os slots
     for i = 1, 6 do
