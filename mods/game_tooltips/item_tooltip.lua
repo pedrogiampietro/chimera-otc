@@ -94,7 +94,6 @@ local impPercent = {
 }
 
 function init()
-    g_logger.info("Item tooltip init called")
     connect(UIItem, {onHoverChange = onHoverChange})
     connect(g_game, {onGameEnd = resetData})
 
@@ -108,16 +107,11 @@ function init()
     itemWeightLabel = tooltipWindow:getChildById("itemWeightLabel")
     itemSprite = tooltipWindow:getChildById("itemSprite")
 
-    g_logger.info("tooltipWindow created, labels: " .. tostring(labels) .. ", itemWeightLabel: " .. tostring(itemWeightLabel) .. ", itemSprite: " .. tostring(itemSprite))
-
     _G.buildItemTooltip = buildItemTooltip
     _G.showItemTooltip = showItemTooltip
-
-    g_logger.info("Item tooltip mod loaded: buildItemTooltip and showItemTooltip set in _G")
 end
 
 function terminate()
-    g_logger.info("Item tooltip terminate called")
     disconnect(UIItem, {onHoverChange = onHoverChange})
     disconnect(g_game, {onGameEnd = resetData})
 
@@ -350,8 +344,6 @@ function buildItemTooltip(item)
     local third = item.third
     local weight = item.weight
 
-    g_logger.info("Building tooltip for item: " .. name .. ", rarity: " .. rarity)
-
     -- Set rarity frame
     local src = nil
     if rarity == 1 then
@@ -389,15 +381,12 @@ function buildItemTooltip(item)
     name = name:gsub("^a ", ""):gsub("^an ", "")  -- Remove "a " or "an " from start
     if item.uLvl > 0 then name = name .. " +" .. item.uLvl end
 
-    g_logger.info("Processing item name: " .. name .. ", rarity: " .. rarity .. ", uniqueName: " .. tostring(item.uniqueName) .. ", unidentified: " .. tostring(unidentified))
-
     if unidentified then
         addString("Unidentified" .. " " .. name, rarityColor[1].color)
     elseif item.uniqueName and item.uniqueName ~= "" then
         addString(item.uniqueName .. " " .. name, "#dca01e", false, "verdana-11px-rounded")
     elseif rarity > 1 and rarityColor[rarity] then
         local fullName = rarityColor[rarity].name .. " " .. name
-        g_logger.info("Adding rare item name: " .. fullName .. " with color " .. rarityColor[rarity].color)
         addString(fullName, rarityColor[rarity].color, false, "verdana-11px-rounded")
     else
         addString(name, itemNameColor)
@@ -620,8 +609,6 @@ function showItemTooltip()
     local success, err = pcall(function() tooltipWindow:show() end)
     if not success then
         g_logger.error("Failed to show tooltipWindow: " .. err)
-    else
-        g_logger.info("tooltipWindow:show() succeeded, position: " .. x .. "," .. y .. ", size: " .. tooltipWidth .. "," .. tooltipHeight)
     end
 end
 

@@ -372,7 +372,6 @@ local function formatNumber(n)
 end
 
 function parseShopOpen(data)
-    g_logger.info("parseShopOpen called")
     if MainWindow.currentShop ~= {} then
         if MainWindow.lockUpdate then
             MainWindow.lockUpdate = data
@@ -498,9 +497,6 @@ function parseShopOpen(data)
                     attr = offer.attr
                 }
 
-                g_logger.info("Offer attr for " .. offer.name .. ": " ..
-                                  tostring(offer.attr))
-
                 -- Decodificar attr para tooltip
                 local attrData = {}
                 if offer.attr and offer.attr ~= '' then
@@ -565,16 +561,11 @@ function parseShopOpen(data)
 
                 panel.onHoverChange =
                     function(widget, hovered)
-                        g_logger.info("Shops onHoverChange called, hovered: " ..
-                                          tostring(hovered) .. ", widget: " .. tostring(widget))
                         if hovered then
-                            g_logger.info("Hovered true, checking _G.buildItemTooltip: " .. tostring(_G.buildItemTooltip ~= nil))
                             if _G.buildItemTooltip then
                                 local tooltipData = panel.offerItem:getLinkedTooltip()
-                                g_logger.info("Calling buildItemTooltip with data: " .. tostring(tooltipData))
                                 _G.buildItemTooltip(tooltipData)
                                 if _G.showItemTooltip then
-                                    g_logger.info("Calling showItemTooltip")
                                     _G.showItemTooltip()
                                 else
                                     g_logger.warning("showItemTooltip not found in _G")
@@ -584,7 +575,6 @@ function parseShopOpen(data)
                                     "buildItemTooltip not found in _G")
                             end
                         else
-                            g_logger.info("Hovered false, hiding tooltip")
                             if _G.tooltipWindow then
                                 _G.tooltipWindow:hide()
                             else
