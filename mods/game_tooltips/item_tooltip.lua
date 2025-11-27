@@ -299,6 +299,7 @@ function showTooltip(uid)
     cachedItem.count = hoveredItem:getCount()
 
     buildItemTooltip(cachedItem)
+    showItemTooltip()
 end
 
 function buildItemTooltip(item)
@@ -319,7 +320,7 @@ function buildItemTooltip(item)
     local reqLvl = item.reqLvl or 0
     local unidentified = item.unidentified
     local mirrored = item.mirrored
-    local rarity = item.rarity
+    local rarity = tonumber(item.rarity) or 0
     local maxAttributes = item.maxAttributes
     local attributes = item.attributes
     local count = item.count
@@ -328,6 +329,21 @@ function buildItemTooltip(item)
     local second = item.second
     local third = item.third
     local weight = item.weight
+
+    -- Set rarity frame
+    local src = nil
+    if rarity == 1 then
+        src = "/images/ui/rarity_white"
+    elseif rarity == 2 then
+        src = "/images/ui/rarity_blue"
+    elseif rarity == 3 then
+        src = "/images/ui/rarity_purple"
+    elseif rarity == 4 then
+        src = "/images/ui/rarity_gold"
+    elseif rarity == 5 then
+        src = "/images/ui/rarity_red"
+    end
+    tooltipWindow.currentRaritySrc = src
 
     itemWeightLabel:setText(formatWeight(weight))
 
@@ -352,15 +368,13 @@ function buildItemTooltip(item)
 
     if unidentified then
         addString("Unidentified" .. " " .. name, rarityColor[1].color)
+    elseif item.uniqueName then
+        addString(item.uniqueName .. " " .. name, "#dca01e")
+    elseif rarity > 1 and rarityColor[rarity] then
+        addString(rarityColor[rarity].name .. " " .. name,
+                  rarityColor[rarity].color)
     else
-        if item.uniqueName then
-            addString(item.uniqueName .. " " .. name, "#dca01e")
-        elseif item.rarity ~= 0 and rarityColor[rarity] then
-            addString(rarityColor[rarity].name .. " " .. name,
-                      rarityColor[rarity].color)
-        else
-            addString(name, itemNameColor)
-        end
+        addString(name, itemNameColor)
     end
     -- addString(name, itemNameColor)
 
@@ -463,8 +477,34 @@ function buildItemTooltip(item)
     end
 
     shrinkSeparators()
-    showItemTooltip()
+
+    -- Set tooltip size
+    tooltipWindow:setWidth(tooltipWidth)
+    tooltipWindow:setHeight(tooltipHeight)
+
+    -- Set rarity frame after layout adjustment
+    if tooltipWindow.currentRaritySrc then
+        if not itemSprite.rarityFrame then
+            itemSprite.rarityFrame =
+                g_ui.createWidget("UIWidget", tooltipWindow)
+            local size = itemSprite:getSize()
+            itemSprite.rarityFrame:setSize({
+                width = size.width + 8,
+                height = size.height + 8
+            })
+        end
+        itemSprite.rarityFrame:setImageSource(tooltipWindow.currentRaritySrc)
+        -- Position will be set after tooltip is moved
+    else
+        if itemSprite.rarityFrame then itemSprite.rarityFrame:hide() end
+    end
+
+    -- tooltipWindow:show()  -- Removed to show after positioning
+    -- tooltipWindow:raise()
+    -- Removed followMouse to keep tooltip static at calculated position
 end
+
+_G.buildItemTooltip = buildItemTooltip
 
 function addString(text, color, resize)
     local label = g_ui.createWidget("TooltipLabel", labels)
@@ -521,13 +561,29 @@ function showItemTooltip()
     tooltipWindow:setHeight(tooltipHeight)
 
     local windowSize = g_window.getSize()
-    if mousePos.x > windowSize.width / 2 then
-        tooltipWindow:move(mousePos.x - (tooltipWidth + 2), math.min(
-                               windowSize.height - tooltipHeight, mousePos.y + 5))
-    else
-        tooltipWindow:move(mousePos.x + 5, mousePos.y + 10)
+    local x = mousePos.x + 5
+    if x + tooltipWidth > windowSize.width then
+        x = mousePos.x - tooltipWidth - 5
     end
+    x = math.max(0, math.min(windowSize.width - tooltipWidth, x))
+
+    local y = mousePos.y - tooltipHeight - 5
+    if y < 0 then
+        y = mousePos.y + 5
+    end
+    y = math.max(0, math.min(windowSize.height - tooltipHeight, y))
+
+    tooltipWindow:move(x, y)
     tooltipWindow:raise()
+
+    -- Set rarity frame position after moving the tooltip
+    if itemSprite.rarityFrame and tooltipWindow.currentRaritySrc then
+        local pos = itemSprite:getPosition()
+        itemSprite.rarityFrame:setPosition({x = pos.x - 4, y = pos.y - 4})
+        itemSprite.rarityFrame:show()
+        itemSprite:raise() -- Ensure item image is on top
+    end
+
     tooltipWindow:show()
     g_effects.fadeIn(tooltipWindow, 100)
 end

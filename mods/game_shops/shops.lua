@@ -371,7 +371,8 @@ local function formatNumber(n)
                ",(%-?)$", "%1"):reverse()
 end
 
-local function parseShopOpen(data)
+function parseShopOpen(data)
+    g_logger.info("parseShopOpen called")
     if MainWindow.currentShop ~= {} then
         if MainWindow.lockUpdate then
             MainWindow.lockUpdate = data
@@ -493,8 +494,94 @@ local function parseShopOpen(data)
                     cid = offer.cid,
                     price = offer.price,
                     count = offer.count,
-                    content = offer.content
+                    content = offer.content,
+                    attr = offer.attr
                 }
+
+                g_logger.info("Offer attr for " .. offer.name .. ": " ..
+                                  tostring(offer.attr))
+
+                -- Decodificar attr para tooltip
+                local attrData = {}
+                if offer.attr and offer.attr ~= '' then
+                    local jsonStatus, jsonData = pcall(function()
+                        return json.decode(offer.attr)
+                    end)
+                    if jsonStatus and jsonData then
+                        attrData = jsonData
+                    end
+                end
+
+                -- Se attrData vazio, tentar preencher com dados básicos do item
+                if not attrData.iLvl and not attrData.rarity and
+                    not attrData.imp then
+                    local itemType = g_things.getThingType(offer.cid)
+                    if itemType then
+                        attrData.type = "" -- deixar vazio por enquanto
+                        if itemType.getAttack then
+                            attrData.first = itemType:getAttack()
+                        else
+                            attrData.first = 0
+                        end
+                        if itemType.getDefense then
+                            attrData.second = itemType:getDefense()
+                        else
+                            attrData.second = 0
+                        end
+                        if itemType.getExtraDefense then
+                            attrData.third = itemType:getExtraDefense()
+                        else
+                            attrData.third = 0
+                        end
+                    end
+                end
+
+                -- Se attrData vazio, deixar básico (nome e peso apenas)
+
+                panel.offerItem.getLinkedTooltip = function()
+                    return {
+                        id = offer.cid,
+                        name = offer.name,
+                        desc = attrData.desc or "",
+                        iLvl = attrData.iLvl or 0,
+                        imp = attrData.imp or {},
+                        unidentified = attrData.unidentified or false,
+                        mirrored = attrData.mirrored or false,
+                        uLvl = attrData.uLvl or 0,
+                        uniqueName = attrData.uniqueName or "",
+                        rarity = attrData.rarity or 0,
+                        maxAttributes = attrData.maxAttributes or 0,
+                        attributes = attrData.attributes or {},
+                        stackable = false,
+                        type = attrData.type or "",
+                        first = attrData.first or 0,
+                        second = attrData.second or 0,
+                        third = attrData.third or 0,
+                        weight = offer.weight,
+                        reqLvl = attrData.reqLvl or 0,
+                        count = offer.count
+                    }
+                end
+
+                panel.offerItem.onHoverChange =
+                    function(widget, hovered)
+                        g_logger.info("onHoverChange called, hovered: " ..
+                                          tostring(hovered))
+                        if hovered then
+                            if _G.buildItemTooltip then
+                                _G.buildItemTooltip(widget:getLinkedTooltip())
+                            else
+                                g_logger.warning(
+                                    "buildItemTooltip not found in _G")
+                            end
+                        else
+                            if _G.tooltipWindow then
+                                _G.tooltipWindow:hide()
+                            else
+                                g_logger.warning("tooltipWindow not found in _G")
+                            end
+                        end
+                    end
 
                 panel.offerItem:setItemId(offer.cid)
                 panel.offerItem:setItemCount(offer.count)
