@@ -563,18 +563,28 @@ function parseShopOpen(data)
                     }
                 end
 
-                panel.offerItem.onHoverChange =
+                panel.onHoverChange =
                     function(widget, hovered)
-                        g_logger.info("onHoverChange called, hovered: " ..
-                                          tostring(hovered))
+                        g_logger.info("Shops onHoverChange called, hovered: " ..
+                                          tostring(hovered) .. ", widget: " .. tostring(widget))
                         if hovered then
+                            g_logger.info("Hovered true, checking _G.buildItemTooltip: " .. tostring(_G.buildItemTooltip ~= nil))
                             if _G.buildItemTooltip then
-                                _G.buildItemTooltip(widget:getLinkedTooltip())
+                                local tooltipData = panel.offerItem:getLinkedTooltip()
+                                g_logger.info("Calling buildItemTooltip with data: " .. tostring(tooltipData))
+                                _G.buildItemTooltip(tooltipData)
+                                if _G.showItemTooltip then
+                                    g_logger.info("Calling showItemTooltip")
+                                    _G.showItemTooltip()
+                                else
+                                    g_logger.warning("showItemTooltip not found in _G")
+                                end
                             else
                                 g_logger.warning(
                                     "buildItemTooltip not found in _G")
                             end
                         else
+                            g_logger.info("Hovered false, hiding tooltip")
                             if _G.tooltipWindow then
                                 _G.tooltipWindow:hide()
                             else

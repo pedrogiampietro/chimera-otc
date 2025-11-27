@@ -94,6 +94,7 @@ local impPercent = {
 }
 
 function init()
+    g_logger.info("Item tooltip init called")
     connect(UIItem, {onHoverChange = onHoverChange})
     connect(g_game, {onGameEnd = resetData})
 
@@ -106,9 +107,17 @@ function init()
     labels = tooltipWindow:getChildById("labels")
     itemWeightLabel = tooltipWindow:getChildById("itemWeightLabel")
     itemSprite = tooltipWindow:getChildById("itemSprite")
+
+    g_logger.info("tooltipWindow created, labels: " .. tostring(labels) .. ", itemWeightLabel: " .. tostring(itemWeightLabel) .. ", itemSprite: " .. tostring(itemSprite))
+
+    _G.buildItemTooltip = buildItemTooltip
+    _G.showItemTooltip = showItemTooltip
+
+    g_logger.info("Item tooltip mod loaded: buildItemTooltip and showItemTooltip set in _G")
 end
 
 function terminate()
+    g_logger.info("Item tooltip terminate called")
     disconnect(UIItem, {onHoverChange = onHoverChange})
     disconnect(g_game, {onGameEnd = resetData})
 
@@ -251,6 +260,7 @@ function onHoverChange(widget, hovered)
             if hovered then
                 showingVirtual = widget:getLinkedTooltip()
                 buildItemTooltip(widget:getLinkedTooltip())
+                showItemTooltip()
             else
                 tooltipWindow:hide()
                 showingVirtual = nil
@@ -263,6 +273,7 @@ function onHoverChange(widget, hovered)
     if item and widget.getItemTooltip then
         if hovered then
             buildItemTooltip(widget:getItemTooltip())
+            showItemTooltip()
         else
             tooltipWindow:hide()
         end
@@ -304,6 +315,15 @@ end
 
 function buildItemTooltip(item)
 
+    if not tooltipWindow then
+        g_logger.error("tooltipWindow is nil in buildItemTooltip")
+        return
+    end
+    if not labels then
+        g_logger.error("labels is nil in buildItemTooltip")
+        return
+    end
+
     tooltipWidth = 0
     longestString = 0
     tooltipWidthBase = BASE_WIDTH
@@ -329,6 +349,8 @@ function buildItemTooltip(item)
     local second = item.second
     local third = item.third
     local weight = item.weight
+
+    g_logger.info("Building tooltip for item: " .. name .. ", rarity: " .. rarity)
 
     -- Set rarity frame
     local src = nil
@@ -364,15 +386,19 @@ function buildItemTooltip(item)
     name = name:gsub("(%a)(%a+)", function(a, b)
         return string.upper(a) .. string.lower(b)
     end)
+    name = name:gsub("^a ", ""):gsub("^an ", "")  -- Remove "a " or "an " from start
     if item.uLvl > 0 then name = name .. " +" .. item.uLvl end
+
+    g_logger.info("Processing item name: " .. name .. ", rarity: " .. rarity .. ", uniqueName: " .. tostring(item.uniqueName) .. ", unidentified: " .. tostring(unidentified))
 
     if unidentified then
         addString("Unidentified" .. " " .. name, rarityColor[1].color)
-    elseif item.uniqueName then
-        addString(item.uniqueName .. " " .. name, "#dca01e")
+    elseif item.uniqueName and item.uniqueName ~= "" then
+        addString(item.uniqueName .. " " .. name, "#dca01e", false, "verdana-11px-rounded")
     elseif rarity > 1 and rarityColor[rarity] then
-        addString(rarityColor[rarity].name .. " " .. name,
-                  rarityColor[rarity].color)
+        local fullName = rarityColor[rarity].name .. " " .. name
+        g_logger.info("Adding rare item name: " .. fullName .. " with color " .. rarityColor[rarity].color)
+        addString(fullName, rarityColor[rarity].color, false, "verdana-11px-rounded")
     else
         addString(name, itemNameColor)
     end
@@ -506,9 +532,14 @@ end
 
 _G.buildItemTooltip = buildItemTooltip
 
-function addString(text, color, resize)
+_G.showItemTooltip = showItemTooltip
+
+g_logger.info("Item tooltip mod loaded: buildItemTooltip and showItemTooltip set in _G")
+
+function addString(text, color, resize, font)
     local label = g_ui.createWidget("TooltipLabel", labels)
     label:setColor(color)
+    if font then label:setFont(font) end
 
     if resize then
         tooltipWindow:setWidth(tooltipWidth)
@@ -555,6 +586,10 @@ function addEmpty(height)
 end
 
 function showItemTooltip()
+    if not tooltipWindow then
+        g_logger.error("tooltipWindow is nil in showItemTooltip")
+        return
+    end
     local mousePos = g_window.getMousePosition()
     tooltipHeight = math.max(tooltipHeight, 40)
     tooltipWindow:setWidth(tooltipWidth)
@@ -568,9 +603,7 @@ function showItemTooltip()
     x = math.max(0, math.min(windowSize.width - tooltipWidth, x))
 
     local y = mousePos.y - tooltipHeight - 5
-    if y < 0 then
-        y = mousePos.y + 5
-    end
+    if y < 0 then y = mousePos.y + 5 end
     y = math.max(0, math.min(windowSize.height - tooltipHeight, y))
 
     tooltipWindow:move(x, y)
@@ -584,8 +617,12 @@ function showItemTooltip()
         itemSprite:raise() -- Ensure item image is on top
     end
 
-    tooltipWindow:show()
-    g_effects.fadeIn(tooltipWindow, 100)
+    local success, err = pcall(function() tooltipWindow:show() end)
+    if not success then
+        g_logger.error("Failed to show tooltipWindow: " .. err)
+    else
+        g_logger.info("tooltipWindow:show() succeeded, position: " .. x .. "," .. y .. ", size: " .. tooltipWidth .. "," .. tooltipHeight)
+    end
 end
 
 function formatWeight(weight)

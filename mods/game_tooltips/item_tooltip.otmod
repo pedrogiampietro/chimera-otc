@@ -3,7 +3,7 @@ Module
   description: Show item info on hover
   author: Oen
   website: None
-  sandboxed: true
+  sandboxed: false
   autoload: true
   scripts: [ item_tooltip ]
   @onLoad: init()
